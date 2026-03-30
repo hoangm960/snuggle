@@ -1,0 +1,36 @@
+import dotenv from "dotenv";
+dotenv.config();
+
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+
+import { logger } from "./utils/logger";
+import { errorHandler, notFound } from "./middleware/errorHandler";
+import petRoutes from "./routes/pets";
+import authRoutes from "./routes/auth";
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(helmet());
+app.use(cors());
+app.use(logger);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.get("/health", (_req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+app.use("/api/pets", petRoutes);
+app.use("/api/auth", authRoutes);
+
+app.use(notFound);
+app.use(errorHandler);
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
+
+export default app;
