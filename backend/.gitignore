@@ -3,4 +3,4 @@ dist/
 .env
 *.log
 .DS_Store
-service-account.json
+firebase-service-key.json
