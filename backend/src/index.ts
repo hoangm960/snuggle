@@ -11,6 +11,7 @@ import petRoutes from "./routes/pets";
 import authRoutes from "./routes/auth";
 import shelterRoutes from "./routes/shelters";
 import applicationRoutes from "./routes/adoptionApplications";
+import contractRoutes from "./routes/adoptionContracts";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -29,6 +30,7 @@ app.use("/api/pets", petRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/shelters", shelterRoutes);
 app.use("/api/applications", applicationRoutes);
+app.use("/api/contracts", contractRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
