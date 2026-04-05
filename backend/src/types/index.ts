@@ -1,10 +1,34 @@
 import { Request } from 'express';
+import admin from 'firebase-admin';
 
 export interface AuthRequest extends Request {
   user?: {
     uid: string;
     email?: string;
   };
+}
+
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  error?: string;
+}
+
+export interface User {
+  id?: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+  role: 'visitor' | 'admin';
+  accountStatus: 'active' | 'suspended';
+  authProvider: 'email' | 'google' | 'apple';
+  emailVerified: boolean;
+  isKycVerified: boolean;
+  shelterId?: string;
+  fcmTokens?: string[];
+  createdAt: Date;
+  updatedAt?: Date;
 }
 
 export interface Pet {
@@ -22,18 +46,9 @@ export interface Pet {
   updatedAt: Date;
 }
 
-export interface User {
   id?: string;
-  email: string;
-  displayName: string;
-  role: 'adopter' | 'shelter' | 'admin';
   createdAt: Date;
-  updatedAt: Date;
 }
 
-export interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
   message?: string;
-  error?: string;
 }

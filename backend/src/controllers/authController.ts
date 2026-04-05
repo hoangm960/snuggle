@@ -5,6 +5,268 @@ import { AppError } from '../middleware/errorHandler';
 
 const usersCollection = db.collection('users');
 
+export const register = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { email, password, displayName, role } = req.body;
+
+    if (!email || !password) {
+      throw new AppError('Email and password are required', 400);
+    }
+
+    if (password.length < 6) {
+      throw new AppError('Password must be at least 6 characters', 400);
+    }
+
+    const userRecord = await auth.createUser({
+      email,
+      password,
+      displayName: displayName || '',
+    });
+
+    const userData: Omit<User, 'id'> = {
+      email,
+      displayName: displayName || '',
+      role: role || 'visitor',
+      accountStatus: 'active',
+      authProvider: 'email',
+      emailVerified: true,
+      isKycVerified: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    await usersCollection.doc(userRecord.uid).set(userData);
+
+    const customToken = await auth.createCustomToken(userRecord.uid);
+
+    const user: User = { id: userRecord.uid, ...userData };
+
+    const response: ApiResponse<{ user: User; token: string }> = {
+      success: true,
+      data: {
+        user,
+        token: customToken,
+      },
+      message: 'User registered successfully',
+    };
+
+    res.status(201).json(response);
+  } catch (error: any) {
+    if (error.code || error.message?.includes('already exists')) {
+      throw new AppError('Email already in use', 400);
+    }
+    if (error instanceof AppError) throw error;
+    throw new AppError('Failed to register user', 500);
+  }
+};
+
+export const login = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      throw new AppError('Email and password are required', 400);
+    }
+
+    const firebaseApiKey = process.env.FIREBASE_API_KEY;
+    if (!firebaseApiKey) {
+      throw new AppError('Firebase API key not configured', 500);
+    }
+
+    const response = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${firebaseApiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+          returnSecureToken: true,
+        }),
+      }
+    );
+
+    const data = await response.json() as {
+      error?: { message?: string };
+      localId?: string;
+    };
+
+    if (!response.ok) {
+      if (data.error?.message === 'INVALID_PASSWORD') {
+        throw new AppError('Invalid password', 401);
+      }
+      if (data.error?.message === 'EMAIL_NOT_FOUND') {
+        throw new AppError('User not found', 404);
+      }
+      throw new AppError('Login failed', 401);
+    }
+
+    if (!data.localId) {
+      throw new AppError('Login failed', 401);
+    }
+
+    const uid = data.localId;
+    const userDoc = await usersCollection.doc(uid).get();
+
+    if (!userDoc.exists) {
+      throw new AppError('User profile not found', 404);
+    }
+
+    const customToken = await auth.createCustomToken(uid);
+    const user: User = { id: userDoc.id, ...userDoc.data() } as User;
+
+    const apiResponse: ApiResponse<{ user: User; token: string }> = {
+      success: true,
+      data: {
+        user,
+        token: customToken,
+      },
+      message: 'Login successful',
+    };
+
+    res.status(200).json(apiResponse);
+  } catch (error: any) {
+    if (error instanceof AppError) throw error;
+    throw new AppError('Failed to login', 500);
+  }
+};
+
+export const googleSignIn = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      throw new AppError('Google ID token is required', 400);
+    }
+
+    const decodedToken = await auth.verifyIdToken(idToken, true);
+    const uid = decodedToken.uid;
+    const email = decodedToken.email || '';
+    const displayName = decodedToken.name || decodedToken.displayName || '';
+    const photoURL = decodedToken.picture || decodedToken.photoURL || '';
+
+    let userDoc = await usersCollection.doc(uid).get();
+    let user: User;
+
+    if (!userDoc.exists) {
+      const userData: Omit<User, 'id'> = {
+        email,
+        displayName,
+        photoURL,
+        role: 'visitor',
+        accountStatus: 'active',
+        authProvider: 'google',
+        emailVerified: true,
+        isKycVerified: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await usersCollection.doc(uid).set(userData);
+      user = { id: uid, ...userData };
+    } else {
+      user = { id: userDoc.id, ...userDoc.data() } as User;
+    }
+
+    const customToken = await auth.createCustomToken(uid);
+
+    const response: ApiResponse<{ user: User; token: string }> = {
+      success: true,
+      data: {
+        user,
+        token: customToken,
+      },
+      message: 'Google sign-in successful',
+    };
+
+    res.status(200).json(response);
+  } catch (error: any) {
+    if (error.code === 'auth/invalid-id-token' || error.code === 'auth/id-token-expired') {
+      throw new AppError('Invalid or expired Google ID token', 401);
+    }
+    if (error instanceof AppError) throw error;
+    throw new AppError('Failed to sign in with Google', 500);
+  }
+};
+
+export const createUserProfile = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      throw new AppError('Unauthorized', 401);
+    }
+
+    const { displayName, role, photoURL } = req.body;
+
+    const userDoc = await usersCollection.doc(req.user.uid).get();
+
+    let user: User;
+
+    if (!userDoc.exists) {
+      const userData: Omit<User, 'id'> = {
+        email: req.user.email || '',
+        displayName: displayName || '',
+        photoURL: photoURL || '',
+        role: role || 'visitor',
+        accountStatus: 'active',
+        authProvider: 'email',
+        emailVerified: true,
+        isKycVerified: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await usersCollection.doc(req.user.uid).set(userData);
+      user = { id: req.user.uid, ...userData };
+
+      const response: ApiResponse<User> = {
+        success: true,
+        data: user,
+        message: 'User profile created successfully',
+      };
+
+      res.status(201).json(response);
+    } else {
+      const existingUser = userDoc.data() as User;
+      
+      const updateData: Partial<User> = {
+        updatedAt: new Date(),
+      };
+
+      if (displayName) updateData.displayName = displayName;
+      if (role) updateData.role = role;
+      if (photoURL) updateData.photoURL = photoURL;
+
+      await usersCollection.doc(req.user.uid).update(updateData);
+
+      const updatedDoc = await usersCollection.doc(req.user.uid).get();
+      user = { id: updatedDoc.id, ...updatedDoc.data() } as User;
+
+      const response: ApiResponse<User> = {
+        success: true,
+        data: user,
+        message: 'User profile updated successfully',
+      };
+
+      res.status(200).json(response);
+    }
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError('Failed to create user profile', 500);
+  }
+};
+
 export const verifyToken = async (
   req: AuthRequest,
   res: Response
@@ -34,43 +296,7 @@ export const verifyToken = async (
   } catch (error) {
     if (error instanceof AppError) throw error;
     throw new AppError('Failed to verify token', 500);
-  }
-};
-
-export const createUserProfile = async (
-  req: AuthRequest,
-  res: Response
-): Promise<void> => {
-  try {
-    if (!req.user) {
-      throw new AppError('Unauthorized', 401);
-    }
-
-    const { displayName, role } = req.body;
-
-    const userData: Omit<User, 'id'> = {
-      email: req.user.email || '',
-      displayName: displayName || '',
-      role: role || 'adopter',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    await usersCollection.doc(req.user.uid).set(userData);
-
-    const user: User = { id: req.user.uid, ...userData };
-
-    const response: ApiResponse<User> = {
-      success: true,
-      data: user,
-      message: 'User profile created successfully',
-    };
-
-    res.status(201).json(response);
-  } catch (error) {
-    if (error instanceof AppError) throw error;
-    throw new AppError('Failed to create user profile', 500);
-  }
+      }
 };
 
 export const getUserProfile = async (
@@ -134,5 +360,29 @@ export const updateUserProfile = async (
   } catch (error) {
     if (error instanceof AppError) throw error;
     throw new AppError('Failed to update user profile', 500);
+  }
+};
+
+export const deleteUserAccount = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      throw new AppError('Unauthorized', 401);
+    }
+
+    await usersCollection.doc(req.user.uid).delete();
+    await auth.deleteUser(req.user.uid);
+
+    const response: ApiResponse = {
+      success: true,
+      message: 'User account deleted successfully',
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError('Failed to delete user account', 500);
   }
 };
