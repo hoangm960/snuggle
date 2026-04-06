@@ -131,15 +131,21 @@ yarn dev
 
 ## API Endpoints
 
+### Health Check
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/health` | Server health status | No |
+
 ### Pets
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/pets` | List all pets | No |
-| GET | `/pets/:id` | Get single pet | No |
-| POST | `/pets` | Create pet | Required |
-| PUT | `/pets/:id` | Update pet | Required |
-| DELETE | `/pets/:id` | Delete pet | Required |
+| GET | `/api/pets` | List all pets | No |
+| GET | `/api/pets/:id` | Get single pet | No |
+| POST | `/api/pets` | Create pet | Required |
+| PUT | `/api/pets/:id` | Update pet | Required |
+| DELETE | `/api/pets/:id` | Delete pet | Required |
 
 #### Query Parameters
 
@@ -151,10 +157,44 @@ yarn dev
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/auth/me` | Verify JWT token | Required |
-| POST | `/auth/profile` | Create user profile | Required |
-| GET | `/auth/profile` | Get user profile | Required |
-| PUT | `/auth/profile` | Update user profile | Required |
+| POST | `/api/auth/register` | Register new user | No |
+| POST | `/api/auth/login` | Login user | No |
+| POST | `/api/auth/google` | Google sign-in | No |
+| GET | `/api/auth/me` | Verify JWT token | Required |
+| POST | `/api/auth/profile` | Create user profile | Required |
+| GET | `/api/auth/profile` | Get user profile | Required |
+| PUT | `/api/auth/profile` | Update user profile | Required |
+| DELETE | `/api/auth/account` | Delete user account | Required |
+
+### Shelters
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/shelters` | List all shelters | No |
+| GET | `/api/shelters/:id` | Get single shelter | No |
+| POST | `/api/shelters` | Create shelter | Required |
+| PUT | `/api/shelters/:id` | Update shelter | Required |
+| DELETE | `/api/shelters/:id` | Delete shelter | Required |
+
+### Adoption Applications
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/applications` | List all applications | Required |
+| GET | `/api/applications/:id` | Get single application | Required |
+| POST | `/api/applications` | Create application | Required |
+| PUT | `/api/applications/:id/status` | Update application status | Required |
+| DELETE | `/api/applications/:id` | Delete application | Required |
+
+### Adoption Contracts
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/contracts` | List all contracts | Required |
+| GET | `/api/contracts/:id` | Get single contract | No |
+| POST | `/api/contracts` | Create contract | Required |
+| PUT | `/api/contracts/:id/sign` | Sign contract | Required |
+| PUT | `/api/contracts/:id/archive` | Archive contract | Required |
 
 ## Building for Production
 
