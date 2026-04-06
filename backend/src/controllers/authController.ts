@@ -1,537 +1,413 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { auth, db } from '../config/firebase';
 import { AuthRequest, ApiResponse, User } from '../types';
 import { AppError } from '../middleware/errorHandler';
 
 const usersCollection = db.collection('users');
 
-export const register = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const { email, password, displayName, role } = req.body;
+export const register = async (req: AuthRequest, res: Response): Promise<void> => {
+	const { email, password, displayName, role } = req.body;
 
-    if (!email || !password) {
-      throw new AppError('Email and password are required', 400);
-    }
+	const existingUsers = await usersCollection.where('email', '==', email.toLowerCase()).get();
+	if (!existingUsers.empty) {
+		const response: ApiResponse = {
+			success: false,
+			message: 'An account with this email already exists. Would you like to log in instead?',
+		};
+		res.status(400).json(response);
+		return;
+	}
 
-    if (password.length < 6) {
-      throw new AppError('Password must be at least 6 characters', 400);
-    }
+	const userRecord = await auth.createUser({
+		email,
+		password,
+		displayName: displayName || '',
+		emailVerified: false,
+	});
 
-    const existingUsers = await usersCollection.where('email', '==', email.toLowerCase()).get();
-    if (!existingUsers.empty) {
-      const response: ApiResponse = {
-        success: false,
-        message: 'An account with this email already exists. Would you like to log in instead?',
-      };
-      res.status(400).json(response);
-      return;
-    }
+	const userData: Omit<User, 'id'> = {
+		email,
+		displayName: displayName || '',
+		role: role || 'visitor',
+		accountStatus: 'active',
+		authProvider: 'email',
+		emailVerified: false,
+		isKycVerified: false,
+		createdAt: new Date(),
+		updatedAt: new Date(),
+	};
 
-    const userRecord = await auth.createUser({
-      email,
-      password,
-      displayName: displayName || '',
-      emailVerified: false,
-    });
+	await usersCollection.doc(userRecord.uid).set(userData);
 
-    const userData: Omit<User, 'id'> = {
-      email,
-      displayName: displayName || '',
-      role: role || 'visitor',
-      accountStatus: 'active',
-      authProvider: 'email',
-      emailVerified: false,
-      isKycVerified: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+	const verificationLink = await auth.generateEmailVerificationLink(email);
+	console.log(`Verification link for ${email}: ${verificationLink}`);
 
-    await usersCollection.doc(userRecord.uid).set(userData);
+	const response: ApiResponse = {
+		success: true,
+		message: 'Registration successful. Please check your email to verify your account.',
+	};
 
-    const verificationLink = await auth.generateEmailVerificationLink(email);
-    console.log(`Verification link for ${email}: ${verificationLink}`);
-
-    const response: ApiResponse = {
-      success: true,
-      message: 'Registration successful. Please check your email to verify your account.',
-    };
-
-    res.status(201).json(response);
-  } catch (error: any) {
-    if (error.code || error.message?.includes('already exists')) {
-      throw new AppError('Email already in use', 400);
-    }
-    if (error instanceof AppError) throw error;
-    throw new AppError('Failed to register user', 500);
-  }
+	res.status(201).json(response);
 };
 
-export const login = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const { email, password } = req.body;
+export const login = async (req: AuthRequest, res: Response): Promise<void> => {
+	const { email, password } = req.body;
 
-    if (!email || !password) {
-      throw new AppError('Email and password are required', 400);
-    }
+	const firebaseApiKey = process.env.FIREBASE_API_KEY;
+	if (!firebaseApiKey) {
+		throw new AppError('Firebase API key not configured', 500);
+	}
 
-    const firebaseApiKey = process.env.FIREBASE_API_KEY;
-    if (!firebaseApiKey) {
-      throw new AppError('Firebase API key not configured', 500);
-    }
+	const response = await fetch(
+		`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${firebaseApiKey}`,
+		{
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				email,
+				password,
+				returnSecureToken: true,
+			}),
+		}
+	);
 
-    const response = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${firebaseApiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          password,
-          returnSecureToken: true,
-        }),
-      }
-    );
+	const data = (await response.json()) as {
+		error?: { message?: string };
+		localId?: string;
+	};
 
-    const data = await response.json() as {
-      error?: { message?: string };
-      localId?: string;
-    };
+	if (!response.ok) {
+		if (data.error?.message === 'INVALID_PASSWORD') {
+			throw new AppError(
+				'Incorrect email or password. Try again or click "Forgot Password".',
+				401
+			);
+		}
+		if (data.error?.message === 'EMAIL_NOT_FOUND') {
+			throw new AppError('User not found', 404);
+		}
+		throw new AppError('Login failed', 401);
+	}
 
-    if (!response.ok) {
-      if (data.error?.message === 'INVALID_PASSWORD') {
-        throw new AppError('Incorrect email or password. Try again or click "Forgot Password".', 401);
-      }
-      if (data.error?.message === 'EMAIL_NOT_FOUND') {
-        throw new AppError('User not found', 404);
-      }
-      throw new AppError('Login failed', 401);
-    }
+	if (!data.localId) {
+		throw new AppError('Login failed', 401);
+	}
 
-    if (!data.localId) {
-      throw new AppError('Login failed', 401);
-    }
+	const uid = data.localId;
+	const userDoc = await usersCollection.doc(uid).get();
 
-    const uid = data.localId;
-    const userDoc = await usersCollection.doc(uid).get();
+	if (!userDoc.exists) {
+		throw new AppError('User profile not found', 404);
+	}
 
-    if (!userDoc.exists) {
-      throw new AppError('User profile not found', 404);
-    }
+	const userData = userDoc.data() as User;
+	if (!userData.emailVerified) {
+		const response: ApiResponse = {
+			success: false,
+			emailVerificationRequired: true,
+			message: 'Please verify your email before logging in.',
+		};
+		res.status(403).json(response);
+		return;
+	}
 
-    const userData = userDoc.data() as User;
-    if (!userData.emailVerified) {
-      const response: ApiResponse = {
-        success: false,
-        emailVerificationRequired: true,
-        message: 'Please verify your email before logging in.',
-      };
-      res.status(403).json(response);
-      return;
-    }
+	const customToken = await auth.createCustomToken(uid);
+	const user: User = { id: userDoc.id, ...userData };
 
-    const customToken = await auth.createCustomToken(uid);
-    const user: User = { id: userDoc.id, ...userData };
+	const apiResponse: ApiResponse<{ user: User; token: string }> = {
+		success: true,
+		data: {
+			user,
+			token: customToken,
+		},
+		message: 'Login successful',
+	};
 
-    const apiResponse: ApiResponse<{ user: User; token: string }> = {
-      success: true,
-      data: {
-        user,
-        token: customToken,
-      },
-      message: 'Login successful',
-    };
-
-    res.status(200).json(apiResponse);
-  } catch (error: any) {
-    if (error instanceof AppError) throw error;
-    throw new AppError('Failed to login', 500);
-  }
+	res.status(200).json(apiResponse);
 };
 
-export const googleSignIn = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const { idToken } = req.body;
+export const googleSignIn = async (req: AuthRequest, res: Response): Promise<void> => {
+	const { idToken } = req.body;
 
-    if (!idToken) {
-      throw new AppError('Google ID token is required', 400);
-    }
+	const decodedToken = await auth.verifyIdToken(idToken, true);
+	const uid = decodedToken.uid;
+	const email = decodedToken.email || '';
+	const displayName = decodedToken.name || decodedToken.displayName || '';
+	const photoURL = decodedToken.picture || decodedToken.photoURL || '';
 
-    const decodedToken = await auth.verifyIdToken(idToken, true);
-    const uid = decodedToken.uid;
-    const email = decodedToken.email || '';
-    const displayName = decodedToken.name || decodedToken.displayName || '';
-    const photoURL = decodedToken.picture || decodedToken.photoURL || '';
+	let userDoc = await usersCollection.doc(uid).get();
+	let user: User;
 
-    let userDoc = await usersCollection.doc(uid).get();
-    let user: User;
+	if (!userDoc.exists) {
+		const userData: Omit<User, 'id'> = {
+			email,
+			displayName,
+			photoURL,
+			role: 'visitor',
+			accountStatus: 'active',
+			authProvider: 'google',
+			emailVerified: true,
+			isKycVerified: false,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
 
-    if (!userDoc.exists) {
-      const userData: Omit<User, 'id'> = {
-        email,
-        displayName,
-        photoURL,
-        role: 'visitor',
-        accountStatus: 'active',
-        authProvider: 'google',
-        emailVerified: true,
-        isKycVerified: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+		await usersCollection.doc(uid).set(userData);
+		user = { id: uid, ...userData };
+	} else {
+		user = { id: userDoc.id, ...userDoc.data() } as User;
+	}
 
-      await usersCollection.doc(uid).set(userData);
-      user = { id: uid, ...userData };
-    } else {
-      user = { id: userDoc.id, ...userDoc.data() } as User;
-    }
+	const customToken = await auth.createCustomToken(uid);
 
-    const customToken = await auth.createCustomToken(uid);
+	const response: ApiResponse<{ user: User; token: string }> = {
+		success: true,
+		data: {
+			user,
+			token: customToken,
+		},
+		message: 'Google sign-in successful',
+	};
 
-    const response: ApiResponse<{ user: User; token: string }> = {
-      success: true,
-      data: {
-        user,
-        token: customToken,
-      },
-      message: 'Google sign-in successful',
-    };
-
-    res.status(200).json(response);
-  } catch (error: any) {
-    if (error.code === 'auth/invalid-id-token' || error.code === 'auth/id-token-expired') {
-      throw new AppError('Invalid or expired Google ID token', 401);
-    }
-    if (error instanceof AppError) throw error;
-    throw new AppError('Failed to sign in with Google', 500);
-  }
+	res.status(200).json(response);
 };
 
-export const createUserProfile = async (
-  req: AuthRequest,
-  res: Response
-): Promise<void> => {
-  try {
-    if (!req.user) {
-      throw new AppError('Unauthorized', 401);
-    }
+export const createUserProfile = async (req: AuthRequest, res: Response): Promise<void> => {
+	if (!req.user) {
+		throw new AppError('Unauthorized', 401);
+	}
 
-    const { displayName, role, photoURL } = req.body;
+	const { displayName, role, photoURL } = req.body;
 
-    const userDoc = await usersCollection.doc(req.user.uid).get();
+	const userDoc = await usersCollection.doc(req.user.uid).get();
 
-    let user: User;
+	let user: User;
 
-    if (!userDoc.exists) {
-      const userData: Omit<User, 'id'> = {
-        email: req.user.email || '',
-        displayName: displayName || '',
-        photoURL: photoURL || '',
-        role: role || 'visitor',
-        accountStatus: 'active',
-        authProvider: 'email',
-        emailVerified: true,
-        isKycVerified: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+	if (!userDoc.exists) {
+		const userData: Omit<User, 'id'> = {
+			email: req.user.email || '',
+			displayName: displayName || '',
+			photoURL: photoURL || '',
+			role: role || 'visitor',
+			accountStatus: 'active',
+			authProvider: 'email',
+			emailVerified: true,
+			isKycVerified: false,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
 
-      await usersCollection.doc(req.user.uid).set(userData);
-      user = { id: req.user.uid, ...userData };
+		await usersCollection.doc(req.user.uid).set(userData);
+		user = { id: req.user.uid, ...userData };
 
-      const response: ApiResponse<User> = {
-        success: true,
-        data: user,
-        message: 'User profile created successfully',
-      };
+		const response: ApiResponse<User> = {
+			success: true,
+			data: user,
+			message: 'User profile created successfully',
+		};
 
-      res.status(201).json(response);
-    } else {
-      const existingUser = userDoc.data() as User;
-      
-      const updateData: Partial<User> = {
-        updatedAt: new Date(),
-      };
+		res.status(201).json(response);
+	} else {
+		const updateData: Partial<User> = {
+			updatedAt: new Date(),
+		};
 
-      if (displayName) updateData.displayName = displayName;
-      if (role) updateData.role = role;
-      if (photoURL) updateData.photoURL = photoURL;
+		if (displayName) updateData.displayName = displayName;
+		if (role) updateData.role = role;
+		if (photoURL) updateData.photoURL = photoURL;
 
-      await usersCollection.doc(req.user.uid).update(updateData);
+		await usersCollection.doc(req.user.uid).update(updateData);
 
-      const updatedDoc = await usersCollection.doc(req.user.uid).get();
-      user = { id: updatedDoc.id, ...updatedDoc.data() } as User;
+		const updatedDoc = await usersCollection.doc(req.user.uid).get();
+		user = { id: updatedDoc.id, ...updatedDoc.data() } as User;
 
-      const response: ApiResponse<User> = {
-        success: true,
-        data: user,
-        message: 'User profile updated successfully',
-      };
+		const response: ApiResponse<User> = {
+			success: true,
+			data: user,
+			message: 'User profile updated successfully',
+		};
 
-      res.status(200).json(response);
-    }
-  } catch (error) {
-    if (error instanceof AppError) throw error;
-    throw new AppError('Failed to create user profile', 500);
-  }
+		res.status(200).json(response);
+	}
 };
 
-export const verifyToken = async (
-  req: AuthRequest,
-  res: Response
-): Promise<void> => {
-  try {
-    if (!req.user) {
-      throw new AppError('Unauthorized', 401);
-    }
+export const verifyToken = async (req: AuthRequest, res: Response): Promise<void> => {
+	if (!req.user) {
+		throw new AppError('Unauthorized', 401);
+	}
 
-    const userDoc = await usersCollection.doc(req.user.uid).get();
-    
-    let user: User | null = null;
-    if (userDoc.exists) {
-      user = { id: userDoc.id, ...userDoc.data() } as User;
-    }
+	const userDoc = await usersCollection.doc(req.user.uid).get();
 
-    const response: ApiResponse<{ uid: string; email?: string; user?: User }> = {
-      success: true,
-      data: {
-        uid: req.user.uid,
-        email: req.user.email,
-        user: user || undefined,
-      },
-    };
+	let user: User | null = null;
+	if (userDoc.exists) {
+		user = { id: userDoc.id, ...userDoc.data() } as User;
+	}
 
-    res.status(200).json(response);
-  } catch (error) {
-    if (error instanceof AppError) throw error;
-    throw new AppError('Failed to verify token', 500);
-      }
+	const response: ApiResponse<{ uid: string; email?: string; user?: User }> = {
+		success: true,
+		data: {
+			uid: req.user.uid,
+			email: req.user.email,
+			user: user || undefined,
+		},
+	};
+
+	res.status(200).json(response);
 };
 
-export const getUserProfile = async (
-  req: AuthRequest,
-  res: Response
-): Promise<void> => {
-  try {
-    if (!req.user) {
-      throw new AppError('Unauthorized', 401);
-    }
+export const getUserProfile = async (req: AuthRequest, res: Response): Promise<void> => {
+	if (!req.user) {
+		throw new AppError('Unauthorized', 401);
+	}
 
-    const userDoc = await usersCollection.doc(req.user.uid).get();
+	const userDoc = await usersCollection.doc(req.user.uid).get();
 
-    if (!userDoc.exists) {
-      throw new AppError('User profile not found', 404);
-    }
+	if (!userDoc.exists) {
+		throw new AppError('User profile not found', 404);
+	}
 
-    const user: User = { id: userDoc.id, ...userDoc.data() } as User;
+	const user: User = { id: userDoc.id, ...userDoc.data() } as User;
 
-    const response: ApiResponse<User> = {
-      success: true,
-      data: user,
-    };
+	const response: ApiResponse<User> = {
+		success: true,
+		data: user,
+	};
 
-    res.status(200).json(response);
-  } catch (error) {
-    if (error instanceof AppError) throw error;
-    throw new AppError('Failed to get user profile', 500);
-  }
+	res.status(200).json(response);
 };
 
-export const updateUserProfile = async (
-  req: AuthRequest,
-  res: Response
-): Promise<void> => {
-  try {
-    if (!req.user) {
-      throw new AppError('Unauthorized', 401);
-    }
+export const updateUserProfile = async (req: AuthRequest, res: Response): Promise<void> => {
+	if (!req.user) {
+		throw new AppError('Unauthorized', 401);
+	}
 
-    const { displayName, role } = req.body;
-    const updateData: Partial<User> = {
-      updatedAt: new Date(),
-    };
+	const { displayName, role } = req.body;
+	const updateData: Partial<User> = {
+		updatedAt: new Date(),
+	};
 
-    if (displayName) updateData.displayName = displayName;
-    if (role) updateData.role = role;
+	if (displayName) updateData.displayName = displayName;
+	if (role) updateData.role = role;
 
-    await usersCollection.doc(req.user.uid).update(updateData);
+	await usersCollection.doc(req.user.uid).update(updateData);
 
-    const updatedDoc = await usersCollection.doc(req.user.uid).get();
-    const user: User = { id: updatedDoc.id, ...updatedDoc.data() } as User;
+	const updatedDoc = await usersCollection.doc(req.user.uid).get();
+	const user: User = { id: updatedDoc.id, ...updatedDoc.data() } as User;
 
-    const response: ApiResponse<User> = {
-      success: true,
-      data: user,
-      message: 'User profile updated successfully',
-    };
+	const response: ApiResponse<User> = {
+		success: true,
+		data: user,
+		message: 'User profile updated successfully',
+	};
 
-    res.status(200).json(response);
-  } catch (error) {
-    if (error instanceof AppError) throw error;
-    throw new AppError('Failed to update user profile', 500);
-  }
+	res.status(200).json(response);
 };
 
-export const deleteUserAccount = async (
-  req: AuthRequest,
-  res: Response
-): Promise<void> => {
-  try {
-    if (!req.user) {
-      throw new AppError('Unauthorized', 401);
-    }
+export const deleteUserAccount = async (req: AuthRequest, res: Response): Promise<void> => {
+	if (!req.user) {
+		throw new AppError('Unauthorized', 401);
+	}
 
-    await usersCollection.doc(req.user.uid).delete();
-    await auth.deleteUser(req.user.uid);
+	await usersCollection.doc(req.user.uid).delete();
+	await auth.deleteUser(req.user.uid);
 
-    const response: ApiResponse = {
-      success: true,
-      message: 'User account deleted successfully',
-    };
+	const response: ApiResponse = {
+		success: true,
+		message: 'User account deleted successfully',
+	};
 
-    res.status(200).json(response);
-  } catch (error) {
-    if (error instanceof AppError) throw error;
-    throw new AppError('Failed to delete user account', 500);
-  }
+	res.status(200).json(response);
 };
 
-export const facebookSignIn = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const { idToken } = req.body;
+export const facebookSignIn = async (req: AuthRequest, res: Response): Promise<void> => {
+	const { idToken } = req.body;
 
-    if (!idToken) {
-      throw new AppError('Facebook access token is required', 400);
-    }
+	const decodedToken = await auth.verifyIdToken(idToken, true);
+	const uid = decodedToken.uid;
+	const email = decodedToken.email || '';
+	const displayName = decodedToken.name || decodedToken.displayName || '';
 
-    const decodedToken = await auth.verifyIdToken(idToken, true);
-    const uid = decodedToken.uid;
-    const email = decodedToken.email || '';
-    const displayName = decodedToken.name || decodedToken.displayName || '';
+	let userDoc = await usersCollection.doc(uid).get();
+	let user: User;
 
-    let userDoc = await usersCollection.doc(uid).get();
-    let user: User;
+	if (!userDoc.exists) {
+		const userData: Omit<User, 'id'> = {
+			email,
+			displayName,
+			role: 'visitor',
+			accountStatus: 'active',
+			authProvider: 'facebook',
+			emailVerified: true,
+			isKycVerified: false,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
 
-    if (!userDoc.exists) {
-      const userData: Omit<User, 'id'> = {
-        email,
-        displayName,
-        role: 'visitor',
-        accountStatus: 'active',
-        authProvider: 'facebook',
-        emailVerified: true,
-        isKycVerified: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+		await usersCollection.doc(uid).set(userData);
+		user = { id: uid, ...userData };
+	} else {
+		user = { id: userDoc.id, ...userDoc.data() } as User;
+	}
 
-      await usersCollection.doc(uid).set(userData);
-      user = { id: uid, ...userData };
-    } else {
-      user = { id: userDoc.id, ...userDoc.data() } as User;
-    }
+	const customToken = await auth.createCustomToken(uid);
 
-    const customToken = await auth.createCustomToken(uid);
+	const response: ApiResponse<{ user: User; token: string }> = {
+		success: true,
+		data: {
+			user,
+			token: customToken,
+		},
+		message: 'Facebook sign-in successful',
+	};
 
-    const response: ApiResponse<{ user: User; token: string }> = {
-      success: true,
-      data: {
-        user,
-        token: customToken,
-      },
-      message: 'Facebook sign-in successful',
-    };
-
-    res.status(200).json(response);
-  } catch (error: any) {
-    if (error.code === 'auth/invalid-id-token' || error.code === 'auth/id-token-expired') {
-      throw new AppError('Invalid or expired Facebook access token', 401);
-    }
-    if (error instanceof AppError) throw error;
-    throw new AppError('Failed to sign in with Facebook', 500);
-  }
+	res.status(200).json(response);
 };
 
-export const resendVerification = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const { email } = req.body;
+export const resendVerification = async (req: AuthRequest, res: Response): Promise<void> => {
+	const { email } = req.body;
 
-    if (!email) {
-      throw new AppError('Email is required', 400);
-    }
+	const existingUsers = await usersCollection.where('email', '==', email.toLowerCase()).get();
 
-    const existingUsers = await usersCollection.where('email', '==', email.toLowerCase()).get();
-    
-    if (existingUsers.empty) {
-      throw new AppError('No account found with this email', 404);
-    }
+	if (existingUsers.empty) {
+		throw new AppError('No account found with this email', 404);
+	}
 
-    const userDoc = existingUsers.docs[0];
-    const userData = userDoc.data() as User;
+	const userDoc = existingUsers.docs[0];
+	const userData = userDoc.data() as User;
 
-    if (userData.emailVerified) {
-      const response: ApiResponse = {
-        success: true,
-        message: 'This email is already verified. You can log in now.',
-      };
-      res.status(200).json(response);
-      return;
-    }
+	if (userData.emailVerified) {
+		const response: ApiResponse = {
+			success: true,
+			message: 'This email is already verified. You can log in now.',
+		};
+		res.status(200).json(response);
+		return;
+	}
 
-    const verificationLink = await auth.generateEmailVerificationLink(email);
-    console.log(`Verification link for ${email}: ${verificationLink}`);
+	const verificationLink = await auth.generateEmailVerificationLink(email);
+	console.log(`Verification link for ${email}: ${verificationLink}`);
 
-    const response: ApiResponse = {
-      success: true,
-      message: 'Verification email sent. Please check your inbox.',
-    };
+	const response: ApiResponse = {
+		success: true,
+		message: 'Verification email sent. Please check your inbox.',
+	};
 
-    res.status(200).json(response);
-  } catch (error: any) {
-    if (error instanceof AppError) throw error;
-    throw new AppError('Failed to resend verification email', 500);
-  }
+	res.status(200).json(response);
 };
 
-export const verifyEmail = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const { oobCode } = req.body;
+export const verifyEmail = async (req: AuthRequest, res: Response): Promise<void> => {
+	const { oobCode } = req.body;
 
-    if (!oobCode) {
-      throw new AppError('Verification code is required', 400);
-    }
+	try {
+		await auth.verifyIdToken(oobCode);
+	} catch {
+		throw new AppError('Invalid or expired verification code', 400);
+	}
 
-    try {
-      await auth.verifyIdToken(oobCode);
-    } catch {
-      throw new AppError('Invalid or expired verification code', 400);
-    }
+	const response: ApiResponse = {
+		success: true,
+		message: 'Email verified successfully. You can now log in.',
+	};
 
-    const response: ApiResponse = {
-      success: true,
-      message: 'Email verified successfully. You can now log in.',
-    };
-
-    res.status(200).json(response);
-  } catch (error: any) {
-    if (error instanceof AppError) throw error;
-    throw new AppError('Failed to verify email', 500);
-  }
+	res.status(200).json(response);
 };
