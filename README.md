@@ -108,11 +108,14 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 #### Backend (`.env`)
 
 ```env
+FIREBASE_API_KEY=your-firebase-key
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_SERVICE_ACCOUNT_FILE=./service-account.json
 PORT=3001
-FIREBASE_PROJECT_ID=your_project_id
-FIREBASE_PRIVATE_KEY=your_private_key
-FIREBASE_CLIENT_EMAIL=your_client_email
+NODE_ENV=development
 ```
+
+> **Note:** Create a service account in Firebase Console and download the JSON key. Place it in the `backend/` directory and rename it to `service-account.json` (or update the path in `FIREBASE_SERVICE_ACCOUNT_FILE`).
 
 ### 4. Run Development Servers
 
