@@ -20,10 +20,21 @@ export const register = async (
       throw new AppError('Password must be at least 6 characters', 400);
     }
 
+    const existingUsers = await usersCollection.where('email', '==', email.toLowerCase()).get();
+    if (!existingUsers.empty) {
+      const response: ApiResponse = {
+        success: false,
+        message: 'An account with this email already exists. Would you like to log in instead?',
+      };
+      res.status(400).json(response);
+      return;
+    }
+
     const userRecord = await auth.createUser({
       email,
       password,
       displayName: displayName || '',
+      emailVerified: false,
     });
 
     const userData: Omit<User, 'id'> = {
@@ -32,7 +43,7 @@ export const register = async (
       role: role || 'visitor',
       accountStatus: 'active',
       authProvider: 'email',
-      emailVerified: true,
+      emailVerified: false,
       isKycVerified: false,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -40,17 +51,12 @@ export const register = async (
 
     await usersCollection.doc(userRecord.uid).set(userData);
 
-    const customToken = await auth.createCustomToken(userRecord.uid);
+    const verificationLink = await auth.generateEmailVerificationLink(email);
+    console.log(`Verification link for ${email}: ${verificationLink}`);
 
-    const user: User = { id: userRecord.uid, ...userData };
-
-    const response: ApiResponse<{ user: User; token: string }> = {
+    const response: ApiResponse = {
       success: true,
-      data: {
-        user,
-        token: customToken,
-      },
-      message: 'User registered successfully',
+      message: 'Registration successful. Please check your email to verify your account.',
     };
 
     res.status(201).json(response);
@@ -99,7 +105,7 @@ export const login = async (
 
     if (!response.ok) {
       if (data.error?.message === 'INVALID_PASSWORD') {
-        throw new AppError('Invalid password', 401);
+        throw new AppError('Incorrect email or password. Try again or click "Forgot Password".', 401);
       }
       if (data.error?.message === 'EMAIL_NOT_FOUND') {
         throw new AppError('User not found', 404);
@@ -118,8 +124,19 @@ export const login = async (
       throw new AppError('User profile not found', 404);
     }
 
+    const userData = userDoc.data() as User;
+    if (!userData.emailVerified) {
+      const response: ApiResponse = {
+        success: false,
+        emailVerificationRequired: true,
+        message: 'Please verify your email before logging in.',
+      };
+      res.status(403).json(response);
+      return;
+    }
+
     const customToken = await auth.createCustomToken(uid);
-    const user: User = { id: userDoc.id, ...userDoc.data() } as User;
+    const user: User = { id: userDoc.id, ...userData };
 
     const apiResponse: ApiResponse<{ user: User; token: string }> = {
       success: true,
@@ -384,5 +401,137 @@ export const deleteUserAccount = async (
   } catch (error) {
     if (error instanceof AppError) throw error;
     throw new AppError('Failed to delete user account', 500);
+  }
+};
+
+export const facebookSignIn = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      throw new AppError('Facebook access token is required', 400);
+    }
+
+    const decodedToken = await auth.verifyIdToken(idToken, true);
+    const uid = decodedToken.uid;
+    const email = decodedToken.email || '';
+    const displayName = decodedToken.name || decodedToken.displayName || '';
+
+    let userDoc = await usersCollection.doc(uid).get();
+    let user: User;
+
+    if (!userDoc.exists) {
+      const userData: Omit<User, 'id'> = {
+        email,
+        displayName,
+        role: 'visitor',
+        accountStatus: 'active',
+        authProvider: 'facebook',
+        emailVerified: true,
+        isKycVerified: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await usersCollection.doc(uid).set(userData);
+      user = { id: uid, ...userData };
+    } else {
+      user = { id: userDoc.id, ...userDoc.data() } as User;
+    }
+
+    const customToken = await auth.createCustomToken(uid);
+
+    const response: ApiResponse<{ user: User; token: string }> = {
+      success: true,
+      data: {
+        user,
+        token: customToken,
+      },
+      message: 'Facebook sign-in successful',
+    };
+
+    res.status(200).json(response);
+  } catch (error: any) {
+    if (error.code === 'auth/invalid-id-token' || error.code === 'auth/id-token-expired') {
+      throw new AppError('Invalid or expired Facebook access token', 401);
+    }
+    if (error instanceof AppError) throw error;
+    throw new AppError('Failed to sign in with Facebook', 500);
+  }
+};
+
+export const resendVerification = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      throw new AppError('Email is required', 400);
+    }
+
+    const existingUsers = await usersCollection.where('email', '==', email.toLowerCase()).get();
+    
+    if (existingUsers.empty) {
+      throw new AppError('No account found with this email', 404);
+    }
+
+    const userDoc = existingUsers.docs[0];
+    const userData = userDoc.data() as User;
+
+    if (userData.emailVerified) {
+      const response: ApiResponse = {
+        success: true,
+        message: 'This email is already verified. You can log in now.',
+      };
+      res.status(200).json(response);
+      return;
+    }
+
+    const verificationLink = await auth.generateEmailVerificationLink(email);
+    console.log(`Verification link for ${email}: ${verificationLink}`);
+
+    const response: ApiResponse = {
+      success: true,
+      message: 'Verification email sent. Please check your inbox.',
+    };
+
+    res.status(200).json(response);
+  } catch (error: any) {
+    if (error instanceof AppError) throw error;
+    throw new AppError('Failed to resend verification email', 500);
+  }
+};
+
+export const verifyEmail = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { oobCode } = req.body;
+
+    if (!oobCode) {
+      throw new AppError('Verification code is required', 400);
+    }
+
+    try {
+      await auth.verifyIdToken(oobCode);
+    } catch {
+      throw new AppError('Invalid or expired verification code', 400);
+    }
+
+    const response: ApiResponse = {
+      success: true,
+      message: 'Email verified successfully. You can now log in.',
+    };
+
+    res.status(200).json(response);
+  } catch (error: any) {
+    if (error instanceof AppError) throw error;
+    throw new AppError('Failed to verify email', 500);
   }
 };

@@ -15,6 +15,7 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   message?: string;
   error?: string;
+  emailVerificationRequired?: boolean;
 }
 
 export interface User {
@@ -24,7 +25,7 @@ export interface User {
   photoURL?: string;
   role: 'visitor' | 'admin';
   accountStatus: 'active' | 'suspended';
-  authProvider: 'email' | 'google' | 'apple';
+  authProvider: 'email' | 'google' | 'apple' | 'facebook';
   emailVerified: boolean;
   isKycVerified: boolean;
   shelterId?: string;
