@@ -150,11 +150,13 @@ yarn dev
 | PUT | `/api/pets/:id` | Update pet | Required |
 | DELETE | `/api/pets/:id` | Delete pet | Required |
 
-#### Query Parameters
+#### Health Records
 
-- `?species=` - Filter by species (e.g., "dog", "cat")
-- `?status=` - Filter by status (e.g., "available", "adopted")
-- `?shelterId=` - Filter by shelter ID
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/pets/:petId/health-records` | List pet health records | No |
+| POST | `/api/pets/:petId/health-records` | Create health record | Required |
+| DELETE | `/api/pets/:petId/health-records/:id` | Delete health record | Required |
 
 ### Auth
 
@@ -163,6 +165,9 @@ yarn dev
 | POST | `/api/auth/register` | Register new user | No |
 | POST | `/api/auth/login` | Login user | No |
 | POST | `/api/auth/google` | Google sign-in | No |
+| POST | `/api/auth/facebook` | Facebook sign-in | No |
+| POST | `/api/auth/resend-verification` | Resend verification email | No |
+| POST | `/api/auth/verify-email` | Verify email | No |
 | GET | `/api/auth/me` | Verify JWT token | Required |
 | POST | `/api/auth/profile` | Create user profile | Required |
 | GET | `/api/auth/profile` | Get user profile | Required |
@@ -198,6 +203,32 @@ yarn dev
 | POST | `/api/contracts` | Create contract | Required |
 | PUT | `/api/contracts/:id/sign` | Sign contract | Required |
 | PUT | `/api/contracts/:id/archive` | Archive contract | Required |
+
+### Reviews
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/reviews/:shelterId` | Get shelter reviews | No |
+| POST | `/api/reviews/:shelterId` | Create review | Required |
+| PUT | `/api/reviews/:shelterId/:id/status` | Update review status | Required |
+
+### User Endpoints
+
+#### Adopter Profile
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/users/me/adopter-profile` | Get adopter profile | Required |
+| POST | `/api/users/me/adopter-profile` | Create adopter profile | Required |
+| PUT | `/api/users/me/adopter-profile` | Update adopter profile | Required |
+
+#### Saved Searches
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/users/me/saved-searches` | List saved searches | Required |
+| POST | `/api/users/me/saved-searches` | Create saved search | Required |
+| DELETE | `/api/users/me/saved-searches/:id` | Delete saved search | Required |
 
 ## Building for Production
 
