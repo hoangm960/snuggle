@@ -1,9 +1,9 @@
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
 
 import { logger } from "./utils/logger";
 import { errorHandler, notFound } from "./middleware/errorHandler";
@@ -15,7 +15,6 @@ import contractRoutes from "./routes/adoptionContracts";
 import savedSearchRoutes from "./routes/savedSearches";
 import adopterProfileRoutes from "./routes/adopterProfile";
 import reviewRoutes from "./routes/reviews";
-import healthRecordRoutes from "./routes/healthRecords";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -26,8 +25,8 @@ app.use(logger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get('/health', (_req, res) => {
-	res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get("/health", (_req, res) => {
+	res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 app.use("/api/pets", petRoutes);
@@ -38,7 +37,6 @@ app.use("/api/contracts", contractRoutes);
 app.use("/api/users/me/saved-searches", savedSearchRoutes);
 app.use("/api/users/me/adopter-profile", adopterProfileRoutes);
 app.use("/api/reviews", reviewRoutes);
-app.use("/api/pets", healthRecordRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

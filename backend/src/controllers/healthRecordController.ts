@@ -1,12 +1,13 @@
-import { Request, Response } from 'express';
-import { db } from '../config/firebase';
-import { HealthRecord, AuthRequest, ApiResponse } from '../types';
-import { AppError } from '../middleware/errorHandler';
+import { Response } from "express";
+import { db } from "../config/firebase";
+import { HealthRecord, AuthRequest, ApiResponse } from "../types";
+import { AppError } from "../middleware/errorHandler";
+import { errorLogger } from "../utils/logger";
 
 const getHealthRecordsCollection = (petId: string) =>
-	db.collection('pets').doc(petId).collection('healthRecords');
+	db.collection("pets").doc(petId).collection("healthRecords");
 
-export const getPetHealthRecords = async (req: Request, res: Response): Promise<void> => {
+export const getPetHealthRecords = async (req: AuthRequest, res: Response): Promise<void> => {
 	try {
 		const { petId } = req.params;
 		const { type } = req.query;
@@ -14,10 +15,10 @@ export const getPetHealthRecords = async (req: Request, res: Response): Promise<
 		let query: FirebaseFirestore.Query = getHealthRecordsCollection(petId);
 
 		if (type) {
-			query = query.where('type', '==', type);
+			query = query.where("type", "==", type);
 		}
 
-		const snapshot = await query.orderBy('recordDate', 'desc').get();
+		const snapshot = await query.orderBy("recordDate", "desc").get();
 		const records: HealthRecord[] = [];
 
 		snapshot.forEach((doc) => {
@@ -30,25 +31,26 @@ export const getPetHealthRecords = async (req: Request, res: Response): Promise<
 		};
 
 		res.status(200).json(response);
-	} catch (error) {
-		throw new AppError('Failed to fetch health records', 500);
+	} catch (err) {
+		errorLogger.error({ message: (err as Error).message, stack: (err as Error).stack });
+		res.status(500).json({ success: false, error: { code: "INTERNAL_ERROR", message: "Failed to fetch health records" } });
 	}
 };
 
 export const createHealthRecord = async (req: AuthRequest, res: Response): Promise<void> => {
 	try {
 		if (!req.user) {
-			throw new AppError('Unauthorized', 401);
+			throw new AppError("Unauthorized", 401);
 		}
 
 		const { petId } = req.params;
 		const { type, description, vetName, batchNumber, documentURL, recordDate } = req.body;
 
-		if (!type || !['vaccine', 'checkup', 'treatment'].includes(type)) {
-			throw new AppError('Invalid health record type', 400);
+		if (!type || !["vaccine", "checkup", "treatment"].includes(type)) {
+			throw new AppError("Invalid health record type", 400);
 		}
 
-		const recordData: Omit<HealthRecord, 'id'> = {
+		const recordData: Omit<HealthRecord, "id"> = {
 			petId,
 			type,
 			description,
@@ -66,39 +68,39 @@ export const createHealthRecord = async (req: AuthRequest, res: Response): Promi
 		const response: ApiResponse<HealthRecord> = {
 			success: true,
 			data: record,
-			message: 'Health record added successfully',
+			message: "Health record added successfully",
 		};
 
 		res.status(201).json(response);
 	} catch (error) {
 		if (error instanceof AppError) throw error;
-		throw new AppError('Failed to create health record', 500);
+		throw new AppError("Failed to create health record", 500);
 	}
 };
 
 export const deleteHealthRecord = async (req: AuthRequest, res: Response): Promise<void> => {
 	try {
 		if (!req.user) {
-			throw new AppError('Unauthorized', 401);
+			throw new AppError("Unauthorized", 401);
 		}
 
 		const { petId, id } = req.params;
 
 		const doc = await getHealthRecordsCollection(petId).doc(id).get();
 		if (!doc.exists) {
-			throw new AppError('Health record not found', 404);
+			throw new AppError("Health record not found", 404);
 		}
 
 		await getHealthRecordsCollection(petId).doc(id).delete();
 
 		const response: ApiResponse = {
 			success: true,
-			message: 'Health record deleted successfully',
+			message: "Health record deleted successfully",
 		};
 
 		res.status(200).json(response);
 	} catch (error) {
 		if (error instanceof AppError) throw error;
-		throw new AppError('Failed to delete health record', 500);
+		throw new AppError("Failed to delete health record", 500);
 	}
 };

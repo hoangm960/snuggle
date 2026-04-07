@@ -1,22 +1,22 @@
-import { Response } from 'express';
-import { db } from '../config/firebase';
-import { AdoptionContract, AuthRequest, ApiResponse } from '../types';
-import { AppError } from '../middleware/errorHandler';
+import { Response } from "express";
+import { db } from "../config/firebase";
+import { AdoptionContract, AuthRequest, ApiResponse } from "../types";
+import { AppError } from "../middleware/errorHandler";
 
-const contractsCollection = db.collection('adoptionContracts');
-const applicationsCollection = db.collection('adoptionApplications');
-const petsCollection = db.collection('pets');
+const contractsCollection = db.collection("adoptionContracts");
+const applicationsCollection = db.collection("adoptionApplications");
+const petsCollection = db.collection("pets");
 
 export const getAllContracts = async (req: AuthRequest, res: Response): Promise<void> => {
 	if (!req.user) {
-		throw new AppError('Unauthorized', 401);
+		throw new AppError("Unauthorized", 401);
 	}
 
 	const { adopterId } = req.query;
 	let query: FirebaseFirestore.Query = contractsCollection;
 
 	if (adopterId) {
-		query = query.where('adopterId', '==', adopterId);
+		query = query.where("adopterId", "==", adopterId);
 	}
 
 	const snapshot = await query.get();
@@ -39,7 +39,7 @@ export const getContractById = async (req: AuthRequest, res: Response): Promise<
 	const doc = await contractsCollection.doc(id).get();
 
 	if (!doc.exists) {
-		throw new AppError('Contract not found', 404);
+		throw new AppError("Contract not found", 404);
 	}
 
 	const response: ApiResponse<AdoptionContract> = {
@@ -52,26 +52,26 @@ export const getContractById = async (req: AuthRequest, res: Response): Promise<
 
 export const createContract = async (req: AuthRequest, res: Response): Promise<void> => {
 	if (!req.user) {
-		throw new AppError('Unauthorized', 401);
+		throw new AppError("Unauthorized", 401);
 	}
 
 	const { applicationId, petId, adopterId } = req.body;
 
 	const appDoc = await applicationsCollection.doc(applicationId).get();
 	if (!appDoc.exists) {
-		throw new AppError('Application not found', 404);
+		throw new AppError("Application not found", 404);
 	}
 
 	const appData = appDoc.data();
-	if (appData?.status !== 'approved') {
-		throw new AppError('Application must be approved before creating contract', 400);
+	if (appData?.status !== "approved") {
+		throw new AppError("Application must be approved before creating contract", 400);
 	}
 
-	const contractData: Omit<AdoptionContract, 'id'> = {
+	const contractData: Omit<AdoptionContract, "id"> = {
 		applicationId,
 		petId: petId || appData?.petId,
 		adopterId: adopterId || appData?.adopterId,
-		status: 'draft',
+		status: "draft",
 		createdAt: new Date(),
 	};
 
@@ -83,7 +83,7 @@ export const createContract = async (req: AuthRequest, res: Response): Promise<v
 	const response: ApiResponse<AdoptionContract> = {
 		success: true,
 		data: contract,
-		message: 'Contract created successfully',
+		message: "Contract created successfully",
 	};
 
 	res.status(201).json(response);
@@ -91,7 +91,7 @@ export const createContract = async (req: AuthRequest, res: Response): Promise<v
 
 export const signContract = async (req: AuthRequest, res: Response): Promise<void> => {
 	if (!req.user) {
-		throw new AppError('Unauthorized', 401);
+		throw new AppError("Unauthorized", 401);
 	}
 
 	const { id } = req.params;
@@ -99,18 +99,18 @@ export const signContract = async (req: AuthRequest, res: Response): Promise<voi
 
 	const doc = await contractsCollection.doc(id).get();
 	if (!doc.exists) {
-		throw new AppError('Contract not found', 404);
+		throw new AppError("Contract not found", 404);
 	}
 
 	const contractData = doc.data() as AdoptionContract;
 	const updateData: Partial<AdoptionContract> = {};
 
-	if (role === 'adopter') {
+	if (role === "adopter") {
 		if (contractData.adopterId !== req.user.uid) {
-			throw new AppError('Not authorized to sign as adopter', 403);
+			throw new AppError("Not authorized to sign as adopter", 403);
 		}
 		updateData.adopterSignedAt = new Date();
-	} else if (role === 'shelter') {
+	} else if (role === "shelter") {
 		updateData.shelterSignedAt = new Date();
 	}
 
@@ -118,7 +118,7 @@ export const signContract = async (req: AuthRequest, res: Response): Promise<voi
 	if (contractHash) updateData.contractHash = contractHash;
 
 	if (contractData.adopterSignedAt && updateData.shelterSignedAt) {
-		updateData.status = 'signed';
+		updateData.status = "signed";
 	}
 
 	await contractsCollection.doc(id).update(updateData);
@@ -132,7 +132,7 @@ export const signContract = async (req: AuthRequest, res: Response): Promise<voi
 	const response: ApiResponse<AdoptionContract> = {
 		success: true,
 		data: contract,
-		message: 'Contract signed successfully',
+		message: "Contract signed successfully",
 	};
 
 	res.status(200).json(response);
@@ -140,16 +140,16 @@ export const signContract = async (req: AuthRequest, res: Response): Promise<voi
 
 export const archiveContract = async (req: AuthRequest, res: Response): Promise<void> => {
 	if (!req.user) {
-		throw new AppError('Unauthorized', 401);
+		throw new AppError("Unauthorized", 401);
 	}
 
 	const { id } = req.params;
 
-	await contractsCollection.doc(id).update({ status: 'archived' });
+	await contractsCollection.doc(id).update({ status: "archived" });
 
 	const response: ApiResponse = {
 		success: true,
-		message: 'Contract archived successfully',
+		message: "Contract archived successfully",
 	};
 
 	res.status(200).json(response);

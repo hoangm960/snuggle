@@ -1,12 +1,12 @@
-import { Response, NextFunction } from 'express';
-import { auth } from '../config/firebase';
-import { AuthRequest } from '../types';
-import jwt from 'jsonwebtoken';
+import { Response, NextFunction } from "express";
+import { auth } from "../config/firebase";
+import { AuthRequest } from "../types";
+import jwt from "jsonwebtoken";
 
 const isCustomToken = (token: string): boolean => {
 	try {
 		const decoded = jwt.decode(token);
-		return !!(decoded && typeof decoded === 'object' && 'uid' in decoded);
+		return !!(decoded && typeof decoded === "object" && "uid" in decoded);
 	} catch {
 		return false;
 	}
@@ -20,15 +20,15 @@ export const authenticate = async (
 	try {
 		const authHeader = req.headers.authorization;
 
-		if (!authHeader || !authHeader.startsWith('Bearer ')) {
+		if (!authHeader || !authHeader.startsWith("Bearer ")) {
 			res.status(401).json({
 				success: false,
-				error: 'No token provided',
+				error: "No token provided",
 			});
 			return;
 		}
 
-		const token = authHeader.split('Bearer ')[1];
+		const token = authHeader.split("Bearer ")[1];
 
 		if (isCustomToken(token)) {
 			const decoded = jwt.decode(token) as jwt.JwtPayload;
@@ -37,7 +37,7 @@ export const authenticate = async (
 			if (!uid) {
 				res.status(401).json({
 					success: false,
-					error: 'Invalid token',
+					error: "Invalid token",
 				});
 				return;
 			}
@@ -52,7 +52,7 @@ export const authenticate = async (
 			} catch {
 				res.status(401).json({
 					success: false,
-					error: 'Invalid token',
+					error: "Invalid token",
 				});
 			}
 			return;
@@ -68,13 +68,13 @@ export const authenticate = async (
 		} catch {
 			res.status(401).json({
 				success: false,
-				error: 'Invalid token',
+				error: "Invalid token",
 			});
 		}
 	} catch {
 		res.status(401).json({
 			success: false,
-			error: 'Invalid token',
+			error: "Invalid token",
 		});
 	}
 };
@@ -87,8 +87,8 @@ export const optionalAuth = async (
 	try {
 		const authHeader = req.headers.authorization;
 
-		if (authHeader && authHeader.startsWith('Bearer ')) {
-			const token = authHeader.split('Bearer ')[1];
+		if (authHeader && authHeader.startsWith("Bearer ")) {
+			const token = authHeader.split("Bearer ")[1];
 
 			if (isCustomToken(token)) {
 				const decoded = jwt.decode(token) as jwt.JwtPayload;

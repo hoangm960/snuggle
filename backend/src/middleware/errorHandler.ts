@@ -1,17 +1,17 @@
-import { Request, Response, NextFunction } from 'express';
-import { ZodError } from 'zod';
-import { errorLogger } from '../utils/logger';
+import { Request, Response, NextFunction } from "express";
+import { ZodError } from "zod";
+import { errorLogger } from "../utils/logger";
 
 export enum ErrorCode {
-	BAD_REQUEST = 'BAD_REQUEST',
-	VALIDATION_ERROR = 'VALIDATION_ERROR',
-	UNAUTHORIZED = 'UNAUTHORIZED',
-	FORBIDDEN = 'FORBIDDEN',
-	NOT_FOUND = 'NOT_FOUND',
-	CONFLICT = 'CONFLICT',
-	INTERNAL_ERROR = 'INTERNAL_ERROR',
-	FIREBASE_ERROR = 'FIREBASE_ERROR',
-	EXTERNAL_SERVICE_ERROR = 'EXTERNAL_SERVICE_ERROR',
+	BAD_REQUEST = "BAD_REQUEST",
+	VALIDATION_ERROR = "VALIDATION_ERROR",
+	UNAUTHORIZED = "UNAUTHORIZED",
+	FORBIDDEN = "FORBIDDEN",
+	NOT_FOUND = "NOT_FOUND",
+	CONFLICT = "CONFLICT",
+	INTERNAL_ERROR = "INTERNAL_ERROR",
+	FIREBASE_ERROR = "FIREBASE_ERROR",
+	EXTERNAL_SERVICE_ERROR = "EXTERNAL_SERVICE_ERROR",
 }
 
 export class AppError extends Error {
@@ -61,7 +61,7 @@ export const errorHandler = (
 ): void => {
 	let statusCode = 500;
 	let errorCode = ErrorCode.INTERNAL_ERROR;
-	let message = 'Internal server error';
+	let message = "Internal server error";
 
 	if (err instanceof AppError) {
 		statusCode = err.statusCode;
@@ -70,7 +70,7 @@ export const errorHandler = (
 	} else if (err instanceof ZodError) {
 		statusCode = 400;
 		errorCode = ErrorCode.VALIDATION_ERROR;
-		message = 'Validation failed';
+		message = "Validation failed";
 	}
 
 	errorLogger.error({
@@ -91,7 +91,7 @@ export const errorHandler = (
 		errorBody.details = err.issues;
 	}
 
-	if (process.env.NODE_ENV === 'development') {
+	if (process.env.NODE_ENV === "development") {
 		errorBody.stack = err.stack;
 	}
 

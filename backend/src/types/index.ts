@@ -1,5 +1,5 @@
-import { Request } from 'express';
-import admin from 'firebase-admin';
+import { Request } from "express";
+import admin from "firebase-admin";
 
 export type GeoPoint = admin.firestore.GeoPoint;
 
@@ -23,9 +23,9 @@ export interface User {
 	email: string;
 	displayName: string;
 	photoURL?: string;
-	role: 'visitor' | 'admin';
-	accountStatus: 'active' | 'suspended';
-	authProvider: 'email' | 'google' | 'apple' | 'facebook';
+	role: "visitor" | "admin";
+	accountStatus: "active" | "suspended";
+	authProvider: "email" | "google" | "apple" | "facebook";
 	emailVerified: boolean;
 	isKycVerified: boolean;
 	shelterId?: string;
@@ -48,7 +48,7 @@ export interface SavedSearch {
 export interface KycVerification {
 	id?: string;
 	userId?: string;
-	status: 'pending' | 'approved' | 'rejected';
+	status: "pending" | "approved" | "rejected";
 	idDocumentURL?: string;
 	selfieURL?: string;
 	kycProvider?: string;
@@ -62,10 +62,10 @@ export interface KycVerification {
 export interface AdopterProfile {
 	id?: string;
 	userId?: string;
-	homeType: 'apartment' | 'house' | 'townhouse' | 'condo' | 'farm' | 'other';
+	homeType: "apartment" | "house" | "townhouse" | "condo" | "farm" | "other";
 	hasChildren: boolean;
 	hasOtherPets: boolean;
-	activityLevel: 'low' | 'medium' | 'high';
+	activityLevel: "low" | "medium" | "high";
 	preferredPetSize?: string[];
 	preferredSpecies?: string[];
 	locationName?: string;
@@ -87,7 +87,7 @@ export interface Shelter {
 	photoURLs?: string[];
 	trustScore: number;
 	totalReviews: number;
-	status: 'active' | 'suspended';
+	status: "active" | "suspended";
 	createdAt: Date;
 	updatedAt?: Date;
 }
@@ -98,7 +98,7 @@ export interface Review {
 	reviewerId: string;
 	rating: number;
 	comment?: string;
-	status: 'pending' | 'approved' | 'removed';
+	status: "pending" | "approved" | "removed";
 	createdAt: Date;
 }
 
@@ -108,9 +108,9 @@ export interface Pet {
 	species: string;
 	breed: string;
 	ageMonths: number;
-	size: 'small' | 'medium' | 'large';
-	gender: 'male' | 'female';
-	status: 'available' | 'pending' | 'adopted';
+	size: "small" | "medium" | "large";
+	gender: "male" | "female";
+	status: "available" | "pending" | "adopted";
 	shelterId: string;
 	shelterName?: string;
 	postedBy?: string;
@@ -127,7 +127,7 @@ export interface Pet {
 export interface HealthRecord {
 	id?: string;
 	petId?: string;
-	type: 'vaccine' | 'checkup' | 'treatment';
+	type: "vaccine" | "checkup" | "treatment";
 	description: string;
 	vetName?: string;
 	batchNumber?: string;
@@ -144,7 +144,7 @@ export interface AdoptionApplication {
 	adopterId: string;
 	adopterName: string;
 	shelterId: string;
-	status: 'pending' | 'approved' | 'rejected' | 'completed';
+	status: "pending" | "approved" | "rejected" | "completed";
 	message?: string;
 	adminNote?: string;
 	chatId?: string;
@@ -162,7 +162,7 @@ export interface AdoptionContract {
 	contractHash?: string;
 	adopterSignedAt?: Date;
 	shelterSignedAt?: Date;
-	status: 'draft' | 'signed' | 'archived';
+	status: "draft" | "signed" | "archived";
 	createdAt: Date;
 }
 
@@ -180,7 +180,7 @@ export interface Message {
 	chatId?: string;
 	senderId: string;
 	content: string;
-	type: 'text' | 'image' | 'system';
+	type: "text" | "image" | "system";
 	isRead: boolean;
 	sentAt: Date;
 }
@@ -192,7 +192,7 @@ export interface JournalPost {
 	contractId?: string;
 	content: string;
 	photoURLs?: string[];
-	status: 'pending' | 'approved' | 'highlighted' | 'deleted';
+	status: "pending" | "approved" | "highlighted" | "deleted";
 	createdAt: Date;
 }
 
