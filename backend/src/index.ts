@@ -5,13 +5,14 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 
-import { logger } from './utils/logger';
-import { errorHandler, notFound } from './middleware/errorHandler';
-import petRoutes from './routes/pets';
-import authRoutes from './routes/auth';
-import shelterRoutes from './routes/shelters';
-import applicationRoutes from './routes/adoptionApplications';
-import contractRoutes from './routes/adoptionContracts';
+import { logger } from "./utils/logger";
+import { errorHandler, notFound } from "./middleware/errorHandler";
+import petRoutes from "./routes/pets";
+import authRoutes from "./routes/auth";
+import shelterRoutes from "./routes/shelters";
+import applicationRoutes from "./routes/adoptionApplications";
+import contractRoutes from "./routes/adoptionContracts";
+import adopterProfileRoutes from "./routes/adopterProfile";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -26,11 +27,12 @@ app.get('/health', (_req, res) => {
 	res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.use('/api/pets', petRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/shelters', shelterRoutes);
-app.use('/api/applications', applicationRoutes);
-app.use('/api/contracts', contractRoutes);
+app.use("/api/pets", petRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/shelters", shelterRoutes);
+app.use("/api/applications", applicationRoutes);
+app.use("/api/contracts", contractRoutes);
+app.use("/api/users/me/adopter-profile", adopterProfileRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
