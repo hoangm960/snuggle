@@ -15,6 +15,7 @@ import contractRoutes from "./routes/adoptionContracts";
 import savedSearchRoutes from "./routes/savedSearches";
 import adopterProfileRoutes from "./routes/adopterProfile";
 import reviewRoutes from "./routes/reviews";
+import healthRecordRoutes from "./routes/healthRecords";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -37,6 +38,7 @@ app.use("/api/contracts", contractRoutes);
 app.use("/api/users/me/saved-searches", savedSearchRoutes);
 app.use("/api/users/me/adopter-profile", adopterProfileRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/pets", healthRecordRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
