@@ -12,6 +12,7 @@ import authRoutes from "./routes/auth";
 import shelterRoutes from "./routes/shelters";
 import applicationRoutes from "./routes/adoptionApplications";
 import contractRoutes from "./routes/adoptionContracts";
+import savedSearchRoutes from "./routes/savedSearches";
 import adopterProfileRoutes from "./routes/adopterProfile";
 
 const app = express();
@@ -32,6 +33,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/shelters", shelterRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/contracts", contractRoutes);
+app.use("/api/users/me/saved-searches", savedSearchRoutes);
 app.use("/api/users/me/adopter-profile", adopterProfileRoutes);
 
 app.use(notFound);
