@@ -30,6 +30,8 @@ export interface User {
 	isKycVerified: boolean;
 	shelterId?: string;
 	fcmTokens?: string[];
+	loginCount?: number;
+	lastLoginAt?: Date;
 	createdAt: Date;
 	updatedAt?: Date;
 }

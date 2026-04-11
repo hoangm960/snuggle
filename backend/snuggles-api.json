@@ -18,6 +18,105 @@
   ],
   "item": [
     {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "List all users",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users"]
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "query": [
+              {
+                "key": "search",
+                "value": "",
+                "description": "Search by name or email",
+                "disabled": true
+              },
+              {
+                "key": "role",
+                "value": "",
+                "description": "Filter by role (visitor, admin)",
+                "disabled": true
+              },
+              {
+                "key": "status",
+                "value": "",
+                "description": "Filter by account status (active, suspended)",
+                "disabled": true
+              },
+              {
+                "key": "page",
+                "value": "1",
+                "description": "Page number"
+              },
+              {
+                "key": "limit",
+                "value": "20",
+                "description": "Items per page"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get user by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users", ":id"]
+            },
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Update user (role or status)",
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users", ":id"]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"visitor\",\n  \"accountStatus\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "Pets",
       "item": [
         {

@@ -6,7 +6,7 @@ import { AppError } from "../middleware/errorHandler";
 const usersCollection = db.collection("users");
 
 export const register = async (req: AuthRequest, res: Response): Promise<void> => {
-	const { email, password, displayName, role } = req.body;
+	const { email, password, displayName } = req.body;
 
 	const existingUsers = await usersCollection.where("email", "==", email.toLowerCase()).get();
 	if (!existingUsers.empty) {
@@ -28,7 +28,7 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
 	const userData: Omit<User, "id"> = {
 		email,
 		displayName: displayName || "",
-		role: role || "visitor",
+		role: "visitor",
 		accountStatus: "active",
 		authProvider: "email",
 		emailVerified: false,
@@ -111,8 +111,23 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
 		return;
 	}
 
+	if (userData.accountStatus === "suspended") {
+		const response: ApiResponse = {
+			success: false,
+			message: "Your account has been suspended. Please contact an administrator.",
+		};
+		res.status(403).json(response);
+		return;
+	}
+
+	await usersCollection.doc(uid).update({
+		loginCount: (userData.loginCount || 0) + 1,
+		lastLoginAt: new Date(),
+		updatedAt: new Date(),
+	});
+
 	const customToken = await auth.createCustomToken(uid);
-	const user: User = { id: userDoc.id, ...userData };
+	const user: User = { id: userDoc.id, ...userData, loginCount: (userData.loginCount || 0) + 1 };
 
 	const apiResponse: ApiResponse<{ user: User; token: string }> = {
 		success: true,
@@ -155,7 +170,22 @@ export const googleSignIn = async (req: AuthRequest, res: Response): Promise<voi
 		await usersCollection.doc(uid).set(userData);
 		user = { id: uid, ...userData };
 	} else {
-		user = { id: userDoc.id, ...userDoc.data() } as User;
+		const userData = userDoc.data() as User;
+		if (userData.accountStatus === "suspended") {
+			const response: ApiResponse = {
+				success: false,
+				message: "Your account has been suspended. Please contact an administrator.",
+			};
+			res.status(403).json(response);
+			return;
+		}
+
+		await usersCollection.doc(uid).update({
+			loginCount: (userData.loginCount || 0) + 1,
+			lastLoginAt: new Date(),
+			updatedAt: new Date(),
+		});
+		user = { id: userDoc.id, ...userData, loginCount: (userData.loginCount || 0) + 1 };
 	}
 
 	const customToken = await auth.createCustomToken(uid);
@@ -177,7 +207,7 @@ export const createUserProfile = async (req: AuthRequest, res: Response): Promis
 		throw new AppError("Unauthorized", 401);
 	}
 
-	const { displayName, role, photoURL } = req.body;
+	const { displayName, photoURL } = req.body;
 
 	const userDoc = await usersCollection.doc(req.user.uid).get();
 
@@ -188,7 +218,7 @@ export const createUserProfile = async (req: AuthRequest, res: Response): Promis
 			email: req.user.email || "",
 			displayName: displayName || "",
 			photoURL: photoURL || "",
-			role: role || "visitor",
+			role: "visitor",
 			accountStatus: "active",
 			authProvider: "email",
 			emailVerified: true,
@@ -213,7 +243,6 @@ export const createUserProfile = async (req: AuthRequest, res: Response): Promis
 		};
 
 		if (displayName) updateData.displayName = displayName;
-		if (role) updateData.role = role;
 		if (photoURL) updateData.photoURL = photoURL;
 
 		await usersCollection.doc(req.user.uid).update(updateData);
@@ -281,13 +310,12 @@ export const updateUserProfile = async (req: AuthRequest, res: Response): Promis
 		throw new AppError("Unauthorized", 401);
 	}
 
-	const { displayName, role } = req.body;
+	const { displayName } = req.body;
 	const updateData: Partial<User> = {
 		updatedAt: new Date(),
 	};
 
 	if (displayName) updateData.displayName = displayName;
-	if (role) updateData.role = role;
 
 	await usersCollection.doc(req.user.uid).update(updateData);
 
@@ -346,7 +374,22 @@ export const facebookSignIn = async (req: AuthRequest, res: Response): Promise<v
 		await usersCollection.doc(uid).set(userData);
 		user = { id: uid, ...userData };
 	} else {
-		user = { id: userDoc.id, ...userDoc.data() } as User;
+		const userData = userDoc.data() as User;
+		if (userData.accountStatus === "suspended") {
+			const response: ApiResponse = {
+				success: false,
+				message: "Your account has been suspended. Please contact an administrator.",
+			};
+			res.status(403).json(response);
+			return;
+		}
+
+		await usersCollection.doc(uid).update({
+			loginCount: (userData.loginCount || 0) + 1,
+			lastLoginAt: new Date(),
+			updatedAt: new Date(),
+		});
+		user = { id: userDoc.id, ...userData, loginCount: (userData.loginCount || 0) + 1 };
 	}
 
 	const customToken = await auth.createCustomToken(uid);

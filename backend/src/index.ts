@@ -9,6 +9,7 @@ import { logger } from "./utils/logger";
 import { errorHandler, notFound } from "./middleware/errorHandler";
 import petRoutes from "./routes/pets";
 import authRoutes from "./routes/auth";
+import adminRoutes from "./routes/admin";
 import shelterRoutes from "./routes/shelters";
 import applicationRoutes from "./routes/adoptionApplications";
 import contractRoutes from "./routes/adoptionContracts";
@@ -31,6 +32,7 @@ app.get("/health", (_req, res) => {
 
 app.use("/api/pets", petRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/shelters", shelterRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/contracts", contractRoutes);

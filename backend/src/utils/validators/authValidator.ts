@@ -4,7 +4,6 @@ export const registerSchema = z.object({
 	email: z.string().email("Invalid email format"),
 	password: z.string().min(6, "Password must be at least 6 characters"),
 	displayName: z.string().max(100).optional(),
-	role: z.enum(["visitor", "admin"]).default("visitor"),
 });
 
 export const loginSchema = z.object({
@@ -31,5 +30,4 @@ export const verifyEmailSchema = z.object({
 export const updateUserProfileSchema = z.object({
 	displayName: z.string().max(100).optional(),
 	photoURL: z.string().url().optional(),
-	role: z.enum(["visitor", "admin"]).optional(),
 });
