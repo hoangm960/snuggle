@@ -117,6 +117,10 @@ NODE_ENV=development
 
 > **Note:** Create a service account in Firebase Console and download the JSON key. Place it in the `backend/` directory and rename it to `service-account.json` (or update the path in `FIREBASE_SERVICE_ACCOUNT_FILE`).
 
+### Specification
+
+See [SPEC.md](./SPEC.md) for detailed system specifications, database schema, and feature documentation.
+
 ### 4. Run Development Servers
 
 ```bash
@@ -211,6 +215,14 @@ yarn dev
 | GET | `/api/reviews/:shelterId` | Get shelter reviews | No |
 | POST | `/api/reviews/:shelterId` | Create review | Required |
 | PUT | `/api/reviews/:shelterId/:id/status` | Update review status | Required |
+
+### Admin
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/admin/users` | List all users (search/filter/paginate) | Admin |
+| GET | `/api/admin/users/:id` | Get user + activity history | Admin |
+| PUT | `/api/admin/users/:id` | Update user role or status | Admin |
 
 ### User Endpoints
 
