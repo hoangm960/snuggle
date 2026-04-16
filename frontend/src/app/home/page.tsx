@@ -45,11 +45,11 @@ const VISION_ITEMS = [
 ]
 
 const PETS = [
-  { name: 'Luna', breed: 'Golden Retriever', age: '2 years', img: '/images/hero1.png' },
-  { name: 'Mochi', breed: 'Persian Cat', age: '1 year', img: '/images/hero.png' },
-  { name: 'Buddy', breed: 'Labrador', age: '3 years', img: '/images/header.png' },
-  { name: 'Cleo', breed: 'Siamese Cat', age: '2 years', img: '/images/hero.png' },
-  { name: 'Max', breed: 'Beagle', age: '4 years', img: '/images/hero1.png' },
+  { name: 'Luna', breed: 'Golden Retriever', age: '2 years', img: '/images/pets/1.png' },
+  { name: 'Mochi', breed: 'Persian Cat', age: '1 year', img: '/images/pets/2.png' },
+  { name: 'Buddy', breed: 'Labrador', age: '3 years', img: '/images/pets/3.png' },
+  { name: 'Cleo', breed: 'Siamese Cat', age: '2 years', img: '/images/pets/4.png' },
+  { name: 'Max', breed: 'Beagle', age: '4 years', img: '/images/pets/5.png' },
 ]
 
 const TESTIMONIALS = [
@@ -100,9 +100,12 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen w-full" style={{ fontFamily: "'Poppins', sans-serif" }}>
 
+      {/* ── Hero wrapper (header overlaid + fullscreen) ── */}
+      <div style={{ position: 'relative' }}>
+
       {/* ── Header ── */}
-      <header style={{ background: '#fff', borderBottom: '1px solid #E8E8E8' }}
-        className="flex items-center justify-between px-6 md:px-10 py-4 z-20 rounded-b-2xl relative">
+      <header style={{ background: '#fff', borderBottom: '1px solid #E8E8E8', position: 'absolute', top: 0, left: 0, right: 0, zIndex: 20 }}
+        className="flex items-center justify-between px-6 md:px-10 py-4 rounded-b-2xl">
         {/* Logo */}
         <div className="flex items-center gap-2">
           <PawLogo />
@@ -114,7 +117,7 @@ export default function HomePage() {
         {/* Desktop: nav + right controls */}
         <nav className="hidden lg:flex items-center gap-7">
           {NAV_LINKS.map(link => (
-            <a key={link} href={`#${link.toLowerCase().replace(' ', '-')}`}
+            <a key={link} href={link === 'eKYC' ? '/ekyc' : `#${link.toLowerCase().replace(' ', '-')}`}
               style={{ color: '#111', fontFamily: "'Space Grotesk', sans-serif", fontSize: '15px', fontWeight: 400 }}
               className="hover:opacity-60 transition-opacity whitespace-nowrap">
               {link}
@@ -159,9 +162,9 @@ export default function HomePage() {
 
       {/* Mobile menu drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden flex flex-col px-6 py-6 gap-5 bg-white border-b border-[#E8E8E8]" style={{ zIndex: 10 }}>
+        <div className="lg:hidden flex flex-col px-6 py-6 gap-5 bg-white border-b border-[#E8E8E8]" style={{ position: 'absolute', top: '72px', left: 0, right: 0, zIndex: 15 }}>
           {NAV_LINKS.map(link => (
-            <a key={link} href={`#${link.toLowerCase().replace(' ', '-')}`}
+            <a key={link} href={link === 'eKYC' ? '/ekyc' : `#${link.toLowerCase().replace(' ', '-')}`}
               onClick={() => setMobileMenuOpen(false)}
               style={{ color: '#111', fontFamily: "'Space Grotesk', sans-serif", fontSize: '16px', fontWeight: 400 }}>
               {link}
@@ -183,17 +186,14 @@ export default function HomePage() {
       )}
 
       {/* ── Hero ── */}
-      <section id="home" className="relative overflow-hidden" style={{ background: '#fff', minHeight: '500px' }}>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 618" preserveAspectRatio="xMidYMid slice"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0 }}>
-          <path d="M-322.107 72.1535C-323.321 71.1954 -323.643 70.1815 -323.001 69.1084L-322.107 72.1535C-297.797 91.342 84.0612 88.1084 235.5 88.1084C332.5 88.1084 566.681 38.3197 879 153.108C1147 251.608 1453.97 -72.815 1605 16.1084C1725.82 87.247 1566.25 366.761 1444.22 617.109H-162.102L-322.107 72.1535Z" fill="#F3EDE1"/>
-          <path d="M-323.001 69.1084C-336.504 91.673 76.4999 88.1084 235.5 88.1084C332.5 88.1084 566.681 38.3197 879 153.108C1147 251.608 1453.97 -72.815 1605 16.1084C1725.82 87.247 1566.25 366.761 1444.22 617.109H-162.102L-323.001 69.1084Z" stroke="white" fill="none"/>
-        </svg>
+      <section id="home" className="relative overflow-hidden" style={{ background: '#fff', minHeight: '100vh' }}>
+        <img src="/images/decorate/bg1.svg" alt="" aria-hidden="true"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top left', zIndex: 0 }} />
 
         {/* Mobile: stacked layout */}
-        <div className="relative flex flex-col lg:flex-row lg:items-stretch" style={{ zIndex: 1, minHeight: '500px' }}>
+        <div className="relative flex flex-col lg:flex-row lg:items-stretch" style={{ zIndex: 1, minHeight: '100vh' }}>
           {/* Text side */}
-          <div className="flex flex-col justify-center px-6 md:px-14 py-14 lg:py-20 w-full lg:w-[52%]">
+          <div className="flex flex-col justify-center px-6 md:px-14 w-full lg:w-[52%]" style={{ paddingTop: '100px', paddingBottom: '60px' }}>
             <p className="font-semibold mb-4"
               style={{ color: '#7AADA1', fontFamily: "'Space Grotesk', sans-serif", fontSize: '12px', letterSpacing: '0.12em' }}>
               WELCOME TO SNUGGLE
@@ -220,12 +220,14 @@ export default function HomePage() {
           </div>
 
           {/* Image side — full height on desktop, fixed height on mobile */}
-          <div className="relative w-full lg:flex-1 overflow-hidden" style={{ minHeight: '280px' }}>
+          <div className="relative w-full lg:flex-1 overflow-hidden" style={{ minHeight: '50vh' }}>
             <img src="/images/header.png" alt="Cute pets"
               style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
           </div>
         </div>
       </section>
+
+      </div>{/* end hero wrapper */}
 
       {/* ── Stats Bar ── */}
       <div className="flex flex-wrap items-center justify-center gap-0" style={{ background: '#2D6A5F' }}>
@@ -239,7 +241,7 @@ export default function HomePage() {
       </div>
 
       {/* ── About Us ── */}
-      <section id="about-us" className="relative overflow-hidden px-6 md:px-10 lg:px-20 py-16 md:py-24" style={{ background: '#fff', isolation: 'isolate' }}>
+      <section id="about-us" className="relative px-6 md:px-10 lg:px-20 py-16 md:py-24" style={{ background: '#fff' }}>
         <div className="flex flex-col lg:flex-row items-center gap-10 max-w-6xl mx-auto">
           {/* Left text */}
           <div className="flex-1 w-full" style={{ zIndex: 1 }}>
@@ -261,10 +263,8 @@ export default function HomePage() {
 
           {/* Right — teal blob + image */}
           <div className="flex-1 w-full relative flex justify-center items-center" style={{ minHeight: '340px' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 582 667"
-              style={{ position: 'absolute', right: '-40px', top: '-20px', width: 'min(420px, 95%)', height: 'auto', zIndex: 0 }}>
-              <path d="M312.995 128.839C365.821 66.5479 510.86 16.9918 576.776 8.79051e-05L917.472 447.315L675.199 623.905L74.3295 882.615C45.3332 825.726 -9.8248 694.216 1.51273 623.287C15.6847 534.626 105.026 528.02 117.391 454.241C129.757 380.462 248.142 361.476 277.96 323.429C307.778 285.382 246.963 206.702 312.995 128.839Z" fill="#7AADA1"/>
-            </svg>
+            <img src="/images/decorate/bg1.svg" alt="" aria-hidden="true"
+              style={{ position: 'absolute', right: '-120px', top: '-80px', width: '70%', minWidth: '520px', height: 'auto', zIndex: 0 }} />
             <img src="/images/cute.png" alt="About Snuggle"
               style={{ position: 'relative', zIndex: 1, width: 'min(280px, 75%)', height: 'auto', aspectRatio: '4/5', objectFit: 'cover', borderRadius: '20px', boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }} />
           </div>
@@ -300,10 +300,8 @@ export default function HomePage() {
       {/* ── Our Pets ── */}
       <section id="pets" className="relative px-6 md:px-10 lg:px-20 py-20 md:py-28" style={{ background: '#fff' }}>
         {/* Pink blob — centered behind the cards */}
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 986"
-          style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 'min(1000px, 110%)', height: 'auto', zIndex: 0, pointerEvents: 'none' }}>
-          <path d="M-53.5997 18.418C-313.087 61.5563 -268.591 538.474 -161.095 645.121C-53.5993 751.768 370.379 842.838 517.872 950.085C665.365 1057.33 1031.35 891.369 1272.83 842.838C1514.32 794.308 1661.32 950.085 1661.32 950.085C1783.34 617.39 1581.32 269.459 1540.82 114.281C1500.32 -40.897 1098.34 -19.328 750.361 71.7418C402.378 162.812 218.409 -26.8018 -53.5997 18.418Z" fill="#F1CCC5" stroke="white"/>
-        </svg>
+        <img src="/images/decorate/bg2.svg" alt="" aria-hidden="true"
+          style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 'max(1300px, 110vw)', height: 'auto', zIndex: 0, pointerEvents: 'none' }} />
 
         <div className="relative max-w-6xl mx-auto" style={{ zIndex: 1 }}>
           {/* Title + arrows */}
@@ -419,8 +417,10 @@ export default function HomePage() {
       </section>
 
       {/* ── Get In Touch ── */}
-      <section id="contact" className="relative px-6 md:px-10 lg:px-20 py-16 md:py-24" style={{ background: '#6B4F3A' }}>
-        <div className="w-full max-w-2xl mx-auto">
+      <section id="contact" className="relative px-6 md:px-10 lg:px-20 py-16 md:py-24" style={{ background: '#6B4F3A', overflow: 'hidden' }}>
+        <img src="/images/decorate/bg3.svg" alt="" aria-hidden="true"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', zIndex: 0, pointerEvents: 'none' }} />
+        <div className="w-full max-w-2xl mx-auto" style={{ position: 'relative', zIndex: 1 }}>
           <p className="font-semibold mb-2 tracking-widest text-center" style={{ color: 'rgba(255,255,255,0.6)', fontSize: '11px', letterSpacing: '0.14em' }}>
             Drop us a question
           </p>

@@ -93,7 +93,7 @@ export default function LoginPage() {
             {NAV_LINKS.map((link) => (
               <a
                 key={link}
-                href={link === 'Home' ? '/home' : '#'}
+                href={link === 'Home' ? '/home' : link === 'eKYC' ? '/ekyc' : link === 'Pets' ? '/pets' : '#'}
                 style={{ color: '#111', fontFamily: "'Space Grotesk', sans-serif", fontSize: '16px', fontWeight: 400 }}
                 className="hover:opacity-70 transition-opacity"
               >
