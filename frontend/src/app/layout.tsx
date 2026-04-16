@@ -2,8 +2,11 @@ import './globals.css';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Snuggles',
+  title: 'Snuggle',
   description: 'Pet adoption platform',
+  icons: {
+    icon: '/images/logo.svg',
+  },
 };
 
 export default function RootLayout({
