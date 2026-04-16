@@ -9,6 +9,7 @@ Snuggles is a pet adoption platform built with Next.js and Express.js. Users can
 ## Tech Stack
 
 ### Frontend
+
 - **Framework**: Next.js 14
 - **Language**: TypeScript
 - **UI**: React 18, Tailwind CSS
@@ -17,6 +18,7 @@ Snuggles is a pet adoption platform built with Next.js and Express.js. Users can
 - **HTTP Client**: Axios
 
 ### Backend
+
 - **Framework**: Express.js
 - **Language**: TypeScript
 - **Database**: Firebase Firestore
@@ -29,38 +31,92 @@ Snuggles is a pet adoption platform built with Next.js and Express.js. Users can
 snuggles/
 ├── frontend/
 │   ├── src/
-│   │   ├── app/           # Next.js App Router pages
-│   │   │   ├── login/     # Login page
-│   │   │   ├── register/  # Registration page
-│   │   │   ├── pets/      # Pet listings page
-│   │   │   ├── pets/[id]/ # Individual pet page
-│   │   │   └── admin/     # Admin dashboard
-│   │   ├── hooks/         # Custom React hooks
-│   │   │   ├── useAuth.ts # Authentication hook
-│   │   │   └── usePets.ts # Pets data hook
-│   │   ├── lib/           # Utilities
-│   │   │   ├── firebase.ts
-│   │   │   └── api.ts
-│   │   └── types/         # TypeScript type definitions
-│   └── package.json
+│   │   ├── app/                 # Next.js App Router pages
+│   │   │   ├── login/           # Login page
+│   │   │   ├── register/         # Registration page
+│   │   │   ├── pets/            # Pet listings page
+│   │   │   ├── pets/[id]/       # Individual pet page
+│   │   │   ├── admin/           # Admin dashboard
+│   │   │   ├── layout.tsx       # Root layout
+│   │   │   ├── page.tsx         # Landing page
+│   │   │   └── globals.css      # Global styles
+│   │   ├── hooks/               # Custom React hooks
+│   │   │   ├── useAuth.ts       # Authentication hook
+│   │   │   └── usePets.ts       # Pets data hook
+│   │   ├── lib/                 # Utilities
+│   │   │   ├── firebase.ts      # Firebase client config
+│   │   │   └── api.ts           # API client
+│   │   └── types/               # TypeScript type definitions
+│   │       └── index.ts
+│   ├── public/                  # Static assets
+│   ├── package.json
+│   ├── tailwind.config.ts
+│   ├── next.config.js
+│   └── tsconfig.json
 │
 └── backend/
     ├── src/
-    │   ├── routes/        # API routes
-    │   │   ├── pets.ts
-    │   │   └── auth.ts
-    │   ├── controllers/   # Route handlers
+    │   ├── config/              # Configuration
+    │   │   └── firebase.ts      # Firebase Admin SDK config
+    │   ├── controllers/         # Route handlers
+    │   │   ├── adminController.ts
+    │   │   ├── adoptionApplicationController.ts
+    │   │   ├── adoptionContractController.ts
+    │   │   ├── adopterProfileController.ts
+    │   │   ├── authController.ts
+    │   │   ├── healthRecordController.ts
     │   │   ├── petController.ts
-    │   │   └── authController.ts
-    │   ├── middleware/    # Express middleware
+    │   │   ├── reviewController.ts
+    │   │   ├── savedSearchController.ts
+    │   │   └── shelterController.ts
+    │   ├── middleware/          # Express middleware
+    │   │   ├── admin.ts         # Admin role check
+    │   │   ├── asyncHandler.ts   # Async wrapper
+    │   │   ├── auth.ts          # JWT authentication
+    │   │   ├── errorHandler.ts  # Error handling
+    │   │   └── validate.ts      # Request validation
+    │   ├── routes/              # API routes
+    │   │   ├── admin.ts
+    │   │   ├── adoptionApplications.ts
+    │   │   ├── adoptionContracts.ts
+    │   │   ├── adopterProfile.ts
     │   │   ├── auth.ts
-    │   │   └── errorHandler.ts
-    │   ├── config/        # Configuration
-    │   │   └── firebase.ts
-    │   ├── types/         # TypeScript type definitions
-    │   ├── utils/         # Utility functions
-    │   └── index.ts       # Server entry point
-    └── package.json
+    │   │   ├── pets.ts
+    │   │   ├── reviews.ts
+    │   │   ├── savedSearches.ts
+    │   │   └── shelters.ts
+    │   ├── scripts/             # Utility scripts
+    │   │   └── createAdmin.ts
+    │   ├── types/               # TypeScript type definitions
+    │   │   └── index.ts
+    │   ├── utils/               # Utility functions
+    │   │   ├── firebaseError.ts  # Firebase error mapping
+    │   │   ├── logger.ts        # Logging utility
+    │   │   └── validators/      # Zod validation schemas
+    │   │       ├── authValidator.ts
+    │   │       ├── otherValidator.ts
+    │   │       └── petValidator.ts
+    │   └── index.ts             # Server entry point
+    ├── tests/                   # Test files
+    │   ├── integration/         # Integration tests
+    │   │   ├── admin.test.ts
+    │   │   ├── applications.test.ts
+    │   │   ├── auth.test.ts
+    │   │   ├── pets.test.ts
+    │   │   ├── repositories.test.ts
+    │   │   ├── reviews.test.ts
+    │   │   └── shelters.test.ts
+    │   ├── unit/                # Unit tests
+    │   │   ├── authValidator.test.ts
+    │   │   ├── petValidator.test.ts
+    │   │   └── validation.test.ts
+    │   ├── app.ts               # Test app setup
+    │   ├── setup.ts             # Test setup
+    │   └── utils.ts             # Test utilities
+    ├── package.json
+    ├── tsconfig.json
+    ├── jest.config.js
+    └── .env                     # Environment variables
 ```
 
 ## Setup
@@ -135,6 +191,21 @@ yarn dev
 
 - Frontend: http://localhost:3000
 - Backend: http://localhost:3001
+
+## Testing
+
+### Test Commands
+
+```bash
+# Run all tests
+yarn test
+
+# Run tests in watch mode
+yarn test:watch
+
+# Run tests with coverage
+yarn test:coverage
+```
 
 ## API Reference
 
