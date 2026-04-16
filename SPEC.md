@@ -4,15 +4,135 @@ Version 1.3
 
 ## Table of Contents
 
-1. [Use Cases](#1-use-cases)
+1. [Tech Stack](#2-tech-stack)
+2. [Folder Structure](#3-folder-structure)
+3. [Use Cases](#1-use-cases)
     - [1.1 Use-case Model](#11-use-case-model)
     - [1.2 Use-case Specifications](#12-use-case-specifications)
         - [1.2.1 Shared Use Cases](#121-shared-use-cases)
         - [1.2.2 Visitors (Potential Adopters)](#122-visitors-potential-adopters)
         - [1.2.3 Admin](#123-admin)
-2. [Database Schema](#2-database-schema)
-3. [API Reference](#3-api-reference)
-4. [Testing](#4-testing)
+4. [Database Schema](#4-database-schema)
+5. [API Reference](#5-api-reference)
+6. [Testing](#6-testing)
+
+---
+
+## 2. Tech Stack
+
+### Frontend
+
+- **Framework**: Next.js 14
+- **Language**: TypeScript
+- **UI**: React 18, Tailwind CSS
+- **Animation**: Framer Motion
+- **Auth**: Firebase Authentication
+- **HTTP Client**: Axios
+
+### Backend
+
+- **Framework**: Express.js
+- **Language**: TypeScript
+- **Database**: Firebase Firestore
+- **Auth**: Firebase Admin SDK
+- **Scraping**: Puppeteer
+- **Validation**: Zod
+
+---
+
+## 3. Folder Structure
+
+```
+snuggles/
+├── frontend/
+│   ├── src/
+│   │   ├── app/                 # Next.js App Router pages
+│   │   │   ├── login/           # Login page
+│   │   │   ├── register/        # Registration page
+│   │   │   ├── pets/            # Pet listings page
+│   │   │   ├── pets/[id]/       # Individual pet page
+│   │   │   ├── admin/           # Admin dashboard
+│   │   │   ├── layout.tsx       # Root layout
+│   │   │   ├── page.tsx         # Landing page
+│   │   │   └── globals.css      # Global styles
+│   │   ├── hooks/               # Custom React hooks
+│   │   │   ├── useAuth.ts       # Authentication hook
+│   │   │   └── usePets.ts       # Pets data hook
+│   │   ├── lib/                 # Utilities
+│   │   │   ├── firebase.ts      # Firebase client config
+│   │   │   └── api.ts           # API client
+│   │   └── types/               # TypeScript type definitions
+│   │       └── index.ts
+│   ├── public/                  # Static assets
+│   ├── package.json
+│   ├── tailwind.config.ts
+│   ├── next.config.js
+│   └── tsconfig.json
+│
+└── backend/
+    ├── src/
+    │   ├── config/              # Configuration
+    │   │   └── firebase.ts      # Firebase Admin SDK config
+    │   ├── controllers/         # Route handlers
+    │   │   ├── adminController.ts
+    │   │   ├── adoptionApplicationController.ts
+    │   │   ├── adoptionContractController.ts
+    │   │   ├── adopterProfileController.ts
+    │   │   ├── authController.ts
+    │   │   ├── healthRecordController.ts
+    │   │   ├── petController.ts
+    │   │   ├── reviewController.ts
+    │   │   ├── savedSearchController.ts
+    │   │   └── shelterController.ts
+    │   ├── middleware/          # Express middleware
+    │   │   ├── admin.ts         # Admin role check
+    │   │   ├── asyncHandler.ts  # Async wrapper
+    │   │   ├── auth.ts          # JWT authentication
+    │   │   ├── errorHandler.ts  # Error handling
+    │   │   └── validate.ts      # Request validation
+    │   ├── routes/              # API routes
+    │   │   ├── admin.ts
+    │   │   ├── adoptionApplications.ts
+    │   │   ├── adoptionContracts.ts
+    │   │   ├── adopterProfile.ts
+    │   │   ├── auth.ts
+    │   │   ├── pets.ts
+    │   │   ├── reviews.ts
+    │   │   ├── savedSearches.ts
+    │   │   └── shelters.ts
+    │   ├── scripts/             # Utility scripts
+    │   │   └── createAdmin.ts
+    │   ├── types/               # TypeScript type definitions
+    │   │   └── index.ts
+    │   ├── utils/               # Utility functions
+    │   │   ├── firebaseError.ts # Firebase error mapping
+    │   │   ├── logger.ts        # Logging utility
+    │   │   └── validators/      # Zod validation schemas
+    │   │       ├── authValidator.ts
+    │   │       ├── otherValidator.ts
+    │   │       └── petValidator.ts
+    │   └── index.ts             # Server entry point
+    ├── tests/                   # Test files
+    │   ├── integration/         # Integration tests
+    │   │   ├── admin.test.ts
+    │   │   ├── applications.test.ts
+    │   │   ├── auth.test.ts
+    │   │   ├── pets.test.ts
+    │   │   ├── repositories.test.ts
+    │   │   ├── reviews.test.ts
+    │   │   └── shelters.test.ts
+    │   ├── unit/                # Unit tests
+    │   │   ├── authValidator.test.ts
+    │   │   ├── petValidator.test.ts
+    │   │   └── validation.test.ts
+    │   ├── app.ts               # Test app setup
+    │   ├── setup.ts             # Test setup
+    │   └── utils.ts             # Test utilities
+    ├── package.json
+    ├── tsconfig.json
+    ├── jest.config.js
+    └── .env                     # Environment variables
+```
 
 ---
 
@@ -585,7 +705,7 @@ There are two main views for 2 different users for this website: the Admin manag
 
 ---
 
-## 2. Database Schema
+## 4. Database Schema
 
 This section documents the Firestore database schema for the Snuggle platform.
 
@@ -853,7 +973,7 @@ Firestore rules summary:
 
 ---
 
-## 3. API Reference
+## 5. API Reference
 
 This section documents the REST API endpoints, request/response formats, and error codes.
 
@@ -1211,7 +1331,7 @@ Token is obtained from `/api/auth/login` or `/api/auth/google` endpoints.
 
 ---
 
-## 4. Testing
+## 6. Testing
 
 ### Test Files
 
