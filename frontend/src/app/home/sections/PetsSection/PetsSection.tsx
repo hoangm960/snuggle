@@ -147,7 +147,7 @@ export default function PetsSection() {
 								style={{ paddingTop: "75%", overflow: "hidden" }}
 							>
 								<img
-									src={pet.imageUrl || "/images/pets/placeholder.png"}
+									src={pet.thumbnail || pet.photoUrls?.[0] || "/images/pets/placeholder.png"}
 									alt={pet.name}
 									style={{
 										position: "absolute",

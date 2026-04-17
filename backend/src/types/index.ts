@@ -118,6 +118,7 @@ export interface Pet {
 	postedBy?: string;
 	description?: string;
 	photoURLs?: string[];
+	thumbnail?: string;
 	isVaccinated: boolean;
 	isNeutered: boolean;
 	geoPoint?: GeoPoint;

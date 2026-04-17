@@ -807,7 +807,7 @@ function PetCard({ pet }: { pet: Pet }) {
 				style={{ paddingTop: "72%", background: "#F9F6F2" }}
 			>
 				<img
-					src={pet.imageUrl || "/images/pets/placeholder.png"}
+					src={pet.thumbnail || pet.photoUrls?.[0] || "/images/pets/placeholder.png"}
 					alt={pet.name}
 					style={{
 						position: "absolute",

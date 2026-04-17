@@ -13,7 +13,8 @@ export interface Pet {
 	age: number;
 	gender: "male" | "female";
 	description: string;
-	imageUrl: string;
+	thumbnail?: string;
+	photoUrls?: string[];
 	shelterId: string;
 	status: "available" | "adopted" | "pending";
 	createdAt: Date;
