@@ -2,14 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-
-const PETS = [
-  { name: 'Luna', breed: 'Golden Retriever', age: '2 years', img: '/images/pets/1.png' },
-  { name: 'Mochi', breed: 'Persian Cat', age: '1 year', img: '/images/pets/2.png' },
-  { name: 'Buddy', breed: 'Labrador', age: '3 years', img: '/images/pets/3.png' },
-  { name: 'Cleo', breed: 'Siamese Cat', age: '2 years', img: '/images/pets/4.png' },
-  { name: 'Max', breed: 'Beagle', age: '4 years', img: '/images/pets/5.png' },
-]
+import { usePets } from '@/hooks/usePets'
 
 function useWindowWidth() {
   const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200)
@@ -22,11 +15,13 @@ function useWindowWidth() {
 }
 
 export default function PetsSection() {
+  const { pets } = usePets()
   const [petIndex, setPetIndex] = useState(0)
   const windowWidth = useWindowWidth()
 
+  const petList = pets || []
   const visibleCount = windowWidth < 640 ? 1 : windowWidth < 1024 ? 2 : 3
-  const maxIndex = PETS.length - visibleCount
+  const maxIndex = Math.max(0, petList.length - visibleCount)
 
   const prevPet = () => setPetIndex(i => Math.max(0, i - 1))
   const nextPet = () => setPetIndex(i => Math.min(maxIndex, i + 1))
@@ -81,11 +76,11 @@ export default function PetsSection() {
 
         {/* Cards */}
         <div style={{ display: 'grid', gap: '24px', gridTemplateColumns: `repeat(${visibleCount}, 1fr)` }}>
-          {PETS.slice(petIndex, petIndex + visibleCount).map(pet => (
-            <div key={pet.name} className="rounded-3xl overflow-hidden bg-white" style={{ boxShadow: '0 6px 32px rgba(0,0,0,0.10)', minWidth: 0 }}>
+          {petList.slice(petIndex, petIndex + visibleCount).map(pet => (
+            <div key={pet.id} className="rounded-3xl overflow-hidden bg-white" style={{ boxShadow: '0 6px 32px rgba(0,0,0,0.10)', minWidth: 0 }}>
               <div className="relative w-full" style={{ paddingTop: '75%', overflow: 'hidden' }}>
                 <img
-                  src={pet.img}
+                  src={pet.imageUrl || '/images/pets/placeholder.png'}
                   alt={pet.name}
                   style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                 />
@@ -93,12 +88,12 @@ export default function PetsSection() {
                   className="absolute top-4 right-4 bg-white rounded-full px-3 py-1"
                   style={{ color: '#7AADA1', fontFamily: "'Space Grotesk', sans-serif", fontSize: '11px', fontWeight: 600 }}
                 >
-                  Available
+                  {pet.status || 'Available'}
                 </div>
               </div>
               <div className="p-5 md:p-6">
                 <h3 className="font-semibold mb-1" style={{ color: '#111', fontFamily: "'Space Grotesk', sans-serif", fontSize: '16px' }}>{pet.name}</h3>
-                <p className="mb-5" style={{ color: '#888', fontSize: '13px' }}>{pet.breed} · {pet.age}</p>
+                <p className="mb-5" style={{ color: '#888', fontSize: '13px' }}>{pet.breed} · {pet.age} year{pet.age === 1 ? '' : 's'}</p>
                 <Link
                   href="/register"
                   className="block text-center font-semibold py-3 rounded-[40px] transition-opacity hover:opacity-80"
