@@ -28,7 +28,10 @@ export const getSavedSearches = async (req: AuthRequest, res: Response): Promise
 		res.status(200).json(response);
 	} catch (err) {
 		errorLogger.error({ message: (err as Error).message, stack: (err as Error).stack });
-		res.status(500).json({ success: false, error: { code: "INTERNAL_ERROR", message: "Failed to fetch saved searches" } });
+		res.status(500).json({
+			success: false,
+			error: { code: "INTERNAL_ERROR", message: "Failed to fetch saved searches" },
+		});
 	}
 };
 
