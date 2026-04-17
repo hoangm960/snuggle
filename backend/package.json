@@ -13,7 +13,7 @@
 		"test:coverage": "jest --coverage",
 		"lint": "eslint src --ext .ts",
 		"lint:fix": "eslint src --ext .ts --fix",
-		"format": "prettier --write \"src/**/*.ts\"",
+		"format": "prettier --write .",
 		"prepare": "husky",
 		"create-admin": "ts-node src/scripts/createAdmin.ts"
 	},

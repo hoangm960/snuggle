@@ -30,7 +30,10 @@ async function createAdmin() {
 		const email = ADMIN_EMAIL as string;
 		const password = ADMIN_PASSWORD as string;
 
-		const existingUsers = await db.collection("users").where("email", "==", email.toLowerCase()).get();
+		const existingUsers = await db
+			.collection("users")
+			.where("email", "==", email.toLowerCase())
+			.get();
 
 		if (!existingUsers.empty) {
 			console.log("User already exists. Updating role to admin...");
