@@ -6,11 +6,12 @@ import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { auth } from "@/lib/firebase";
 import {
-  GoogleAuthProvider,
-  FacebookAuthProvider,
-  signInWithPopup,
-  getIdToken,
+	GoogleAuthProvider,
+	FacebookAuthProvider,
+	signInWithPopup,
+	getIdToken,
 } from "firebase/auth";
+import { setAuthSession } from "@/lib/cookies";
 
 const NAV_LINKS = ["Home", "About Us", "Pets", "eKYC", "Contact"];
 
@@ -64,9 +65,12 @@ export default function LoginPage() {
 			if (!response.data.success) {
 				throw new Error(response.data.message || "Login failed");
 			}
+			const { token, user } = response.data.data;
+			setAuthSession(token, user);
 			router.push("/home");
 		} catch (err: any) {
-			const msg = err.response?.data?.message || err.message || "Login failed. Please try again.";
+			const msg =
+				err.response?.data?.message || err.message || "Login failed. Please try again.";
 			setPasswordError(msg);
 		} finally {
 			setLoading(false);
@@ -83,9 +87,14 @@ export default function LoginPage() {
 			if (!response.data.success) {
 				throw new Error(response.data.message || "Google login failed");
 			}
+			const { token, user } = response.data.data;
+			setAuthSession(token, user);
 			router.push("/home");
 		} catch (err: any) {
-			const msg = err.response?.data?.message || err.message || "Google login failed. Please try again.";
+			const msg =
+				err.response?.data?.message ||
+				err.message ||
+				"Google login failed. Please try again.";
 			setPasswordError(msg);
 		} finally {
 			setLoading(false);
@@ -102,9 +111,14 @@ export default function LoginPage() {
 			if (!response.data.success) {
 				throw new Error(response.data.message || "Facebook login failed");
 			}
+			const { token, user } = response.data.data;
+			setAuthSession(token, user);
 			router.push("/home");
 		} catch (err: any) {
-			const msg = err.response?.data?.message || err.message || "Facebook login failed. Please try again.";
+			const msg =
+				err.response?.data?.message ||
+				err.message ||
+				"Facebook login failed. Please try again.";
 			setPasswordError(msg);
 		} finally {
 			setLoading(false);

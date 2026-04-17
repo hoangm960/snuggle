@@ -1,1 +1,1 @@
-export { default } from './StatsBarSection'
+export { default } from "./StatsBarSection";

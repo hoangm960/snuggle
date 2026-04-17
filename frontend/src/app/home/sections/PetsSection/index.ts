@@ -1,1 +1,1 @@
-export { default } from './PetsSection'
+export { default } from "./PetsSection";
