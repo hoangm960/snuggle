@@ -12,6 +12,30 @@ const statusColor: Record<Pet["status"], string> = {
   Foster: "bg-primary-soft text-primary-deep",
 };
 
+function TogglePill({ label }: { label: "Vaccinated" | "Neutered" }) {
+  const [on, setOn] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() => setOn(!on)}
+      className={`h-11 rounded-2xl border text-sm font-semibold flex items-center justify-between px-4 transition-colors ${
+        on
+          ? "bg-primary-soft border-primary text-primary-deep"
+          : "bg-card border-input text-muted-foreground"
+      }`}
+    >
+      <span>{on ? label : `Not ${label}`}</span>
+      <span className={`size-5 rounded-full border-2 flex items-center justify-center transition-colors ${on ? "border-primary bg-primary" : "border-muted-foreground/40"}`}>
+        {on && (
+          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+            <path d="M1 4l2.5 2.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </span>
+    </button>
+  );
+}
+
 export default function PetsPage() {
   const [showUpload, setShowUpload] = useState(false);
   const [search, setSearch] = useState("");
@@ -114,6 +138,11 @@ export default function PetsPage() {
                 </select>
               </div>
               <textarea placeholder="Description..." rows={3} className="w-full rounded-2xl border border-input bg-card p-3 text-sm resize-none outline-none focus:ring-2 focus:ring-ring" />
+              <div className="grid grid-cols-2 gap-3">
+                {(["Vaccinated", "Neutered"] as const).map((label) => (
+                  <TogglePill key={label} label={label} />
+                ))}
+              </div>
               <div className="flex gap-3 pt-2">
                 <button onClick={() => setShowUpload(false)} className="flex-1 h-11 rounded-full bg-secondary font-semibold text-sm">Cancel</button>
                 <button onClick={() => setShowUpload(false)} className="flex-1 h-11 rounded-full bg-gradient-primary text-primary-foreground font-semibold text-sm shadow-glow">Save Pet</button>
