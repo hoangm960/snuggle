@@ -6,62 +6,7 @@ A full-stack pet adoption platform where users can browse, list, and adopt pets.
 
 Snuggles is a pet adoption platform built with Next.js and Express.js. Users can browse available pets, create listings for pets they're rehoming, and manage their adoption profiles. The platform uses Firebase for authentication and Firestore for data storage.
 
-## Tech Stack
-
-### Frontend
-- **Framework**: Next.js 14
-- **Language**: TypeScript
-- **UI**: React 18, Tailwind CSS
-- **Animation**: Framer Motion
-- **Auth**: Firebase Authentication
-- **HTTP Client**: Axios
-
-### Backend
-- **Framework**: Express.js
-- **Language**: TypeScript
-- **Database**: Firebase Firestore
-- **Auth**: Firebase Admin SDK
-- **Scraping**: Puppeteer
-
-## Folder Structure
-
-```
-snuggles/
-├── frontend/
-│   ├── src/
-│   │   ├── app/           # Next.js App Router pages
-│   │   │   ├── login/     # Login page
-│   │   │   ├── register/  # Registration page
-│   │   │   ├── pets/      # Pet listings page
-│   │   │   ├── pets/[id]/ # Individual pet page
-│   │   │   └── admin/     # Admin dashboard
-│   │   ├── hooks/         # Custom React hooks
-│   │   │   ├── useAuth.ts # Authentication hook
-│   │   │   └── usePets.ts # Pets data hook
-│   │   ├── lib/           # Utilities
-│   │   │   ├── firebase.ts
-│   │   │   └── api.ts
-│   │   └── types/         # TypeScript type definitions
-│   └── package.json
-│
-└── backend/
-    ├── src/
-    │   ├── routes/        # API routes
-    │   │   ├── pets.ts
-    │   │   └── auth.ts
-    │   ├── controllers/   # Route handlers
-    │   │   ├── petController.ts
-    │   │   └── authController.ts
-    │   ├── middleware/    # Express middleware
-    │   │   ├── auth.ts
-    │   │   └── errorHandler.ts
-    │   ├── config/        # Configuration
-    │   │   └── firebase.ts
-    │   ├── types/         # TypeScript type definitions
-    │   ├── utils/         # Utility functions
-    │   └── index.ts       # Server entry point
-    └── package.json
-```
+For tech stack and folder structure, see [SPEC.md](./SPEC.md).
 
 ## Setup
 
@@ -135,6 +80,21 @@ yarn dev
 
 - Frontend: http://localhost:3000
 - Backend: http://localhost:3001
+
+## Testing
+
+### Test Commands
+
+```bash
+# Run all tests
+yarn test
+
+# Run tests in watch mode
+yarn test:watch
+
+# Run tests with coverage
+yarn test:coverage
+```
 
 ## API Reference
 
