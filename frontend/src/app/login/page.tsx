@@ -4,6 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
+import { auth } from "@/lib/firebase";
+import {
+  GoogleAuthProvider,
+  FacebookAuthProvider,
+  signInWithPopup,
+  getIdToken,
+} from "firebase/auth";
 
 const NAV_LINKS = ["Home", "About Us", "Pets", "eKYC", "Contact"];
 
@@ -59,8 +66,45 @@ export default function LoginPage() {
 			}
 			router.push("/home");
 		} catch (err: any) {
-			const msg =
-				err.response?.data?.message || err.message || "Login failed. Please try again.";
+			const msg = err.response?.data?.message || err.message || "Login failed. Please try again.";
+			setPasswordError(msg);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleGoogleLogin = async () => {
+		setLoading(true);
+		try {
+			const provider = new GoogleAuthProvider();
+			const result = await signInWithPopup(auth, provider);
+			const idToken = await getIdToken(result.user);
+			const response = await api.post("/auth/google", { idToken });
+			if (!response.data.success) {
+				throw new Error(response.data.message || "Google login failed");
+			}
+			router.push("/home");
+		} catch (err: any) {
+			const msg = err.response?.data?.message || err.message || "Google login failed. Please try again.";
+			setPasswordError(msg);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleFacebookLogin = async () => {
+		setLoading(true);
+		try {
+			const provider = new FacebookAuthProvider();
+			const result = await signInWithPopup(auth, provider);
+			const idToken = await getIdToken(result.user);
+			const response = await api.post("/auth/facebook", { idToken });
+			if (!response.data.success) {
+				throw new Error(response.data.message || "Facebook login failed");
+			}
+			router.push("/home");
+		} catch (err: any) {
+			const msg = err.response?.data?.message || err.message || "Facebook login failed. Please try again.";
 			setPasswordError(msg);
 		} finally {
 			setLoading(false);
@@ -259,6 +303,7 @@ export default function LoginPage() {
 							<div className="flex flex-col gap-5 mb-14">
 								<button
 									type="button"
+									onClick={handleGoogleLogin}
 									className="flex items-center justify-center gap-3 w-full text-[#333333] text-sm font-medium hover:bg-[#F6F6F6] transition-colors whitespace-nowrap"
 									style={{
 										height: "48px",
@@ -273,6 +318,7 @@ export default function LoginPage() {
 
 								<button
 									type="button"
+									onClick={handleFacebookLogin}
 									className="flex items-center justify-center gap-3 w-full text-[#333333] text-sm font-medium hover:bg-[#F6F6F6] transition-colors whitespace-nowrap"
 									style={{
 										height: "48px",

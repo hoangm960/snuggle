@@ -4,6 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
+import { auth } from "@/lib/firebase";
+import {
+  GoogleAuthProvider,
+  FacebookAuthProvider,
+  signInWithPopup,
+  getIdToken,
+} from "firebase/auth";
 
 const NAV_LINKS = ["Home", "About Us", "Pets", "eKYC", "Contact"];
 
@@ -74,17 +81,51 @@ export default function RegisterPage() {
 				email,
 				password,
 				displayName: username,
-				role: "user",
 			});
 			if (!response.data.success) {
 				throw new Error(response.data.message || "Registration failed");
 			}
-			router.push("/login");
+			router.push("/home");
 		} catch (err: any) {
-			const msg =
-				err.response?.data?.message ||
-				err.message ||
-				"Registration failed. Please try again.";
+			const msg = err.response?.data?.message || err.message || "Registration failed. Please try again.";
+			setEmailError(msg);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleGoogleRegister = async () => {
+		setLoading(true);
+		try {
+			const provider = new GoogleAuthProvider();
+			const result = await signInWithPopup(auth, provider);
+			const idToken = await getIdToken(result.user);
+			const response = await api.post("/auth/google", { idToken });
+			if (!response.data.success) {
+				throw new Error(response.data.message || "Google registration failed");
+			}
+			router.push("/home");
+		} catch (err: any) {
+			const msg = err.response?.data?.message || err.message || "Google registration failed. Please try again.";
+			setEmailError(msg);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleFacebookRegister = async () => {
+		setLoading(true);
+		try {
+			const provider = new FacebookAuthProvider();
+			const result = await signInWithPopup(auth, provider);
+			const idToken = await getIdToken(result.user);
+			const response = await api.post("/auth/facebook", { idToken });
+			if (!response.data.success) {
+				throw new Error(response.data.message || "Facebook registration failed");
+			}
+			router.push("/home");
+		} catch (err: any) {
+			const msg = err.response?.data?.message || err.message || "Facebook registration failed. Please try again.";
 			setEmailError(msg);
 		} finally {
 			setLoading(false);
@@ -446,6 +487,7 @@ export default function RegisterPage() {
 							<div className="flex flex-col gap-4">
 								<button
 									type="button"
+									onClick={handleGoogleRegister}
 									className="flex items-center justify-center gap-3 w-full text-[#333333] text-sm font-medium hover:bg-[#F6F6F6] transition-colors whitespace-nowrap"
 									style={{
 										height: "48px",
@@ -459,6 +501,7 @@ export default function RegisterPage() {
 								</button>
 								<button
 									type="button"
+									onClick={handleFacebookRegister}
 									className="flex items-center justify-center gap-3 w-full text-[#333333] text-sm font-medium hover:bg-[#F6F6F6] transition-colors whitespace-nowrap"
 									style={{
 										height: "48px",

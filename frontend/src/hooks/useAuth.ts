@@ -6,6 +6,9 @@ import {
 	signInWithEmailAndPassword,
 	createUserWithEmailAndPassword,
 	signOut,
+	signInWithPopup,
+	GoogleAuthProvider,
+	FacebookAuthProvider,
 	User as FirebaseUser,
 } from "firebase/auth";
 
@@ -15,6 +18,8 @@ interface UseAuthReturn {
 	loading: boolean;
 	login: (email: string, password: string) => Promise<void>;
 	register: (email: string, password: string) => Promise<void>;
+	loginWithGoogle: () => Promise<void>;
+	loginWithFacebook: () => Promise<void>;
 	logout: () => Promise<void>;
 }
 
@@ -55,5 +60,15 @@ export const useAuth = (): UseAuthReturn => {
 		await signOut(auth);
 	};
 
-	return { user, firebaseUser, loading, login, register, logout };
+	const loginWithGoogle = async () => {
+		const provider = new GoogleAuthProvider();
+		await signInWithPopup(auth, provider);
+	};
+
+	const loginWithFacebook = async () => {
+		const provider = new FacebookAuthProvider();
+		await signInWithPopup(auth, provider);
+	};
+
+	return { user, firebaseUser, loading, login, register, loginWithGoogle, loginWithFacebook, logout };
 };
