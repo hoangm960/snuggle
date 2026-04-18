@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { clearAuthSession } from "@/lib/cookies";
 import {
   LayoutDashboard,
   PawPrint,
@@ -31,6 +32,12 @@ function cn(...classes: (string | undefined | false)[]) {
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  function handleLogout() {
+    clearAuthSession();
+    router.push("/login");
+  }
 
   function isActive(href: string, exact: boolean = false) {
     if (exact) return pathname === href;
@@ -109,7 +116,10 @@ export function AppSidebar() {
             View stories →
           </button>
         </div>
-        <button className="mt-4 w-full flex items-center gap-3 px-4 py-2.5 rounded-2xl text-sm text-muted-foreground hover:bg-sidebar-accent/60 transition-colors">
+        <button 
+          className="mt-4 w-full flex items-center gap-3 px-4 py-2.5 rounded-2xl text-sm text-muted-foreground hover:bg-sidebar-accent/60 transition-colors"
+          onClick={handleLogout}
+        >
           <LogOut className="size-[18px]" />
           Sign out
         </button>
