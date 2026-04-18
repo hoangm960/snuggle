@@ -67,7 +67,12 @@ export default function LoginPage() {
 			}
 			const { token, user } = response.data.data;
 			setAuthSession(token, user);
-			router.push("/home");
+			// Redirect based on role
+			if (user.role === "admin") {
+				router.push("/admin");
+			} else {
+				router.push("/home");
+			}
 		} catch (err: any) {
 			const msg =
 				err.response?.data?.message || err.message || "Login failed. Please try again.";
