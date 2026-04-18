@@ -9,6 +9,7 @@ export interface AuthRequest extends Request {
 		email?: string;
 		displayName?: string;
 	};
+	file?: Express.Multer.File;
 }
 
 export interface ApiResponse<T = unknown> {
