@@ -4,6 +4,17 @@ import { Pet, AuthRequest, ApiResponse } from "../types";
 import { AppError } from "../middleware/errorHandler";
 
 const petsCollection = db.collection("pets");
+const usersCollection = db.collection("users");
+
+const isAdmin = async (uid: string): Promise<boolean> => {
+	try {
+		const userDoc = await usersCollection.doc(uid).get();
+		const userData = userDoc.data();
+		return userData?.role === "admin";
+	} catch {
+		return false;
+	}
+};
 
 export const getAllPets = async (_req: AuthRequest, res: Response): Promise<void> => {
 	const { species, status, shelterId, search } = _req.query;
@@ -108,7 +119,8 @@ export const updatePet = async (req: AuthRequest, res: Response): Promise<void> 
 	}
 
 	const petData = doc.data() as Pet;
-	if (petData.shelterId !== req.user.uid) {
+	const userIsAdmin = await isAdmin(req.user.uid);
+	if (!userIsAdmin && petData.shelterId !== req.user.uid) {
 		throw new AppError("Not authorized to update this pet", 403);
 	}
 
@@ -148,7 +160,8 @@ export const deletePet = async (req: AuthRequest, res: Response): Promise<void> 
 	}
 
 	const petData = doc.data() as Pet;
-	if (petData.shelterId !== req.user.uid) {
+	const userIsAdmin = await isAdmin(req.user.uid);
+	if (!userIsAdmin && petData.shelterId !== req.user.uid) {
 		throw new AppError("Not authorized to delete this pet", 403);
 	}
 

@@ -43,17 +43,19 @@ const defaultForm = {
 	gender: "male" as "male" | "female",
 	description: "",
 	image: null as File | null,
+	imagePreview: null as string | null,
 	isVaccinated: false,
 	isNeutered: false,
 };
 
 export default function PetsPage() {
-	const { pets, loading, createPet, updatePet, deletePet } = usePets();
+	const { pets, loading, createPet, updatePet, deletePet, uploadThumbnail } = usePets();
 	const [showUpload, setShowUpload] = useState(false);
 	const [search, setSearch] = useState("");
 	const [status, setStatus] = useState<string>("All");
 	const [form, setForm] = useState(defaultForm);
 	const [editId, setEditId] = useState<string | null>(null);
+	const [saving, setSaving] = useState(false);
 
 	const filtered = (pets || []).filter((p) => {
 		const matchSearch =
@@ -64,49 +66,65 @@ export default function PetsPage() {
 	});
 
 	const handleSave = async () => {
-		const baseData = {
-			name: form.name,
-			species: "dog", // or make this a field later
-			breed: form.breed,
-			ageMonths: form.ageMonths,
-			size: "medium", // temp default
-			gender: form.gender,
-			status: "available" as const,
-			shelterId: "default-shelter", // replace later
-			description: form.description,
-			isVaccinated: form.isVaccinated,
-			isNeutered: form.isNeutered,
-			createdAt: new Date(),
-			updatedAt: new Date(),
-		};
+		setSaving(true);
 
-		if (editId) {
-			const result = await updatePet(editId, {
-				...baseData,
+		try {
+			let thumbnailUrl: string | undefined;
+
+			if (form.image && editId) {
+				const url = await uploadThumbnail(editId, form.image);
+				if (url) {
+					thumbnailUrl = url;
+				}
+			}
+
+			const ageInYears = Math.floor(form.ageMonths / 12);
+
+			const baseData = {
+				name: form.name,
+				species: "dog" as const,
+				breed: form.breed,
+				age: ageInYears,
+				gender: form.gender,
+				description: form.description,
+				...(thumbnailUrl && { thumbnail: thumbnailUrl }),
+				createdAt: new Date(),
 				updatedAt: new Date(),
-			});
+			} as Omit<Pet, "id">;
 
-			alert(result ? "Pet updated successfully!" : "Failed to update pet.");
-			setEditId(null);
-		} else {
-			const result = await createPet(baseData);
-			alert(result ? "Pet created successfully!" : "Failed to create pet.");
+			if (editId) {
+				const result = await updatePet(editId, baseData);
+
+				alert(result ? "Pet updated successfully!" : "Failed to update pet.");
+				setEditId(null);
+			} else {
+				const newPet = await createPet(baseData);
+				if (newPet && form.image) {
+					await uploadThumbnail(newPet.id!, form.image);
+				}
+				alert(newPet ? "Pet created successfully!" : "Failed to create pet.");
+			}
+
+			setForm(defaultForm);
+			setShowUpload(false);
+		} catch {
+			alert("An error occurred while saving.");
+		} finally {
+			setSaving(false);
 		}
-
-		setForm(defaultForm);
-		setShowUpload(false);
 	};
 
 	const handleEdit = (pet: Pet) => {
 		setForm({
 			name: pet.name,
 			breed: pet.breed,
-			ageMonths: pet.ageMonths,
+			ageMonths: pet.age * 12,
 			gender: pet.gender,
 			description: pet.description || "",
 			image: null,
-			vaccinated: pet.isVaccinated,
-			neutered: pet.isNeutered,
+			imagePreview: pet.thumbnail || null,
+			isVaccinated: pet.isVaccinated || false,
+			isNeutered: pet.isNeutered || false,
 		});
 
 		setEditId(pet.id!);
@@ -182,7 +200,7 @@ export default function PetsPage() {
 									{pet.status}
 								</span>
 								<button
-									onClick={() => deletePet(pet.id)}
+									onClick={() => pet.id && deletePet(pet.id)}
 									className="absolute top-3 right-3 size-8 rounded-full bg-card/80 backdrop-blur-md flex items-center justify-center hover:bg-card"
 								>
 									<MoreVertical className="size-4" />
@@ -242,21 +260,47 @@ export default function PetsPage() {
 							</button>
 						</div>
 						<div className="space-y-4">
-							<label className="block border-2 border-dashed border-border rounded-2xl p-8 text-center hover:border-primary cursor-pointer transition-colors">
-								<Upload className="size-8 mx-auto text-muted-foreground mb-2" />
-								<p className="text-sm font-medium">
-									Drop a photo or click to upload
-								</p>
-								<p className="text-xs text-muted-foreground mt-1">
-									PNG or JPG, up to 5MB
-								</p>
+							<label className="block border-2 border-dashed border-border rounded-2xl p-8 text-center hover:border-primary cursor-pointer transition-colors overflow-hidden">
+								{form.imagePreview || (editId && form.image) ? (
+									<div className="relative">
+										<img
+											src={
+												form.imagePreview ||
+												(editId ? "/images/placeholder.png" : "")
+											}
+											alt="Preview"
+											className="size-32 mx-auto object-cover rounded-xl"
+										/>
+										<p className="text-xs text-muted-foreground mt-2">
+											Click to change image
+										</p>
+									</div>
+								) : (
+									<>
+										<Upload className="size-8 mx-auto text-muted-foreground mb-2" />
+										<p className="text-sm font-medium">
+											Drop a photo or click to upload
+										</p>
+										<p className="text-xs text-muted-foreground mt-1">
+											PNG or JPG, up to 5MB
+										</p>
+									</>
+								)}
 								<input
 									type="file"
 									className="hidden"
-									accept="image/*"
-									onChange={(e) =>
-										setForm({ ...form, image: e.target.files?.[0] || null })
-									}
+									accept="image/jpeg,image/jpg,image/png,image/webp"
+									onChange={(e) => {
+										const file = e.target.files?.[0];
+										if (file) {
+											const preview = URL.createObjectURL(file);
+											setForm({
+												...form,
+												image: file,
+												imagePreview: preview,
+											});
+										}
+									}}
 								/>
 							</label>
 							<div className="grid grid-cols-2 gap-3">
@@ -330,9 +374,10 @@ export default function PetsPage() {
 								</button>
 								<button
 									onClick={handleSave}
-									className="flex-1 h-11 rounded-full bg-gradient-primary text-primary-foreground font-semibold text-sm shadow-glow"
+									disabled={saving}
+									className="flex-1 h-11 rounded-full bg-gradient-primary text-primary-foreground font-semibold text-sm shadow-glow disabled:opacity-50"
 								>
-									{editId ? "Update Pet" : "Save Pet"}
+									{saving ? "Saving..." : editId ? "Update Pet" : "Save Pet"}
 								</button>
 							</div>
 						</div>
