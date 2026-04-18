@@ -28,6 +28,7 @@ interface UseUsersReturn {
 	fetchUsers: (params?: UseUsersParams) => Promise<void>;
 	updateUserRole: (userId: string, role: "visitor" | "admin") => Promise<boolean>;
 	updateUserStatus: (userId: string, status: "active" | "suspended") => Promise<boolean>;
+	inviteUser: (email: string, role: "visitor" | "admin") => Promise<{ success: boolean; message: string }>;
 }
 
 export const useUsers = (): UseUsersReturn => {
@@ -81,5 +82,15 @@ export const useUsers = (): UseUsersReturn => {
 		}
 	};
 
-	return { users, loading, error, total, fetchUsers, updateUserRole, updateUserStatus };
+	const inviteUser = async (email: string, role: "visitor" | "admin"): Promise<{ success: boolean; message: string }> => {
+		try {
+			const response = await api.post("/admin/invite", { email, role });
+			return { success: response.data.success, message: response.data.message };
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : "Failed to send invitation";
+			return { success: false, message };
+		}
+	};
+
+	return { users, loading, error, total, fetchUsers, updateUserRole, updateUserStatus, inviteUser };
 };

@@ -2,11 +2,12 @@ import { Response } from "express";
 import { auth, db } from "../config/firebase";
 import { AuthRequest, ApiResponse, User } from "../types";
 import { AppError } from "../middleware/errorHandler";
+import { validateInviteToken, deleteInvite } from "./adminController";
 
 const usersCollection = db.collection("users");
 
 export const register = async (req: AuthRequest, res: Response): Promise<void> => {
-	const { email, password, displayName } = req.body;
+	const { email, password, displayName, inviteToken } = req.body;
 
 	const existingUsers = await usersCollection.where("email", "==", email.toLowerCase()).get();
 	if (!existingUsers.empty) {
@@ -16,6 +17,16 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
 		};
 		res.status(400).json(response);
 		return;
+	}
+
+	let role: "visitor" | "admin" = "visitor";
+
+	if (inviteToken) {
+		const invite = await validateInviteToken(inviteToken);
+		if (invite && invite.email === email.toLowerCase()) {
+			role = invite.role;
+			await deleteInvite(inviteToken);
+		}
 	}
 
 	const userRecord = await auth.createUser({
@@ -28,7 +39,7 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
 	const userData: Omit<User, "id"> = {
 		email,
 		displayName: displayName || "",
-		role: "visitor",
+		role,
 		accountStatus: "active",
 		authProvider: "email",
 		emailVerified: false,
@@ -44,7 +55,9 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
 
 	const response: ApiResponse = {
 		success: true,
-		message: "Registration successful. Please check your email to verify your account.",
+		message: role === "admin" 
+			? "Registration successful. Welcome to Snuggles Admin!"
+			: "Registration successful. Please check your email to verify your account.",
 	};
 
 	res.status(201).json(response);

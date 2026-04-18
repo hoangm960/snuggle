@@ -1,8 +1,11 @@
 import { auth, db } from "../config/firebase";
 import { User, AdoptionApplication, SavedSearch } from "../types";
+import { sendInviteEmail } from "../services/emailService";
+import { randomBytes } from "crypto";
 
 const usersCollection = db.collection("users");
 const auditLogCollection = db.collection("adminAuditLog");
+const invitationsCollection = db.collection("invitations");
 
 interface GetUsersParams {
 	search?: string;
@@ -233,4 +236,115 @@ export const logAdminAction = async (
 		details,
 		createdAt: new Date(),
 	});
+};
+
+function generateInviteToken(): string {
+	return randomBytes(32).toString("hex");
+}
+
+export interface InviteUserParams {
+	email: string;
+	role: "visitor" | "admin";
+	adminId: string;
+	adminName: string;
+}
+
+export const inviteUser = async ({
+	email,
+	role,
+	adminId,
+	adminName,
+}: InviteUserParams): Promise<{ success: boolean; message: string }> => {
+	const emailLower = email.toLowerCase();
+
+	const existingUsers = await usersCollection.where("email", "==", emailLower).get();
+	if (!existingUsers.empty) {
+		const existingUser = existingUsers.docs[0];
+		const userData = existingUser.data() as User;
+		await usersCollection.doc(existingUser.id).update({
+			role,
+			updatedAt: new Date(),
+		});
+		await logAdminAction(adminId, "INVITE_EXISTING_USER", existingUser.id, {
+			email: emailLower,
+			role,
+		});
+		return {
+			success: true,
+			message: `User with this email already exists. Their role has been updated to ${role}.`,
+		};
+	}
+
+	const existingInvites = await invitationsCollection.where("email", "==", emailLower).get();
+	if (!existingInvites.empty) {
+		return {
+			success: false,
+			message: "An invitation has already been sent to this email.",
+		};
+	}
+
+	const inviteToken = generateInviteToken();
+	const expiresAt = new Date();
+	expiresAt.setDate(expiresAt.getDate() + 7);
+
+	await invitationsCollection.add({
+		email: emailLower,
+		role,
+		invitedBy: adminId,
+		inviteToken,
+		expiresAt,
+		createdAt: new Date(),
+	});
+
+	await logAdminAction(adminId, "SEND_INVITE", emailLower, { role });
+
+	try {
+		await sendInviteEmail({
+			to: emailLower,
+			inviteToken,
+			role,
+			invitedByName: adminName || "An administrator",
+		});
+	} catch (error) {
+		console.error("Failed to send invite email:", error);
+		return {
+			success: false,
+			message: "Failed to send invitation email. Please check SMTP configuration.",
+		};
+	}
+
+	return {
+		success: true,
+		message: `Invitation sent successfully to ${email}.`,
+	};
+};
+
+export const validateInviteToken = async (
+	token: string
+): Promise<{ email: string; role: "visitor" | "admin" } | null> => {
+	const invites = await invitationsCollection.where("inviteToken", "==", token).get();
+
+	if (invites.empty) {
+		return null;
+	}
+
+	const inviteDoc = invites.docs[0];
+	const inviteData = inviteDoc.data();
+
+	if (new Date(inviteData.expiresAt) < new Date()) {
+		await invitationsCollection.doc(inviteDoc.id).delete();
+		return null;
+	}
+
+	return {
+		email: inviteData.email,
+		role: inviteData.role,
+	};
+};
+
+export const deleteInvite = async (token: string): Promise<void> => {
+	const invites = await invitationsCollection.where("inviteToken", "==", token).get();
+	if (!invites.empty) {
+		await invitationsCollection.doc(invites.docs[0].id).delete();
+	}
 };
