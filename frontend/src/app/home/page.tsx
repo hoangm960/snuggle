@@ -1,4 +1,4 @@
-import HeaderSection from "./sections/HeaderSection";
+import { Navbar } from "@/components/Navbar";
 import HeroSection from "./sections/HeroSection";
 import StatsBarSection from "./sections/StatsBarSection";
 import AboutUsSection from "./sections/AboutUsSection";
@@ -30,7 +30,7 @@ export default function HomePage() {
 						zIndex: 0,
 					}}
 				/>
-				<HeaderSection />
+				<Navbar variant="overlay" />
 				<HeroSection />
 				<AboutUsSection />
 			</div>
