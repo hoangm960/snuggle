@@ -41,6 +41,7 @@ export default function RegisterPage() {
 	const [passwordError, setPasswordError] = useState("");
 	const [confirmError, setConfirmError] = useState("");
 	const [loading, setLoading] = useState(false);
+	const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
 	const validate = () => {
 		let valid = true;
@@ -83,12 +84,10 @@ export default function RegisterPage() {
 				password,
 				displayName: username,
 			});
-			if (!response.data.success) {
+			if (response.data.success !== true) {
 				throw new Error(response.data.message || "Registration failed");
 			}
-			const { token, user } = response.data.data;
-			setAuthSession(token, user);
-			router.push("/home");
+			setRegistrationSuccess(true);
 		} catch (err: any) {
 			const msg =
 				err.response?.data?.message ||
@@ -107,7 +106,7 @@ export default function RegisterPage() {
 			const result = await signInWithPopup(auth, provider);
 			const idToken = await getIdToken(result.user);
 			const response = await api.post("/auth/google", { idToken });
-			if (!response.data.success) {
+			if (response.data.success !== true) {
 				throw new Error(response.data.message || "Google registration failed");
 			}
 			const { token, user } = response.data.data;
@@ -313,25 +312,63 @@ export default function RegisterPage() {
 				<div className="flex-1 flex flex-col bg-white overflow-y-auto">
 					<main className="flex-1 flex flex-col items-center justify-center px-6 py-20">
 						<div className="w-full max-w-[420px]">
-							<h1
-								className="text-[26px] font-semibold text-[#333333] mb-2 leading-tight text-center"
-								style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-							>
-								Create an account
-							</h1>
+							{registrationSuccess ? (
+								<div className="text-center">
+									<div className="w-16 h-16 mx-auto mb-6 rounded-full bg-[#7AADA1]/10 flex items-center justify-center">
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											width="32"
+											height="32"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="#7AADA1"
+											strokeWidth="2"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+										>
+											<polyline points="20 6 9 17 4 12" />
+										</svg>
+									</div>
+									<h1
+										className="text-[26px] font-semibold text-[#333333] mb-2 leading-tight"
+										style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+									>
+										Check your email
+									</h1>
+									<p className="text-sm text-[#666666] mb-8">
+										We've sent a verification link to <strong>{email}</strong>.
+										<br />
+										Please check your inbox and click the link to verify your account.
+									</p>
+									<Link
+										href="/login"
+										className="inline-block text-white text-base font-semibold px-8 py-3 rounded-[16px] bg-[#111] hover:opacity-90 transition-opacity"
+										style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+									>
+										Go to Log in
+									</Link>
+								</div>
+							) : (
+								<>
+									<h1
+										className="text-[26px] font-semibold text-[#333333] mb-2 leading-tight text-center"
+										style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+									>
+										Create an account
+									</h1>
 
-							<p className="text-xs text-center text-[#999999] mb-14">
-								Already have an account?{" "}
-								<Link
-									href="/login"
-									style={{ color: "#7AADA1" }}
-									className="font-medium hover:underline"
-								>
-									Log in
-								</Link>
-							</p>
+									<p className="text-xs text-center text-[#999999] mb-14">
+										Already have an account?{" "}
+										<Link
+											href="/login"
+											style={{ color: "#7AADA1" }}
+											className="font-medium hover:underline"
+										>
+											Log in
+										</Link>
+									</p>
 
-							<form onSubmit={handleRegister} noValidate>
+									<form onSubmit={handleRegister} noValidate>
 								{/* Email */}
 								<div className="mb-9">
 									<label className="block text-sm font-medium text-[#333333] mb-2">
@@ -530,6 +567,8 @@ export default function RegisterPage() {
 									Continue with Facebook
 								</button>
 							</div>
+								</>
+							)}
 						</div>
 					</main>
 				</div>

@@ -62,8 +62,11 @@ export default function LoginPage() {
 		setLoading(true);
 		try {
 			const response = await api.post("/auth/login", { email, password });
-			if (!response.data.success) {
+			if (response.data.success !== true) {
 				throw new Error(response.data.message || "Login failed");
+			}
+			if (!response.data.data?.token || !response.data.data?.user) {
+				throw new Error("Invalid response from server");
 			}
 			const { token, user } = response.data.data;
 			setAuthSession(token, user);
@@ -89,8 +92,11 @@ export default function LoginPage() {
 			const result = await signInWithPopup(auth, provider);
 			const idToken = await getIdToken(result.user);
 			const response = await api.post("/auth/google", { idToken });
-			if (!response.data.success) {
+			if (response.data.success !== true) {
 				throw new Error(response.data.message || "Google login failed");
+			}
+			if (!response.data.data?.token || !response.data.data?.user) {
+				throw new Error("Invalid response from server");
 			}
 			const { token, user } = response.data.data;
 			setAuthSession(token, user);
@@ -113,8 +119,11 @@ export default function LoginPage() {
 			const result = await signInWithPopup(auth, provider);
 			const idToken = await getIdToken(result.user);
 			const response = await api.post("/auth/facebook", { idToken });
-			if (!response.data.success) {
+			if (response.data.success !== true) {
 				throw new Error(response.data.message || "Facebook login failed");
+			}
+			if (!response.data.data?.token || !response.data.data?.user) {
+				throw new Error("Invalid response from server");
 			}
 			const { token, user } = response.data.data;
 			setAuthSession(token, user);

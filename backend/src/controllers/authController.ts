@@ -3,6 +3,7 @@ import { auth, db } from "../config/firebase";
 import { AuthRequest, ApiResponse, User } from "../types";
 import { AppError } from "../middleware/errorHandler";
 import { validateInviteToken, deleteInvite } from "./adminController";
+import { sendVerificationEmail } from "../services/emailService";
 
 const usersCollection = db.collection("users");
 
@@ -52,6 +53,12 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
 
 	const verificationLink = await auth.generateEmailVerificationLink(email);
 	console.log(`Verification link for ${email}: ${verificationLink}`);
+
+	await sendVerificationEmail({
+		to: email,
+		displayName: displayName || "",
+		verificationLink,
+	});
 
 	const response: ApiResponse = {
 		success: true,
@@ -114,7 +121,9 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
 	}
 
 	const userData = userDoc.data() as User;
-	if (!userData.emailVerified) {
+
+	const firebaseUser = await auth.getUser(uid);
+	if (!firebaseUser.emailVerified) {
 		const response: ApiResponse = {
 			success: false,
 			emailVerificationRequired: true,
@@ -140,7 +149,12 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
 	});
 
 	const customToken = await auth.createCustomToken(uid);
-	const user: User = { id: userDoc.id, ...userData, loginCount: (userData.loginCount || 0) + 1 };
+	const user: User = { 
+		id: userDoc.id, 
+		...userData, 
+		emailVerified: firebaseUser.emailVerified,
+		loginCount: (userData.loginCount || 0) + 1 
+	};
 
 	const apiResponse: ApiResponse<{ user: User; token: string }> = {
 		success: true,
@@ -443,6 +457,12 @@ export const resendVerification = async (req: AuthRequest, res: Response): Promi
 	const verificationLink = await auth.generateEmailVerificationLink(email);
 	console.log(`Verification link for ${email}: ${verificationLink}`);
 
+	await sendVerificationEmail({
+		to: email,
+		displayName: userData.displayName || "",
+		verificationLink,
+	});
+
 	const response: ApiResponse = {
 		success: true,
 		message: "Verification email sent. Please check your inbox.",
@@ -454,16 +474,46 @@ export const resendVerification = async (req: AuthRequest, res: Response): Promi
 export const verifyEmail = async (req: AuthRequest, res: Response): Promise<void> => {
 	const { oobCode } = req.body;
 
-	try {
-		await auth.verifyIdToken(oobCode);
-	} catch {
-		throw new AppError("Invalid or expired verification code", 400);
+	const firebaseApiKey = process.env.FIREBASE_API_KEY;
+	if (!firebaseApiKey) {
+		throw new AppError("Firebase API key not configured", 500);
 	}
 
-	const response: ApiResponse = {
+	const response = await fetch(
+		`https://identitytoolkit.googleapis.com/v1/accounts:update?key=${firebaseApiKey}`,
+		{
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ oobCode }),
+		}
+	);
+
+	const data = (await response.json()) as {
+		error?: { message?: string };
+		localId?: string;
+		email?: string;
+	};
+
+	if (!response.ok) {
+		if (data.error?.message === "INVALID_OOB_CODE" || data.error?.message === "EXPIRED_OOB_CODE") {
+			throw new AppError("Invalid or expired verification code", 400);
+		}
+		throw new AppError("Email verification failed", 400);
+	}
+
+	if (!data.localId) {
+		throw new AppError("Email verification failed", 400);
+	}
+
+	await usersCollection.doc(data.localId).update({
+		emailVerified: true,
+		updatedAt: new Date(),
+	});
+
+	const apiResponse: ApiResponse = {
 		success: true,
 		message: "Email verified successfully. You can now log in.",
 	};
 
-	res.status(200).json(response);
+	res.status(200).json(apiResponse);
 };
