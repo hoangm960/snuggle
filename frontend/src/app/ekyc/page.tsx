@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-
-const NAV_LINKS = ["Home", "About Us", "Pets", "eKYC", "Contact"];
+import { Navbar } from "@/components/Navbar";
 
 const STEPS = [
 	{
@@ -52,7 +51,6 @@ const WHY_ITEMS = [
 ];
 
 export default function EKYCPage() {
-	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const [activeStep, setActiveStep] = useState(0);
 	const [formData, setFormData] = useState({
 		fullName: "",
@@ -61,251 +59,12 @@ export default function EKYCPage() {
 		phone: "",
 	});
 
-	const navHref = (link: string) => {
-		if (link === "Home") return "/home";
-		if (link === "Pets") return "/pets";
-		if (link === "eKYC") return "/ekyc";
-		return "#";
-	};
-
 	return (
 		<div
 			className="flex flex-col min-h-screen w-full"
 			style={{ fontFamily: "'Poppins', sans-serif" }}
 		>
-			{/* ── Header ── */}
-			<header
-				style={{
-					background: "#fff",
-					borderBottom: "1px solid #E8E8E8",
-					position: "relative",
-					zIndex: 20,
-				}}
-				className="flex items-center justify-between px-6 md:px-10 py-4 rounded-b-2xl"
-			>
-				{/* Logo */}
-				<Link href="/home" className="flex items-center gap-2">
-					<PawLogo />
-					<span
-						style={{
-							color: "#7AADA1",
-							fontFamily: "'Space Grotesk', sans-serif",
-							fontSize: "24px",
-							fontWeight: 500,
-						}}
-					>
-						Snuggle
-					</span>
-				</Link>
-
-				{/* Desktop nav */}
-				<nav className="hidden lg:flex items-center gap-7">
-					{NAV_LINKS.map((link) => (
-						<Link
-							key={link}
-							href={navHref(link)}
-							style={{
-								color: link === "eKYC" ? "#7AADA1" : "#111",
-								fontFamily: "'Space Grotesk', sans-serif",
-								fontSize: "15px",
-								fontWeight: link === "eKYC" ? 600 : 400,
-								borderBottom: link === "eKYC" ? "2px solid #7AADA1" : "none",
-								paddingBottom: link === "eKYC" ? "2px" : "0",
-							}}
-							className="hover:opacity-70 transition-opacity whitespace-nowrap"
-						>
-							{link}
-						</Link>
-					))}
-				</nav>
-
-				<div className="hidden lg:flex items-center gap-4">
-					<div
-						className="flex items-center gap-2"
-						style={{
-							padding: "8px 16px",
-							borderRadius: "16px",
-							border: "1px solid rgba(102,102,102,0.35)",
-							background: "#F6F6F6",
-						}}
-					>
-						{/* Search icon — reused inline */}
-						<svg
-							width="16"
-							height="16"
-							viewBox="0 0 16 16"
-							fill="none"
-							style={{ flexShrink: 0 }}
-						>
-							<g clipPath="url(#s_ekyc)">
-								<path
-									d="M10.3333 9.33333H9.80667L9.62 9.15333C10.2733 8.39333 10.6667 7.40667 10.6667 6.33333C10.6667 3.94 8.72667 2 6.33333 2C3.94 2 2 3.94 2 6.33333C2 8.72667 3.94 10.6667 6.33333 10.6667C7.40667 10.6667 8.39333 10.2733 9.15333 9.62L9.33333 9.80667V10.3333L12.6667 13.66L13.66 12.6667L10.3333 9.33333ZM6.33333 9.33333C4.67333 9.33333 3.33333 7.99333 3.33333 6.33333C3.33333 4.67333 4.67333 3.33333 6.33333 3.33333C7.99333 3.33333 9.33333 4.67333 9.33333 6.33333C9.33333 7.99333 7.99333 9.33333 6.33333 9.33333Z"
-									fill="#666666"
-									fillOpacity="0.8"
-								/>
-							</g>
-							<defs>
-								<clipPath id="s_ekyc">
-									<rect width="16" height="16" fill="white" />
-								</clipPath>
-							</defs>
-						</svg>
-						<input
-							type="search"
-							placeholder="Search..."
-							className="bg-transparent outline-none w-28"
-							style={{
-								fontFamily: "'Space Grotesk', sans-serif",
-								fontSize: "14px",
-								color: "#333",
-							}}
-						/>
-					</div>
-					<button
-						className="flex items-center gap-1 hover:opacity-70 transition-opacity"
-						style={{
-							color: "#333",
-							fontFamily: "'Space Grotesk', sans-serif",
-							fontSize: "14px",
-							background: "none",
-							border: "none",
-							cursor: "pointer",
-							whiteSpace: "nowrap",
-						}}
-					>
-						<GlobeIcon />
-						<span style={{ margin: "0 2px" }}>English (US)</span>
-						<svg width="10" height="5" viewBox="0 0 10 5" fill="none">
-							<path d="M0 0L5 5L10 0H0Z" fill="#333" />
-						</svg>
-					</button>
-					<Link
-						href="/login"
-						className="flex items-center justify-center text-white font-medium hover:opacity-90 transition-opacity"
-						style={{
-							width: "98px",
-							height: "40px",
-							borderRadius: "8px",
-							backgroundColor: "#7AADA1",
-							fontFamily: "'Space Grotesk', sans-serif",
-							fontSize: "14px",
-						}}
-					>
-						Log in
-					</Link>
-					<Link
-						href="/register"
-						className="flex items-center justify-center font-medium hover:opacity-80 transition-opacity"
-						style={{
-							width: "98px",
-							height: "40px",
-							borderRadius: "8px",
-							border: "1px solid #111",
-							color: "#111",
-							fontFamily: "'Space Grotesk', sans-serif",
-							fontSize: "14px",
-						}}
-					>
-						Sign up
-					</Link>
-				</div>
-
-				{/* Mobile hamburger */}
-				<button
-					className="lg:hidden flex flex-col gap-1.5 p-2"
-					onClick={() => setMobileMenuOpen((o) => !o)}
-					style={{ background: "none", border: "none", cursor: "pointer" }}
-				>
-					<span
-						style={{
-							display: "block",
-							width: "22px",
-							height: "2px",
-							background: "#333",
-							borderRadius: "2px",
-							transform: mobileMenuOpen ? "translateY(6px) rotate(45deg)" : "none",
-							transition: "transform 0.2s",
-						}}
-					/>
-					<span
-						style={{
-							display: "block",
-							width: "22px",
-							height: "2px",
-							background: "#333",
-							borderRadius: "2px",
-							opacity: mobileMenuOpen ? 0 : 1,
-							transition: "opacity 0.2s",
-						}}
-					/>
-					<span
-						style={{
-							display: "block",
-							width: "22px",
-							height: "2px",
-							background: "#333",
-							borderRadius: "2px",
-							transform: mobileMenuOpen ? "translateY(-6px) rotate(-45deg)" : "none",
-							transition: "transform 0.2s",
-						}}
-					/>
-				</button>
-			</header>
-
-			{/* Mobile menu */}
-			{mobileMenuOpen && (
-				<div
-					className="lg:hidden flex flex-col px-6 py-6 gap-5 bg-white border-b border-[#E8E8E8]"
-					style={{ zIndex: 15 }}
-				>
-					{NAV_LINKS.map((link) => (
-						<Link
-							key={link}
-							href={navHref(link)}
-							onClick={() => setMobileMenuOpen(false)}
-							style={{
-								color: link === "eKYC" ? "#7AADA1" : "#111",
-								fontFamily: "'Space Grotesk', sans-serif",
-								fontSize: "16px",
-								fontWeight: link === "eKYC" ? 600 : 400,
-							}}
-						>
-							{link}
-						</Link>
-					))}
-					<div className="flex gap-3 pt-2">
-						<Link
-							href="/login"
-							onClick={() => setMobileMenuOpen(false)}
-							className="flex-1 flex items-center justify-center text-white font-medium"
-							style={{
-								height: "40px",
-								borderRadius: "8px",
-								backgroundColor: "#7AADA1",
-								fontFamily: "'Space Grotesk', sans-serif",
-								fontSize: "14px",
-							}}
-						>
-							Log in
-						</Link>
-						<Link
-							href="/register"
-							onClick={() => setMobileMenuOpen(false)}
-							className="flex-1 flex items-center justify-center font-medium"
-							style={{
-								height: "40px",
-								borderRadius: "8px",
-								border: "1px solid #111",
-								color: "#111",
-								fontFamily: "'Space Grotesk', sans-serif",
-								fontSize: "14px",
-							}}
-						>
-							Sign up
-						</Link>
-					</div>
-				</div>
-			)}
+			<Navbar activeLink="eKYC" />
 
 			{/* ── Hero ── */}
 			<section
