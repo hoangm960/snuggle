@@ -20,6 +20,7 @@ interface AuthContextValue {
 	loginWithGoogle: () => Promise<void>;
 	loginWithFacebook: () => Promise<void>;
 	logout: () => void;
+	refreshUser: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -30,29 +31,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
-		const storedUser = getStoredUser();
-		const authenticated = isAuthenticated();
+		const checkAuth = () => {
+			const storedUser = getStoredUser();
+			const authenticated = isAuthenticated();
 
-		if (authenticated && storedUser) {
-			setUser(storedUser);
+			if (authenticated && storedUser) {
+				setUser(storedUser);
+			}
 			setLoading(false);
-		}
+		};
+
+		checkAuth();
 
 		const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
 			setFirebaseUser(fbUser);
-			if (fbUser && !authenticated) {
-				setUser({
-					email: fbUser.email || "",
-					displayName: fbUser.displayName || "",
-					role: "adopter",
-					createdAt: new Date(),
-					updatedAt: new Date(),
-				});
+			if (fbUser) {
+				const storedUser = getStoredUser();
+				const authenticated = isAuthenticated();
+				if (!authenticated || !storedUser) {
+					setUser({
+						email: fbUser.email || "",
+						displayName: fbUser.displayName || "",
+						role: "adopter",
+						createdAt: new Date(),
+						updatedAt: new Date(),
+					});
+				}
 			}
 			setLoading(false);
 		});
 
-		return () => unsubscribe();
+		const handleVisibility = () => {
+			if (!document.hidden) {
+				checkAuth();
+			}
+		};
+		document.addEventListener("visibilitychange", handleVisibility);
+
+		const handleStorage = (e: StorageEvent) => {
+			if (e.key === "auth_user" || e.key === "auth_token" || !e.key) {
+				const storedUser = getStoredUser();
+				const authenticated = isAuthenticated();
+				if (authenticated && storedUser) {
+					setUser(storedUser);
+				} else if (!authenticated) {
+					setUser(null);
+				}
+			}
+		};
+		window.addEventListener("storage", handleStorage);
+
+		return () => {
+			unsubscribe();
+			document.removeEventListener("visibilitychange", handleVisibility);
+			window.removeEventListener("storage", handleStorage);
+		};
 	}, []);
 
 	const loginWithGoogle = async () => {
@@ -76,6 +109,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		}
 	};
 
+	const refreshUser = () => {
+		const storedUser = getStoredUser();
+		const authenticated = isAuthenticated();
+		if (authenticated && storedUser) {
+			setUser(storedUser);
+		} else {
+			setUser(null);
+		}
+	};
+
 	const value: AuthContextValue = {
 		user,
 		firebaseUser,
@@ -83,6 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		loginWithGoogle,
 		loginWithFacebook,
 		logout,
+		refreshUser,
 	};
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

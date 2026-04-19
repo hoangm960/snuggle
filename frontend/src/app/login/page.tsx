@@ -12,6 +12,7 @@ import {
 	getIdToken,
 } from "firebase/auth";
 import { setAuthSession } from "@/lib/cookies";
+import { useAuth } from "@/hooks/useAuth";
 import { Navbar } from "@/components/Navbar";
 
 const FOOTER_LINKS = [
@@ -29,6 +30,7 @@ const FOOTER_LINKS = [
 
 export default function LoginPage() {
 	const router = useRouter();
+	const { refreshUser } = useAuth();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
@@ -69,6 +71,7 @@ export default function LoginPage() {
 			}
 			const { token, user } = response.data.data;
 			setAuthSession(token, user);
+			refreshUser();
 			// Redirect based on role
 			if (user.role === "admin") {
 				router.push("/admin");
@@ -99,6 +102,7 @@ export default function LoginPage() {
 			}
 			const { token, user } = response.data.data;
 			setAuthSession(token, user);
+			refreshUser();
 			router.push("/home");
 		} catch (err: any) {
 			const msg =
@@ -126,6 +130,7 @@ export default function LoginPage() {
 			}
 			const { token, user } = response.data.data;
 			setAuthSession(token, user);
+			refreshUser();
 			router.push("/home");
 		} catch (err: any) {
 			const msg =
