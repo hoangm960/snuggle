@@ -78,16 +78,19 @@ export default function PetsPage() {
 				}
 			}
 
-			const ageInYears = Math.floor(form.ageMonths / 12);
+			//const ageInYears = Math.floor(form.ageMonths / 12);
 
 			const baseData = {
 				name: form.name,
 				species: "dog" as const,
 				breed: form.breed,
-				age: ageInYears,
+				//age: ageInYears,
+        ageMonths: form.ageMonths,
 				gender: form.gender,
 				description: form.description,
 				...(thumbnailUrl && { thumbnail: thumbnailUrl }),
+        isVaccinated: form.isVaccinated,
+        isNeutered: form.isNeutered,
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			} as Omit<Pet, "id">;
@@ -100,7 +103,10 @@ export default function PetsPage() {
 			} else {
 				const newPet = await createPet(baseData);
 				if (newPet && form.image) {
-					await uploadThumbnail(newPet.id!, form.image);
+					const url = await uploadThumbnail(newPet.id!, form.image);
+          if (url) {
+          await updatePet(newPet.id!, { thumbnail: url });
+          }
 				}
 				alert(newPet ? "Pet created successfully!" : "Failed to create pet.");
 			}
@@ -118,7 +124,7 @@ export default function PetsPage() {
 		setForm({
 			name: pet.name,
 			breed: pet.breed,
-			ageMonths: pet.age * 12,
+			ageMonths: pet.ageMonths ?? (pet.age ?? 0) * 12,
 			gender: pet.gender,
 			description: pet.description || "",
 			image: null,
