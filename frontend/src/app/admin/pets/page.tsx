@@ -44,6 +44,7 @@ const defaultForm = {
 	description: "",
 	image: null as File | null,
 	imagePreview: null as string | null,
+  status: "available" as "available" | "pending" | "adopted",
 	isVaccinated: false,
 	isNeutered: false,
 };
@@ -61,7 +62,8 @@ export default function PetsPage() {
 		const matchSearch =
 			p.name.toLowerCase().includes(search.toLowerCase()) ||
 			p.breed.toLowerCase().includes(search.toLowerCase());
-		const matchStatus = status === "All" || p.status === status.toLowerCase();
+		const matchStatus = status === "All" || p.status?.toLowerCase() === status.toLowerCase();
+    
 		return matchSearch && matchStatus;
 	});
 
@@ -89,6 +91,7 @@ export default function PetsPage() {
 				gender: form.gender,
 				description: form.description,
 				...(thumbnailUrl && { thumbnail: thumbnailUrl }),
+        status: form.status,
         isVaccinated: form.isVaccinated,
         isNeutered: form.isNeutered,
 				createdAt: new Date(),
@@ -129,6 +132,7 @@ export default function PetsPage() {
 			description: pet.description || "",
 			image: null,
 			imagePreview: pet.thumbnail || null,
+      status: pet.status,
 			isVaccinated: pet.isVaccinated || false,
 			isNeutered: pet.isNeutered || false,
 		});
@@ -142,6 +146,7 @@ export default function PetsPage() {
 		setEditId(null);
 		setForm(defaultForm);
 	};
+  
 
 	return (
 		<AdminLayout title="Pets" subtitle="Manage every pet currently under Snuggle's care.">
@@ -157,7 +162,7 @@ export default function PetsPage() {
 					/>
 				</div>
 				<div className="flex gap-2 flex-wrap">
-					{["All", "Available", "Pending", "Adopted", "Foster"].map((s) => (
+					{["All", "Available", "Pending", "Adopted"].map((s) => (
 						<button
 							key={s}
 							onClick={() => setStatus(s)}
@@ -203,7 +208,7 @@ export default function PetsPage() {
 								<span
 									className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[11px] font-semibold backdrop-blur-md ${statusColor[pet.status]}`}
 								>
-									{pet.status}
+									{pet.status.charAt(0).toUpperCase() + pet.status.slice(1)}
 								</span>
 								<button
 									onClick={() => pet.id && deletePet(pet.id)}
@@ -222,7 +227,11 @@ export default function PetsPage() {
 									</span>
 								</div>
 								<p className="text-xs text-muted-foreground">
-									{pet.breed} · {pet.age}y · {pet.gender}
+                  {pet.breed} · {pet.ageMonths != null
+                    ? pet.ageMonths < 12
+                      ? `${pet.ageMonths}mo`
+                      : `${(pet.ageMonths / 12).toFixed(1)}y`
+                    : `${pet.age ?? "?"}y`} · {pet.gender}
 								</p>
 								<p className="text-xs text-foreground/70 mt-3 line-clamp-2 leading-relaxed">
 									{pet.description}
@@ -347,6 +356,20 @@ export default function PetsPage() {
 									<option value="male">Male</option>
 									<option value="female">Female</option>
 								</select>
+                <select
+                  value={form.status}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      status: e.target.value as "available" | "pending" | "adopted",
+                    })
+                  }
+                  className="h-11 rounded-2xl border border-input bg-card px-3 text-sm"
+                  >
+                  <option value="available">Available</option>
+                  <option value="pending">Pending</option>
+                  <option value="adopted">Adopted</option>
+                </select>
 							</div>
 							<textarea
 								value={form.description}
