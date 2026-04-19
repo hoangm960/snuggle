@@ -92,5 +92,15 @@ export const usePets = (): UsePetsReturn => {
 		fetchPets();
 	}, []);
 
-	return { pets, loading, error, fetchPets, getPetById, createPet, updatePet, deletePet, uploadThumbnail };
+	return {
+		pets,
+		loading,
+		error,
+		fetchPets,
+		getPetById,
+		createPet,
+		updatePet,
+		deletePet,
+		uploadThumbnail,
+	};
 };

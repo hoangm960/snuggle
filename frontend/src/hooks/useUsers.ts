@@ -28,7 +28,10 @@ interface UseUsersReturn {
 	fetchUsers: (params?: UseUsersParams) => Promise<void>;
 	updateUserRole: (userId: string, role: "visitor" | "admin") => Promise<boolean>;
 	updateUserStatus: (userId: string, status: "active" | "suspended") => Promise<boolean>;
-	inviteUser: (email: string, role: "visitor" | "admin") => Promise<{ success: boolean; message: string }>;
+	inviteUser: (
+		email: string,
+		role: "visitor" | "admin"
+	) => Promise<{ success: boolean; message: string }>;
 }
 
 export const useUsers = (): UseUsersReturn => {
@@ -61,16 +64,17 @@ export const useUsers = (): UseUsersReturn => {
 	const updateUserRole = async (userId: string, role: "visitor" | "admin"): Promise<boolean> => {
 		try {
 			await api.put(`/admin/users/${userId}`, { role });
-			setUsers((prev) =>
-				prev.map((u) => (u.id === userId ? { ...u, role } : u))
-			);
+			setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role } : u)));
 			return true;
 		} catch {
 			return false;
 		}
 	};
 
-	const updateUserStatus = async (userId: string, status: "active" | "suspended"): Promise<boolean> => {
+	const updateUserStatus = async (
+		userId: string,
+		status: "active" | "suspended"
+	): Promise<boolean> => {
 		try {
 			await api.put(`/admin/users/${userId}`, { accountStatus: status });
 			setUsers((prev) =>
@@ -82,7 +86,10 @@ export const useUsers = (): UseUsersReturn => {
 		}
 	};
 
-	const inviteUser = async (email: string, role: "visitor" | "admin"): Promise<{ success: boolean; message: string }> => {
+	const inviteUser = async (
+		email: string,
+		role: "visitor" | "admin"
+	): Promise<{ success: boolean; message: string }> => {
 		try {
 			const response = await api.post("/admin/invite", { email, role });
 			return { success: response.data.success, message: response.data.message };
@@ -92,5 +99,14 @@ export const useUsers = (): UseUsersReturn => {
 		}
 	};
 
-	return { users, loading, error, total, fetchUsers, updateUserRole, updateUserStatus, inviteUser };
+	return {
+		users,
+		loading,
+		error,
+		total,
+		fetchUsers,
+		updateUserRole,
+		updateUserStatus,
+		inviteUser,
+	};
 };

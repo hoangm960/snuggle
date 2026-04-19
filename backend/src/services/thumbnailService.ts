@@ -9,10 +9,7 @@ interface UploadedFile {
 	size: number;
 }
 
-export const uploadThumbnail = async (
-	petId: string,
-	file: UploadedFile
-): Promise<string> => {
+export const uploadThumbnail = async (petId: string, file: UploadedFile): Promise<string> => {
 	const bucket = storage.bucket();
 	const timestamp = Date.now();
 	const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9.]/g, "_");

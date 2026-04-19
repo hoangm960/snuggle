@@ -23,7 +23,10 @@ export default function UsersPage() {
 	const [inviteEmail, setInviteEmail] = useState("");
 	const [inviteRole, setInviteRole] = useState<"visitor" | "admin">("visitor");
 	const [inviteLoading, setInviteLoading] = useState(false);
-	const [inviteMessage, setInviteMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+	const [inviteMessage, setInviteMessage] = useState<{
+		type: "success" | "error";
+		text: string;
+	} | null>(null);
 
 	const { users, loading, error, fetchUsers, inviteUser } = useUsers();
 
@@ -133,36 +136,58 @@ export default function UsersPage() {
 								<tbody className="divide-y divide-border">
 									{users.length === 0 ? (
 										<tr>
-											<td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
+											<td
+												colSpan={6}
+												className="px-6 py-12 text-center text-muted-foreground"
+											>
 												No users found
 											</td>
 										</tr>
 									) : (
 										users.map((u) => (
-											<tr key={u.id} className="hover:bg-secondary/30 transition-colors">
+											<tr
+												key={u.id}
+												className="hover:bg-secondary/30 transition-colors"
+											>
 												<td className="px-6 py-4">
 													<div className="flex items-center gap-3">
 														<img
-															src={u.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName || "U")}&background=random`}
+															src={
+																u.photoURL ||
+																`https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName || "U")}&background=random`
+															}
 															alt={u.displayName || "User"}
 															className="size-10 rounded-full object-cover"
 														/>
-														<p className="font-medium text-sm">{u.displayName || "No name"}</p>
+														<p className="font-medium text-sm">
+															{u.displayName || "No name"}
+														</p>
 													</div>
 												</td>
 												<td className="px-6 py-4">
-													<span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${roleColor[u.role]}`}>
-														{u.role.charAt(0).toUpperCase() + u.role.slice(1)}
+													<span
+														className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${roleColor[u.role]}`}
+													>
+														{u.role.charAt(0).toUpperCase() +
+															u.role.slice(1)}
 													</span>
 												</td>
 												<td className="px-6 py-4 text-sm text-muted-foreground tabular-nums">
-													{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "-"}
+													{u.createdAt
+														? new Date(u.createdAt).toLocaleDateString()
+														: "-"}
 												</td>
-												<td className="px-6 py-4 text-sm text-muted-foreground">{u.email}</td>
+												<td className="px-6 py-4 text-sm text-muted-foreground">
+													{u.email}
+												</td>
 												<td className="px-6 py-4">
 													<div className="flex items-center gap-2">
-														<div className={`size-2 rounded-full ${statusColor[u.accountStatus]}`} />
-														<span className="text-xs capitalize">{u.accountStatus}</span>
+														<div
+															className={`size-2 rounded-full ${statusColor[u.accountStatus]}`}
+														/>
+														<span className="text-xs capitalize">
+															{u.accountStatus}
+														</span>
 													</div>
 												</td>
 												<td className="px-6 py-4 text-right">
@@ -181,17 +206,28 @@ export default function UsersPage() {
 			</AdminLayout>
 
 			{showInviteModal && (
-				<div className="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={handleCloseModal}>
-					<div onClick={(e) => e.stopPropagation()} className="w-full max-w-md bg-card rounded-3xl shadow-soft p-7">
+				<div
+					className="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-sm flex items-center justify-center p-4"
+					onClick={handleCloseModal}
+				>
+					<div
+						onClick={(e) => e.stopPropagation()}
+						className="w-full max-w-md bg-card rounded-3xl shadow-soft p-7"
+					>
 						<div className="flex items-center justify-between mb-6">
 							<h2 className="font-display text-2xl font-semibold">Invite User</h2>
-							<button onClick={handleCloseModal} className="size-9 rounded-full hover:bg-secondary flex items-center justify-center">
+							<button
+								onClick={handleCloseModal}
+								className="size-9 rounded-full hover:bg-secondary flex items-center justify-center"
+							>
 								<X className="size-4" />
 							</button>
 						</div>
 						<div className="space-y-4">
 							<div>
-								<label className="block text-sm font-medium mb-2">Email Address</label>
+								<label className="block text-sm font-medium mb-2">
+									Email Address
+								</label>
 								<input
 									type="email"
 									value={inviteEmail}
@@ -220,7 +256,9 @@ export default function UsersPage() {
 								</div>
 							</div>
 							{inviteMessage && (
-								<div className={`px-4 py-3 rounded-lg text-sm ${inviteMessage.type === "success" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
+								<div
+									className={`px-4 py-3 rounded-lg text-sm ${inviteMessage.type === "success" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}
+								>
 									{inviteMessage.text}
 								</div>
 							)}

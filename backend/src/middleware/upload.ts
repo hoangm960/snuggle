@@ -1,17 +1,8 @@
 import { Request } from "express";
 import multer, { FileFilterCallback } from "multer";
 
-const fileFilter = (
-	_req: Request,
-	file: Express.Multer.File,
-	cb: FileFilterCallback
-): void => {
-	const allowedMimeTypes = [
-		"image/jpeg",
-		"image/jpg",
-		"image/png",
-		"image/webp",
-	];
+const fileFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCallback): void => {
+	const allowedMimeTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 	if (allowedMimeTypes.includes(file.mimetype)) {
 		cb(null, true);

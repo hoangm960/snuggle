@@ -62,9 +62,10 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
 
 	const response: ApiResponse = {
 		success: true,
-		message: role === "admin" 
-			? "Registration successful. Welcome to Snuggles Admin!"
-			: "Registration successful. Please check your email to verify your account.",
+		message:
+			role === "admin"
+				? "Registration successful. Welcome to Snuggles Admin!"
+				: "Registration successful. Please check your email to verify your account.",
 	};
 
 	res.status(201).json(response);
@@ -149,11 +150,11 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
 	});
 
 	const customToken = await auth.createCustomToken(uid);
-	const user: User = { 
-		id: userDoc.id, 
-		...userData, 
+	const user: User = {
+		id: userDoc.id,
+		...userData,
 		emailVerified: firebaseUser.emailVerified,
-		loginCount: (userData.loginCount || 0) + 1 
+		loginCount: (userData.loginCount || 0) + 1,
 	};
 
 	const apiResponse: ApiResponse<{ user: User; token: string }> = {
@@ -495,7 +496,10 @@ export const verifyEmail = async (req: AuthRequest, res: Response): Promise<void
 	};
 
 	if (!response.ok) {
-		if (data.error?.message === "INVALID_OOB_CODE" || data.error?.message === "EXPIRED_OOB_CODE") {
+		if (
+			data.error?.message === "INVALID_OOB_CODE" ||
+			data.error?.message === "EXPIRED_OOB_CODE"
+		) {
 			throw new AppError("Invalid or expired verification code", 400);
 		}
 		throw new AppError("Email verification failed", 400);
