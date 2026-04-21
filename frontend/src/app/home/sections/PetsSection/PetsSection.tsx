@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePets } from "@/hooks/usePets";
+import { PetCardSkeletonCarousel } from "@/components/PetCardSkeleton";
 
 function useWindowWidth() {
 	const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
@@ -15,7 +16,7 @@ function useWindowWidth() {
 }
 
 export default function PetsSection() {
-	const { pets } = usePets();
+	const { pets, loading } = usePets();
 	const [petIndex, setPetIndex] = useState(0);
 	const windowWidth = useWindowWidth();
 
@@ -76,6 +77,9 @@ export default function PetsSection() {
 				</div>
 
 				{/* ✅ Responsive grid (NO JS) */}
+			{loading ? (
+				<PetCardSkeletonCarousel count={3} />
+			) : (
 				<div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
 					{petList.slice(petIndex, petIndex + visibleCount).map((pet) => (
 						<div
@@ -116,6 +120,7 @@ export default function PetsSection() {
 						</div>
 					))}
 				</div>
+			)}
 
 				{/* Dots */}
 				<div className="flex justify-center gap-2 mt-10">

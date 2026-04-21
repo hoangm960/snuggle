@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePets } from "@/hooks/usePets";
 import { Navbar } from "@/components/Navbar";
+import { PetCardSkeletonGrid } from "@/components/PetCardSkeleton";
 
 export default function PetsPage() {
 	const { pets, loading, error, fetchPets } = usePets();
@@ -360,7 +361,9 @@ export default function PetsPage() {
 					</div>
 
 					{/* Pet cards grid */}
-					{filtered.length > 0 ? (
+					{loading ? (
+						<PetCardSkeletonGrid count={8} />
+					) : filtered.length > 0 ? (
 						<div
 							style={{
 								display: "grid",
