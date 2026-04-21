@@ -1,10 +1,10 @@
 jest.setTimeout(30000);
 
-jest.mock('../src/config/firebase', () => ({
+jest.mock("../src/config/firebase", () => ({
 	auth: {
 		getUser: jest.fn(),
 		getUserByEmail: jest.fn(),
-		createCustomToken: jest.fn().mockResolvedValue('mock-custom-token'),
+		createCustomToken: jest.fn().mockResolvedValue("mock-custom-token"),
 		createUser: jest.fn(),
 		updateUser: jest.fn(),
 		deleteUser: jest.fn(),
@@ -14,7 +14,9 @@ jest.mock('../src/config/firebase', () => ({
 	db: {
 		collection: jest.fn().mockReturnValue({
 			doc: jest.fn().mockReturnValue({
-				get: jest.fn().mockResolvedValue({ exists: false, id: 'mock-id', data: () => ({}) }),
+				get: jest
+					.fn()
+					.mockResolvedValue({ exists: false, id: "mock-id", data: () => ({}) }),
 				set: jest.fn().mockResolvedValue(undefined),
 				update: jest.fn().mockResolvedValue(undefined),
 				delete: jest.fn().mockResolvedValue(undefined),
@@ -29,7 +31,7 @@ jest.mock('../src/config/firebase', () => ({
 				get: jest.fn().mockResolvedValue({ docs: [] }),
 			}),
 			get: jest.fn().mockResolvedValue({ docs: [] }),
-			add: jest.fn().mockResolvedValue({ id: 'mock-id' }),
+			add: jest.fn().mockResolvedValue({ id: "mock-id" }),
 		}),
 	},
 	storage: {
@@ -37,7 +39,7 @@ jest.mock('../src/config/firebase', () => ({
 			file: jest.fn().mockReturnValue({
 				save: jest.fn().mockResolvedValue(undefined),
 				delete: jest.fn().mockResolvedValue(undefined),
-				getSignedUrl: jest.fn().mockResolvedValue('https://mock.url/file'),
+				getSignedUrl: jest.fn().mockResolvedValue("https://mock.url/file"),
 			}),
 		}),
 	},

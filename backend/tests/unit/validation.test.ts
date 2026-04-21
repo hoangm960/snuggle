@@ -1,7 +1,7 @@
-import { validate, validateQuery } from '../../src/middleware/validate';
-import { Request, Response, NextFunction } from 'express';
+import { validate, validateQuery } from "../../src/middleware/validate";
+import { Request, Response, NextFunction } from "express";
 
-describe('Validation Middleware', () => {
+describe("Validation Middleware", () => {
 	let mockRequest: Partial<Request>;
 	let mockResponse: Partial<Response>;
 	let mockNext: NextFunction;
@@ -18,27 +18,27 @@ describe('Validation Middleware', () => {
 		mockNext = jest.fn();
 	});
 
-	describe('validate', () => {
-		it('should call next for valid body', () => {
+	describe("validate", () => {
+		it("should call next for valid body", () => {
 			const schema = {
-				parse: jest.fn().mockReturnValue({ name: 'Test' }),
+				parse: jest.fn().mockReturnValue({ name: "Test" }),
 			};
 
-			mockRequest.body = { name: 'Test' };
+			mockRequest.body = { name: "Test" };
 
 			validate(schema as any)(mockRequest as Request, mockResponse as Response, mockNext);
 
 			expect(mockNext).toHaveBeenCalled();
 		});
 
-		it('should call next for invalid body (error passed to next)', () => {
+		it("should call next for invalid body (error passed to next)", () => {
 			const schema = {
 				parse: jest.fn().mockImplementation(() => {
-					throw new Error('Invalid');
+					throw new Error("Invalid");
 				}),
 			};
 
-			mockRequest.body = { invalid: 'data' };
+			mockRequest.body = { invalid: "data" };
 
 			validate(schema as any)(mockRequest as Request, mockResponse as Response, mockNext);
 
@@ -46,29 +46,37 @@ describe('Validation Middleware', () => {
 		});
 	});
 
-	describe('validateQuery', () => {
-		it('should call next for valid query', () => {
+	describe("validateQuery", () => {
+		it("should call next for valid query", () => {
 			const schema = {
-				parse: jest.fn().mockReturnValue({ status: 'active' }),
+				parse: jest.fn().mockReturnValue({ status: "active" }),
 			};
 
-			mockRequest.query = { status: 'active' };
+			mockRequest.query = { status: "active" };
 
-			validateQuery(schema as any)(mockRequest as Request, mockResponse as Response, mockNext);
+			validateQuery(schema as any)(
+				mockRequest as Request,
+				mockResponse as Response,
+				mockNext
+			);
 
 			expect(mockNext).toHaveBeenCalled();
 		});
 
-		it('should pass error to next for invalid query', () => {
+		it("should pass error to next for invalid query", () => {
 			const schema = {
 				parse: jest.fn().mockImplementation(() => {
-					throw new Error('Invalid query');
+					throw new Error("Invalid query");
 				}),
 			};
 
-			mockRequest.query = { invalid: 'query' };
+			mockRequest.query = { invalid: "query" };
 
-			validateQuery(schema as any)(mockRequest as Request, mockResponse as Response, mockNext);
+			validateQuery(schema as any)(
+				mockRequest as Request,
+				mockResponse as Response,
+				mockNext
+			);
 
 			expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
 		});

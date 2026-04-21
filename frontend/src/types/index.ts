@@ -11,12 +11,16 @@ export interface Pet {
 	species: "dog" | "cat" | "other";
 	breed: string;
 	age: number;
+	ageMonths?: number;
 	gender: "male" | "female";
 	description: string;
 	thumbnail?: string;
 	photoUrls?: string[];
 	shelterId: string;
 	status: "available" | "adopted" | "pending";
+	isVaccinated?: boolean;
+	isNeutered?: boolean;
+	arrivalDate?: string;
 	createdAt: Date;
 	updatedAt: Date;
 }

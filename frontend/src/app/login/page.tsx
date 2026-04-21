@@ -12,6 +12,7 @@ import {
 	getIdToken,
 } from "firebase/auth";
 import { setAuthSession } from "@/lib/cookies";
+import { useAuth } from "@/hooks/useAuth";
 import { Navbar } from "@/components/Navbar";
 
 const FOOTER_LINKS = [
@@ -29,6 +30,7 @@ const FOOTER_LINKS = [
 
 export default function LoginPage() {
 	const router = useRouter();
+	const { refreshUser } = useAuth();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
@@ -61,12 +63,21 @@ export default function LoginPage() {
 		setLoading(true);
 		try {
 			const response = await api.post("/auth/login", { email, password });
-			if (!response.data.success) {
+			if (response.data.success !== true) {
 				throw new Error(response.data.message || "Login failed");
+			}
+			if (!response.data.data?.token || !response.data.data?.user) {
+				throw new Error("Invalid response from server");
 			}
 			const { token, user } = response.data.data;
 			setAuthSession(token, user);
-			router.push("/home");
+			refreshUser();
+			// Redirect based on role
+			if (user.role === "admin") {
+				router.push("/admin");
+			} else {
+				router.push("/home");
+			}
 		} catch (err: any) {
 			const msg =
 				err.response?.data?.message || err.message || "Login failed. Please try again.";
@@ -83,11 +94,15 @@ export default function LoginPage() {
 			const result = await signInWithPopup(auth, provider);
 			const idToken = await getIdToken(result.user);
 			const response = await api.post("/auth/google", { idToken });
-			if (!response.data.success) {
+			if (response.data.success !== true) {
 				throw new Error(response.data.message || "Google login failed");
+			}
+			if (!response.data.data?.token || !response.data.data?.user) {
+				throw new Error("Invalid response from server");
 			}
 			const { token, user } = response.data.data;
 			setAuthSession(token, user);
+			refreshUser();
 			router.push("/home");
 		} catch (err: any) {
 			const msg =
@@ -107,11 +122,15 @@ export default function LoginPage() {
 			const result = await signInWithPopup(auth, provider);
 			const idToken = await getIdToken(result.user);
 			const response = await api.post("/auth/facebook", { idToken });
-			if (!response.data.success) {
+			if (response.data.success !== true) {
 				throw new Error(response.data.message || "Facebook login failed");
+			}
+			if (!response.data.data?.token || !response.data.data?.user) {
+				throw new Error("Invalid response from server");
 			}
 			const { token, user } = response.data.data;
 			setAuthSession(token, user);
+			refreshUser();
 			router.push("/home");
 		} catch (err: any) {
 			const msg =

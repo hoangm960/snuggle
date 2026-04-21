@@ -96,13 +96,8 @@ describe("useAuth", () => {
 
 describe("AuthProvider", () => {
 	it("should render children", async () => {
-		const { getByText } = renderHook(
-			() => <div>Child Content</div>,
-			{
-				wrapper: ({ children }) => (
-					<AuthProvider>{children}</AuthProvider>
-				),
-			}
-		);
+		const { getByText } = renderHook(() => <div>Child Content</div>, {
+			wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
+		});
 	});
 });

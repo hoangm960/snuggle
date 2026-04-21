@@ -12,6 +12,7 @@ import {
 	getIdToken,
 } from "firebase/auth";
 import { setAuthSession } from "@/lib/cookies";
+import { useAuth } from "@/hooks/useAuth";
 import { Navbar } from "@/components/Navbar";
 
 const FOOTER_LINKS = [
@@ -29,6 +30,7 @@ const FOOTER_LINKS = [
 
 export default function RegisterPage() {
 	const router = useRouter();
+	const { refreshUser } = useAuth();
 	const [email, setEmail] = useState("");
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
@@ -40,6 +42,7 @@ export default function RegisterPage() {
 	const [passwordError, setPasswordError] = useState("");
 	const [confirmError, setConfirmError] = useState("");
 	const [loading, setLoading] = useState(false);
+	const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
 	const validate = () => {
 		let valid = true;
@@ -82,12 +85,10 @@ export default function RegisterPage() {
 				password,
 				displayName: username,
 			});
-			if (!response.data.success) {
+			if (response.data.success !== true) {
 				throw new Error(response.data.message || "Registration failed");
 			}
-			const { token, user } = response.data.data;
-			setAuthSession(token, user);
-			router.push("/home");
+			setRegistrationSuccess(true);
 		} catch (err: any) {
 			const msg =
 				err.response?.data?.message ||
@@ -106,11 +107,12 @@ export default function RegisterPage() {
 			const result = await signInWithPopup(auth, provider);
 			const idToken = await getIdToken(result.user);
 			const response = await api.post("/auth/google", { idToken });
-			if (!response.data.success) {
+			if (response.data.success !== true) {
 				throw new Error(response.data.message || "Google registration failed");
 			}
 			const { token, user } = response.data.data;
 			setAuthSession(token, user);
+			refreshUser();
 			router.push("/home");
 		} catch (err: any) {
 			const msg =
@@ -135,6 +137,7 @@ export default function RegisterPage() {
 			}
 			const { token, user } = response.data.data;
 			setAuthSession(token, user);
+			refreshUser();
 			router.push("/home");
 		} catch (err: any) {
 			const msg =
@@ -149,7 +152,7 @@ export default function RegisterPage() {
 
 	return (
 		<div className="flex flex-col min-h-screen w-full">
-<Navbar showAuthButtons={false} />
+			<Navbar showAuthButtons={false} />
 
 			{/* Middle row */}
 			<div className="flex flex-1">
@@ -167,223 +170,276 @@ export default function RegisterPage() {
 				<div className="flex-1 flex flex-col bg-white overflow-y-auto">
 					<main className="flex-1 flex flex-col items-center justify-center px-6 py-20">
 						<div className="w-full max-w-[420px]">
-							<h1
-								className="text-[26px] font-semibold text-[#333333] mb-2 leading-tight text-center"
-								style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-							>
-								Create an account
-							</h1>
+							{registrationSuccess ? (
+								<div className="text-center">
+									<div className="w-16 h-16 mx-auto mb-6 rounded-full bg-[#7AADA1]/10 flex items-center justify-center">
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											width="32"
+											height="32"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="#7AADA1"
+											strokeWidth="2"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+										>
+											<polyline points="20 6 9 17 4 12" />
+										</svg>
+									</div>
+									<h1
+										className="text-[26px] font-semibold text-[#333333] mb-2 leading-tight"
+										style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+									>
+										Check your email
+									</h1>
+									<p className="text-sm text-[#666666] mb-8">
+										We've sent a verification link to <strong>{email}</strong>.
+										<br />
+										Please check your inbox and click the link to verify your
+										account.
+									</p>
+									<Link
+										href="/login"
+										className="inline-block text-white text-base font-semibold px-8 py-3 rounded-[16px] bg-[#111] hover:opacity-90 transition-opacity"
+										style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+									>
+										Go to Log in
+									</Link>
+								</div>
+							) : (
+								<>
+									<h1
+										className="text-[26px] font-semibold text-[#333333] mb-2 leading-tight text-center"
+										style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+									>
+										Create an account
+									</h1>
 
-							<p className="text-xs text-center text-[#999999] mb-14">
-								Already have an account?{" "}
-								<Link
-									href="/login"
-									style={{ color: "#7AADA1" }}
-									className="font-medium hover:underline"
-								>
-									Log in
-								</Link>
-							</p>
+									<p className="text-xs text-center text-[#999999] mb-14">
+										Already have an account?{" "}
+										<Link
+											href="/login"
+											style={{ color: "#7AADA1" }}
+											className="font-medium hover:underline"
+										>
+											Log in
+										</Link>
+									</p>
 
-							<form onSubmit={handleRegister} noValidate>
-								{/* Email */}
-								<div className="mb-9">
-									<label className="block text-sm font-medium text-[#333333] mb-2">
-										Email address
-									</label>
-									<input
-										type="email"
-										value={email}
-										onChange={(e) => {
-											setEmail(e.target.value);
-											setEmailError("");
-										}}
-										placeholder="you@example.com"
-										style={{ paddingLeft: "20px", paddingRight: "16px" }}
-										className={`w-full h-10 rounded-[16px] border text-sm outline-none transition-colors
+									<form onSubmit={handleRegister} noValidate>
+										{/* Email */}
+										<div className="mb-9">
+											<label className="block text-sm font-medium text-[#333333] mb-2">
+												Email address
+											</label>
+											<input
+												type="email"
+												value={email}
+												onChange={(e) => {
+													setEmail(e.target.value);
+													setEmailError("");
+												}}
+												placeholder="you@example.com"
+												style={{
+													paddingLeft: "20px",
+													paddingRight: "16px",
+												}}
+												className={`w-full h-10 rounded-[16px] border text-sm outline-none transition-colors
                       ${emailError ? "border-[#EB4335] bg-red-50" : "border-[#CCCCCC] bg-[#F6F6F6] focus:border-[#333333]"}`}
-									/>
-									{emailError && (
-										<p className="mt-1.5 text-xs text-[#EB4335] flex items-center gap-1">
-											<ErrorIcon />
-											{emailError}
-										</p>
-									)}
-								</div>
+											/>
+											{emailError && (
+												<p className="mt-1.5 text-xs text-[#EB4335] flex items-center gap-1">
+													<ErrorIcon />
+													{emailError}
+												</p>
+											)}
+										</div>
 
-								{/* Username */}
-								<div className="mb-9">
-									<label className="block text-sm font-medium text-[#333333] mb-2">
-										User name
-									</label>
-									<input
-										type="text"
-										value={username}
-										onChange={(e) => {
-											setUsername(e.target.value);
-											setUsernameError("");
-										}}
-										placeholder="yourname"
-										style={{ paddingLeft: "20px", paddingRight: "16px" }}
-										className={`w-full h-10 rounded-[16px] border text-sm outline-none transition-colors
+										{/* Username */}
+										<div className="mb-9">
+											<label className="block text-sm font-medium text-[#333333] mb-2">
+												User name
+											</label>
+											<input
+												type="text"
+												value={username}
+												onChange={(e) => {
+													setUsername(e.target.value);
+													setUsernameError("");
+												}}
+												placeholder="yourname"
+												style={{
+													paddingLeft: "20px",
+													paddingRight: "16px",
+												}}
+												className={`w-full h-10 rounded-[16px] border text-sm outline-none transition-colors
                       ${usernameError ? "border-[#EB4335] bg-red-50" : "border-[#CCCCCC] bg-[#F6F6F6] focus:border-[#333333]"}`}
-									/>
-									{usernameError && (
-										<p className="mt-1.5 text-xs text-[#EB4335] flex items-center gap-1">
-											<ErrorIcon />
-											{usernameError}
-										</p>
-									)}
-								</div>
+											/>
+											{usernameError && (
+												<p className="mt-1.5 text-xs text-[#EB4335] flex items-center gap-1">
+													<ErrorIcon />
+													{usernameError}
+												</p>
+											)}
+										</div>
 
-								{/* Password */}
-								<div className="mb-9">
-									<label className="block text-sm font-medium text-[#333333] mb-2">
-										Password
-									</label>
-									<div className="relative">
-										<input
-											type={showPassword ? "text" : "password"}
-											value={password}
-											onChange={(e) => {
-												setPassword(e.target.value);
-												setPasswordError("");
-											}}
-											placeholder="••••••••"
-											style={{ paddingLeft: "20px", paddingRight: "56px" }}
-											className={`w-full h-10 rounded-[16px] border text-sm outline-none transition-colors
+										{/* Password */}
+										<div className="mb-9">
+											<label className="block text-sm font-medium text-[#333333] mb-2">
+												Password
+											</label>
+											<div className="relative">
+												<input
+													type={showPassword ? "text" : "password"}
+													value={password}
+													onChange={(e) => {
+														setPassword(e.target.value);
+														setPasswordError("");
+													}}
+													placeholder="••••••••"
+													style={{
+														paddingLeft: "20px",
+														paddingRight: "56px",
+													}}
+													className={`w-full h-10 rounded-[16px] border text-sm outline-none transition-colors
                         ${passwordError ? "border-[#EB4335] bg-red-50" : "border-[#CCCCCC] bg-[#F6F6F6] focus:border-[#333333]"}`}
-										/>
-										<button
-											type="button"
-											onClick={() => setShowPassword((v) => !v)}
-											className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-[#666666] hover:text-[#333333]"
-										>
-											{showPassword ? "Hide" : "Show"}
-										</button>
-									</div>
-									{passwordError && (
-										<p className="mt-1.5 text-xs text-[#EB4335] flex items-center gap-1">
-											<ErrorIcon />
-											{passwordError}
-										</p>
-									)}
-									{!passwordError && (
-										<p className="mt-1.5 text-xs text-[#666666]">
-											Your password must have at least 8 characters
-										</p>
-									)}
-								</div>
+												/>
+												<button
+													type="button"
+													onClick={() => setShowPassword((v) => !v)}
+													className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-[#666666] hover:text-[#333333]"
+												>
+													{showPassword ? "Hide" : "Show"}
+												</button>
+											</div>
+											{passwordError && (
+												<p className="mt-1.5 text-xs text-[#EB4335] flex items-center gap-1">
+													<ErrorIcon />
+													{passwordError}
+												</p>
+											)}
+											{!passwordError && (
+												<p className="mt-1.5 text-xs text-[#666666]">
+													Your password must have at least 8 characters
+												</p>
+											)}
+										</div>
 
-								{/* Re-enter Password */}
-								<div className="mb-9">
-									<label className="block text-sm font-medium text-[#333333] mb-2">
-										Re-enter Password
-									</label>
-									<div className="relative">
-										<input
-											type={showConfirm ? "text" : "password"}
-											value={confirmPassword}
-											onChange={(e) => {
-												setConfirmPassword(e.target.value);
-												setConfirmError("");
-											}}
-											placeholder="••••••••"
-											style={{ paddingLeft: "20px", paddingRight: "56px" }}
-											className={`w-full h-10 rounded-[16px] border text-sm outline-none transition-colors
+										{/* Re-enter Password */}
+										<div className="mb-9">
+											<label className="block text-sm font-medium text-[#333333] mb-2">
+												Re-enter Password
+											</label>
+											<div className="relative">
+												<input
+													type={showConfirm ? "text" : "password"}
+													value={confirmPassword}
+													onChange={(e) => {
+														setConfirmPassword(e.target.value);
+														setConfirmError("");
+													}}
+													placeholder="••••••••"
+													style={{
+														paddingLeft: "20px",
+														paddingRight: "56px",
+													}}
+													className={`w-full h-10 rounded-[16px] border text-sm outline-none transition-colors
                         ${confirmError ? "border-[#EB4335] bg-red-50" : "border-[#CCCCCC] bg-[#F6F6F6] focus:border-[#333333]"}`}
-										/>
+												/>
+												<button
+													type="button"
+													onClick={() => setShowConfirm((v) => !v)}
+													className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-[#666666] hover:text-[#333333]"
+												>
+													{showConfirm ? "Hide" : "Show"}
+												</button>
+											</div>
+											{confirmError && (
+												<p className="mt-1.5 text-xs text-[#EB4335] flex items-center gap-1">
+													<ErrorIcon />
+													{confirmError}
+												</p>
+											)}
+										</div>
+
+										{/* Terms */}
+										<p className="text-xs text-[#999999] mb-10 leading-relaxed">
+											By creating an account, you agree to our{" "}
+											<a
+												href="#"
+												className="underline text-[#333333] hover:text-[#7AADA1]"
+											>
+												Terms of use
+											</a>{" "}
+											and{" "}
+											<a
+												href="#"
+												className="underline text-[#333333] hover:text-[#7AADA1]"
+											>
+												Privacy Policy
+											</a>
+										</p>
+
+										{/* Submit */}
+										<div className="flex justify-center mb-14">
+											<button
+												type="submit"
+												disabled={loading}
+												className="flex items-center justify-center text-white text-base font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
+												style={{
+													width: "140px",
+													height: "48px",
+													borderRadius: "16px",
+													backgroundColor: "#111",
+												}}
+											>
+												{loading ? "Signing up…" : "Sign up"}
+											</button>
+										</div>
+									</form>
+
+									{/* Or continue with */}
+									<div
+										className="text-xs text-[#999999] text-center"
+										style={{ border: "none", marginBottom: "24px" }}
+									>
+										Or continue with
+									</div>
+
+									{/* Social buttons */}
+									<div className="flex flex-col gap-4">
 										<button
 											type="button"
-											onClick={() => setShowConfirm((v) => !v)}
-											className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-[#666666] hover:text-[#333333]"
+											onClick={handleGoogleRegister}
+											className="flex items-center justify-center gap-3 w-full text-[#333333] text-sm font-medium hover:bg-[#F6F6F6] transition-colors whitespace-nowrap"
+											style={{
+												height: "48px",
+												borderRadius: "40px",
+												border: "1px solid #333",
+												background: "#FFF",
+											}}
 										>
-											{showConfirm ? "Hide" : "Show"}
+											<GoogleIcon />
+											Continue with Google
+										</button>
+										<button
+											type="button"
+											onClick={handleFacebookRegister}
+											className="flex items-center justify-center gap-3 w-full text-[#333333] text-sm font-medium hover:bg-[#F6F6F6] transition-colors whitespace-nowrap"
+											style={{
+												height: "48px",
+												borderRadius: "40px",
+												border: "1px solid #333",
+												background: "#FFF",
+											}}
+										>
+											<FacebookIcon />
+											Continue with Facebook
 										</button>
 									</div>
-									{confirmError && (
-										<p className="mt-1.5 text-xs text-[#EB4335] flex items-center gap-1">
-											<ErrorIcon />
-											{confirmError}
-										</p>
-									)}
-								</div>
-
-								{/* Terms */}
-								<p className="text-xs text-[#999999] mb-10 leading-relaxed">
-									By creating an account, you agree to our{" "}
-									<a
-										href="#"
-										className="underline text-[#333333] hover:text-[#7AADA1]"
-									>
-										Terms of use
-									</a>{" "}
-									and{" "}
-									<a
-										href="#"
-										className="underline text-[#333333] hover:text-[#7AADA1]"
-									>
-										Privacy Policy
-									</a>
-								</p>
-
-								{/* Submit */}
-								<div className="flex justify-center mb-14">
-									<button
-										type="submit"
-										disabled={loading}
-										className="flex items-center justify-center text-white text-base font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
-										style={{
-											width: "140px",
-											height: "48px",
-											borderRadius: "16px",
-											backgroundColor: "#111",
-										}}
-									>
-										{loading ? "Signing up…" : "Sign up"}
-									</button>
-								</div>
-							</form>
-
-							{/* Or continue with */}
-							<div
-								className="text-xs text-[#999999] text-center"
-								style={{ border: "none", marginBottom: "24px" }}
-							>
-								Or continue with
-							</div>
-
-							{/* Social buttons */}
-							<div className="flex flex-col gap-4">
-								<button
-									type="button"
-									onClick={handleGoogleRegister}
-									className="flex items-center justify-center gap-3 w-full text-[#333333] text-sm font-medium hover:bg-[#F6F6F6] transition-colors whitespace-nowrap"
-									style={{
-										height: "48px",
-										borderRadius: "40px",
-										border: "1px solid #333",
-										background: "#FFF",
-									}}
-								>
-									<GoogleIcon />
-									Continue with Google
-								</button>
-								<button
-									type="button"
-									onClick={handleFacebookRegister}
-									className="flex items-center justify-center gap-3 w-full text-[#333333] text-sm font-medium hover:bg-[#F6F6F6] transition-colors whitespace-nowrap"
-									style={{
-										height: "48px",
-										borderRadius: "40px",
-										border: "1px solid #333",
-										background: "#FFF",
-									}}
-								>
-									<FacebookIcon />
-									Continue with Facebook
-								</button>
-							</div>
+								</>
+							)}
 						</div>
 					</main>
 				</div>

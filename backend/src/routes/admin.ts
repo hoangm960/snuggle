@@ -6,6 +6,7 @@ import {
 	getUserActivityHistory,
 	updateUserRole,
 	updateUserStatus,
+	inviteUser,
 } from "../controllers/adminController";
 import { authenticate } from "../middleware/auth";
 import { requireAdmin } from "../middleware/admin";
@@ -16,6 +17,44 @@ const router = Router();
 
 router.use(authenticate);
 router.use(requireAdmin);
+
+router.post(
+	"/invite",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		const { email, role } = req.body;
+		const adminId = req.user?.uid;
+
+		if (!adminId) {
+			throw new AppError("Unauthorized", 401);
+		}
+
+		if (!email || !role) {
+			throw new AppError("Email and role are required", 400);
+		}
+
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailRegex.test(email)) {
+			throw new AppError("Invalid email format", 400);
+		}
+
+		if (role !== "visitor" && role !== "admin") {
+			throw new AppError("Invalid role value", 400);
+		}
+
+		const adminName = req.user?.displayName || "Admin";
+		const result = await inviteUser({
+			email,
+			role,
+			adminId,
+			adminName,
+		});
+
+		res.status(result.success ? 200 : 400).json({
+			success: result.success,
+			message: result.message,
+		});
+	})
+);
 
 router.get(
 	"/users",
