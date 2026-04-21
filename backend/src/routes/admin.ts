@@ -7,6 +7,7 @@ import {
 	updateUserRole,
 	updateUserStatus,
 	inviteUser,
+	deleteUser,
 } from "../controllers/adminController";
 import { authenticate } from "../middleware/auth";
 import { requireAdmin } from "../middleware/admin";
@@ -129,6 +130,25 @@ router.put(
 			success: true,
 			data: updatedUser,
 			message: "User updated successfully",
+		});
+	})
+);
+
+router.delete(
+	"/users/:id",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		const { id } = req.params;
+		const adminId = req.user?.uid;
+
+		if (!adminId) {
+			throw new AppError("Unauthorized", 401);
+		}
+
+		const result = await deleteUser(adminId, id);
+
+		res.status(200).json({
+			success: result.success,
+			message: result.message,
 		});
 	})
 );

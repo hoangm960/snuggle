@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "../_components/AdminLayout";
 import { useUsers, User } from "@/hooks/useUsers";
-import { Search, MoreHorizontal, UserPlus, Loader2, X } from "lucide-react";
+import { Search, MoreHorizontal, UserPlus, Loader2, X, Shield, ShieldOff, Trash2 } from "lucide-react";
 
 const roleColor: Record<User["role"], string> = {
 	visitor: "bg-primary-soft text-primary-deep",
@@ -27,8 +27,25 @@ export default function UsersPage() {
 		type: "success" | "error";
 		text: string;
 	} | null>(null);
+	const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+	const [deleteLoading, setDeleteLoading] = useState(false);
+	const [actionMessage, setActionMessage] = useState<{
+		type: "success" | "error";
+		text: string;
+	} | null>(null);
 
-	const { users, loading, error, fetchUsers, inviteUser } = useUsers();
+	const {
+		users,
+		loading,
+		error,
+		fetchUsers,
+		inviteUser,
+		updateUserRole,
+		updateUserStatus,
+		deleteUser,
+	} = useUsers();
 
 	useEffect(() => {
 		const timer = setTimeout(() => {
@@ -44,7 +61,7 @@ export default function UsersPage() {
 		});
 	}, [debouncedSearch, roleFilter, fetchUsers]);
 
-	const handleRoleChange = (role: string) => {
+	const handleFilterRoleChange = (role: string) => {
 		setRoleFilter(role);
 	};
 
@@ -75,6 +92,60 @@ export default function UsersPage() {
 		setInviteMessage(null);
 	};
 
+	const handleToggleDropdown = (userId: string) => {
+		setActiveDropdown(activeDropdown === userId ? null : userId);
+	};
+
+	const handleRoleChange = async (userId: string, newRole: "visitor" | "admin") => {
+		setActiveDropdown(null);
+		const success = await updateUserRole(userId, newRole);
+		setActionMessage({
+			type: success ? "success" : "error",
+			text: success ? "Role updated successfully" : "Failed to update role",
+		});
+		setTimeout(() => setActionMessage(null), 3000);
+	};
+
+	const handleStatusToggle = async (userId: string, currentStatus: "active" | "suspended") => {
+		setActiveDropdown(null);
+		const newStatus = currentStatus === "active" ? "suspended" : "active";
+		const success = await updateUserStatus(userId, newStatus);
+		setActionMessage({
+			type: success ? "success" : "error",
+			text: success ? `User ${newStatus === "active" ? "activated" : "suspended"} successfully` : "Failed to update status",
+		});
+		setTimeout(() => setActionMessage(null), 3000);
+	};
+
+	const handleDeleteClick = (user: User) => {
+		setActiveDropdown(null);
+		setDeleteTarget(user);
+		setShowDeleteModal(true);
+	};
+
+	const handleConfirmDelete = async () => {
+		if (!deleteTarget) return;
+		setDeleteLoading(true);
+		const result = await deleteUser(deleteTarget.id);
+		setDeleteLoading(false);
+		if (result.success) {
+			setShowDeleteModal(false);
+			setDeleteTarget(null);
+			fetchUsers({
+				search: debouncedSearch || undefined,
+				role: roleFilter === "All" ? undefined : roleFilter,
+			});
+		} else {
+			setActionMessage({ type: "error", text: result.message });
+		}
+		setTimeout(() => setActionMessage(null), 3000);
+	};
+
+	const handleCloseDeleteModal = () => {
+		setShowDeleteModal(false);
+		setDeleteTarget(null);
+	};
+
 	return (
 		<>
 			<AdminLayout title="Users" subtitle="Manage visitors and administrators.">
@@ -92,7 +163,7 @@ export default function UsersPage() {
 						{["All", "visitor", "admin"].map((r) => (
 							<button
 								key={r}
-								onClick={() => handleRoleChange(r)}
+								onClick={() => handleFilterRoleChange(r)}
 								className={`px-4 h-11 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${roleFilter === r ? "bg-primary text-primary-foreground shadow-glow" : "bg-card border border-border text-muted-foreground hover:text-foreground"}`}
 							>
 								{r === "All" ? "All" : r.charAt(0).toUpperCase() + r.slice(1)}
@@ -190,10 +261,65 @@ export default function UsersPage() {
 														</span>
 													</div>
 												</td>
-												<td className="px-6 py-4 text-right">
-													<button className="size-8 rounded-full hover:bg-secondary flex items-center justify-center text-muted-foreground">
+												<td className="px-6 py-4 text-right relative">
+													<button
+														onClick={() => handleToggleDropdown(u.id)}
+														className="size-8 rounded-full hover:bg-secondary flex items-center justify-center text-muted-foreground"
+													>
 														<MoreHorizontal className="size-4" />
 													</button>
+													{activeDropdown === u.id && (
+														<div className="absolute right-6 top-full mt-1 w-48 bg-card border border-border rounded-xl shadow-lg py-1 z-10">
+															<button
+																onClick={() =>
+																	handleRoleChange(
+																		u.id,
+																		u.role === "admin"
+																			? "visitor"
+																			: "admin"
+																	)
+																}
+																className="w-full px-3 py-2 text-left text-sm hover:bg-secondary flex items-center gap-2"
+															>
+																{u.role === "admin" ? (
+																	<>
+																		<Shield className="size-4" />
+																		<span>Demote to Visitor</span>
+																	</>
+																) : (
+																	<>
+																	<Shield className="size-4" />
+																		<span>Promote to Admin</span>
+																</>
+																)}
+															</button>
+															<button
+																onClick={() =>
+																	handleStatusToggle(u.id, u.accountStatus)
+																}
+																className="w-full px-3 py-2 text-left text-sm hover:bg-secondary flex items-center gap-2"
+															>
+																{u.accountStatus === "active" ? (
+																	<>
+																		<ShieldOff className="size-4" />
+																		<span>Suspend User</span>
+																	</>
+																) : (
+																	<>
+																		<Shield className="size-4" />
+																		<span>Activate User</span>
+																</>
+																)}
+															</button>
+															<button
+																onClick={() => handleDeleteClick(u)}
+																className="w-full px-3 py-2 text-left text-sm hover:bg-secondary flex items-center gap-2 text-destructive"
+															>
+																<Trash2 className="size-4" />
+																<span>Delete User</span>
+															</button>
+														</div>
+													)}
 												</td>
 											</tr>
 										))
@@ -269,6 +395,73 @@ export default function UsersPage() {
 							>
 								{inviteLoading ? <Loader2 className="size-4 animate-spin" /> : null}
 								{inviteLoading ? "Sending..." : "Send Invitation"}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{actionMessage && (
+				<div
+					className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-3 rounded-lg text-sm z-50 ${
+						actionMessage.type === "success"
+							? "bg-success/10 text-success"
+							: "bg-destructive/10 text-destructive"
+					}`}
+				>
+					{actionMessage.text}
+				</div>
+			)}
+
+			{showDeleteModal && deleteTarget && (
+				<div
+					className="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-sm flex items-center justify-center p-4"
+					onClick={handleCloseDeleteModal}
+				>
+					<div
+						onClick={(e) => e.stopPropagation()}
+						className="w-full max-w-md bg-card rounded-3xl shadow-soft p-7"
+					>
+						<div className="flex items-center gap-4 mb-6">
+							<div className="size-12 rounded-full bg-destructive/10 flex items-center justify-center">
+								<Trash2 className="size-6 text-destructive" />
+							</div>
+							<div>
+								<h2 className="font-display text-xl font-semibold">
+									Delete User
+								</h2>
+								<p className="text-sm text-muted-foreground">
+									This action cannot be undone.
+								</p>
+							</div>
+						</div>
+						<div className="bg-secondary/40 rounded-2xl p-4 mb-6">
+							<p className="text-sm">
+								Are you sure you want to delete{" "}
+								<strong className="font-semibold">
+									{deleteTarget.displayName || "this user"}
+								</strong>
+								{" "}({deleteTarget.email})? Their account
+								and all associated data will be permanently
+								removed.
+							</p>
+						</div>
+						<div className="flex gap-3">
+							<button
+								onClick={handleCloseDeleteModal}
+								className="flex-1 h-11 rounded-2xl border border-border text-sm font-medium hover:bg-secondary"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={handleConfirmDelete}
+								disabled={deleteLoading}
+								className="flex-1 h-11 rounded-2xl bg-destructive text-destructive-foreground text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+							>
+								{deleteLoading ? (
+									<Loader2 className="size-4 animate-spin" />
+								) : null}
+								{deleteLoading ? "Deleting..." : "Delete User"}
 							</button>
 						</div>
 					</div>
