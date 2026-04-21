@@ -52,12 +52,13 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
 	await usersCollection.doc(userRecord.uid).set(userData);
 
 	const verificationLink = await auth.generateEmailVerificationLink(email);
-	console.log(`Verification link for ${email}: ${verificationLink}`);
 
-	await sendVerificationEmail({
+	sendVerificationEmail({
 		to: email,
 		displayName: displayName || "",
 		verificationLink,
+	}).catch((err) => {
+		console.error(`Failed to send verification email to ${email}:`, err.message);
 	});
 
 	const response: ApiResponse = {
@@ -79,6 +80,9 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
 		throw new AppError("Firebase API key not configured", 500);
 	}
 
+	const controller = new AbortController();
+	const timeoutId = setTimeout(() => controller.abort(), 10000);
+
 	const response = await fetch(
 		`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${firebaseApiKey}`,
 		{
@@ -89,8 +93,11 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
 				password,
 				returnSecureToken: true,
 			}),
+			signal: controller.signal,
 		}
 	);
+
+	clearTimeout(timeoutId);
 
 	const data = (await response.json()) as {
 		error?: { message?: string };
@@ -143,11 +150,14 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
 		return;
 	}
 
-	await usersCollection.doc(uid).update({
-		loginCount: (userData.loginCount || 0) + 1,
-		lastLoginAt: new Date(),
-		updatedAt: new Date(),
-	});
+	usersCollection
+		.doc(uid)
+		.update({
+			loginCount: (userData.loginCount || 0) + 1,
+			lastLoginAt: new Date(),
+			updatedAt: new Date(),
+		})
+		.catch(() => {});
 
 	const customToken = await auth.createCustomToken(uid);
 	const user: User = {
