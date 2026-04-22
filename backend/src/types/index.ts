@@ -145,7 +145,7 @@ export interface HealthRecord {
 export interface AdoptionApplication {
 	id?: string;
 	petId: string;
-	petName: string;
+	name: string;
 	adopterId: string;
 	adopterName: string;
 	shelterId: string;

@@ -13,7 +13,6 @@ export const updateShelterSchema = createShelterSchema.partial();
 
 export const createApplicationSchema = z.object({
 	petId: z.string().min(1, "Pet ID is required"),
-	petName: z.string().min(1, "Pet name is required"),
 	message: z.string().max(2000).optional(),
 });
 
