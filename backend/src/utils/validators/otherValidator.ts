@@ -31,3 +31,53 @@ export const updateContractSchema = z.object({
 	status: z.enum(["draft", "signed", "archived"]).optional(),
 	contractFileURL: z.string().url().optional(),
 });
+
+export const createSavedSearchSchema = z.object({
+	name: z.string().min(1, "Name is required").max(100),
+	searchCriteria: z.object({
+		species: z.enum(["dog", "cat", "bird", "rabbit", "other"]).optional(),
+		size: z.enum(["small", "medium", "large"]).optional(),
+		ageMonthsMin: z.number().int().min(0).optional(),
+		ageMonthsMax: z.number().int().min(0).optional(),
+		gender: z.enum(["male", "female"]).optional(),
+		isVaccinated: z.boolean().optional(),
+		isNeutered: z.boolean().optional(),
+	}).optional(),
+	notifyOnNewMatches: z.boolean().default(false),
+});
+
+export const createReviewSchema = z.object({
+	rating: z.number().int().min(1, "Rating must be at least 1").max(5, "Rating must be at most 5"),
+	comment: z.string().max(2000).optional(),
+});
+
+export const updateReviewStatusSchema = z.object({
+	status: z.enum(["pending", "approved", "rejected"]).optional(),
+});
+
+export const createAdopterProfileSchema = z.object({
+	firstName: z.string().min(1, "First name is required").max(100),
+	lastName: z.string().min(1, "Last name is required").max(100),
+	dateOfBirth: z.string().refine((val) => !isNaN(Date.parse(val)), "Invalid date format"),
+	address: z.string().max(500).optional(),
+	phone: z.string().max(20).optional(),
+	occupation: z.string().max(100).optional(),
+	hasOtherPets: z.boolean().default(false),
+	hasChildren: z.boolean().default(false),
+	housingType: z.enum(["house", "apartment", "other"]).optional(),
+	hasFence: z.boolean().default(false),
+	experienceWithPets: z.enum(["none", "some", "experienced"]).optional(),
+	adoptionReason: z.string().max(1000).optional(),
+});
+
+export const updateAdopterProfileSchema = createAdopterProfileSchema.partial();
+
+export const inviteUserSchema = z.object({
+	email: z.string().email("Invalid email format"),
+	role: z.enum(["visitor", "admin"]),
+});
+
+export const updateUserSchema = z.object({
+	role: z.enum(["visitor", "admin"]).optional(),
+	accountStatus: z.enum(["active", "suspended"]).optional(),
+});
