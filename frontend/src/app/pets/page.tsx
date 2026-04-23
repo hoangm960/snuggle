@@ -613,7 +613,7 @@ function PetCard({ pet }: { pet: Pet }) {
 			? "dog"
 			: "other";
 	const isFemale = pet.gender === "female";
-	const displayAge = pet.age ? `${pet.age} year${pet.age === 1 ? "" : "s"}` : "";
+	const displayAge = pet.ageMonths ? `${pet.ageMonths} month${pet.ageMonths === 1 ? "" : "s"}` : "";
 
 	return (
 		<div
