@@ -6,9 +6,34 @@ import { usePets } from "@/hooks/usePets";
 import { Navbar } from "@/components/Navbar";
 import { PetCardSkeletonGrid } from "@/components/PetCardSkeleton";
 
+
+type PetType = "cat" | "dog" | "other";
+
+const typeConfig: Record<PetType, {
+	bg: string;
+	color: string;
+	label: string;
+}> = {
+	cat: {
+		bg: "#E8F4F1",
+		color: "#216959",
+		label: "🐱 Cat",
+	},
+	dog: {
+		bg: "#FDF2F0",
+		color: "#C4857A",
+		label: "🐶 Dog",
+	},
+	other: {
+		bg: "#EEF3FD",
+		color: "#5A78C4",
+		label: "👀 Other",
+	},
+};
+
 export default function PetsPage() {
 	const { pets, loading, error, fetchPets } = usePets();
-	const [activeFilter, setActiveFilter] = useState<"all" | "cat" | "dog">("all");
+	const [activeFilter, setActiveFilter] = useState<"all" | "cat" | "dog" | "other">("all");
 	const [search, setSearch] = useState("");
 
 	const filtered = (pets || []).filter((p) => {
@@ -163,6 +188,10 @@ export default function PetsPage() {
 								{
 									num: (pets || []).filter((p) => p.species === "dog").length,
 									label: "Dogs",
+								},
+								{
+									num: (pets || []).filter((p) => p.species === "other").length,
+									label: "Other",
 								},
 							].map((s) => (
 								<div key={s.label}>
@@ -319,6 +348,12 @@ export default function PetsPage() {
 										key: "dog",
 										label: "Dogs",
 										count: (pets || []).filter((p) => p.species === "dog")
+											.length,
+									},
+									{
+										key: "other",
+										label: "Other",
+										count: (pets || []).filter((p) => p.species === "other")
 											.length,
 									},
 								] as const
@@ -571,7 +606,12 @@ import { Pet } from "@/types";
 function PetCard({ pet }: { pet: Pet }) {
 	const [hovered, setHovered] = useState(false);
 
-	const isCat = pet.species === "cat";
+	const type: PetType =
+		pet.species === "cat"
+			? "cat"
+			: pet.species === "dog"
+			? "dog"
+			: "other";
 	const isFemale = pet.gender === "female";
 	const displayAge = pet.age ? `${pet.age} year${pet.age === 1 ? "" : "s"}` : "";
 
@@ -642,7 +682,7 @@ function PetCard({ pet }: { pet: Pet }) {
 				<div
 					className="absolute top-4 left-4"
 					style={{
-						background: isCat ? "#E8F4F1" : "#FDF2F0",
+						background: typeConfig[type].bg,
 						borderRadius: "20px",
 						padding: "4px 12px",
 					}}
@@ -652,10 +692,10 @@ function PetCard({ pet }: { pet: Pet }) {
 							fontFamily: "'Space Grotesk', sans-serif",
 							fontSize: "11px",
 							fontWeight: 600,
-							color: isCat ? "#216959" : "#C4857A",
+							color: typeConfig[type].color,
 						}}
 					>
-						{isCat ? "🐱 Cat" : "🐶 Dog"}
+						{typeConfig[type].label}
 					</span>
 				</div>
 			</div>
@@ -702,7 +742,7 @@ function PetCard({ pet }: { pet: Pet }) {
 				</p>
 
 				<Link
-					href="/register"
+					href="/register" // TODO: redirect to pet detail page
 					className="block text-center font-semibold py-3 rounded-[40px] transition-all hover:opacity-90"
 					style={{
 						background: "#7AADA1",
