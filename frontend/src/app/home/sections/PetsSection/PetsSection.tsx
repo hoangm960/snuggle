@@ -107,11 +107,11 @@ export default function PetsSection() {
 								</h3>
 
 								<p className="mb-5 text-[13px] text-[#888]">
-									{pet.breed} · {pet.age} year
-									{pet.age === 1 ? "" : "s"}
+									{pet.breed} · {pet.ageMonths} month
+									{pet.ageMonths === 1 ? "" : "s"}
 								</p>
 								<Link
-									href="/register"
+									href="/register" // TODO: redirect to pet detail page if already login
 									className="block text-center py-3 rounded-full bg-[#F0F7F5] text-[#7AADA1] text-[13px] font-semibold hover:opacity-80"
 								>
 									Adopt Me
