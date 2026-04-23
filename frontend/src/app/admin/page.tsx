@@ -3,6 +3,10 @@
 import { AdminLayout } from "./_components/AdminLayout";
 import { StatCard } from "./_components/StatCard";
 import { Users, PawPrint, HeartHandshake, Clock } from "lucide-react";
+import  { usePets } from "@/hooks/usePets";
+import { useUsers } from "@/hooks/useUsers";
+import { useEffect } from "react";
+
 import {
 	ResponsiveContainer,
 	LineChart,
@@ -20,7 +24,7 @@ import {
 import {
 	stats,
 	donationTrend,
-	speciesSplit,
+	//speciesSplit,
 	adoptionWeek,
 	customerMap,
 	requests,
@@ -34,7 +38,30 @@ const statusBadge = {
 	Delivered: "bg-success text-primary-foreground",
 } as const;
 
+const getPercent = (count: number, total: number) =>
+	total ? Math.round((count / total) * 1000) / 10 : 0;
+
 export default function AdminDashboard() {
+	const { pets = [] } = usePets();
+
+
+	const counts = pets.reduce(
+		(acc, p) => {
+			if (p.species === "cat") acc.cat++;
+			else if (p.species === "dog") acc.dog++;
+			else acc.other++;
+			return acc;
+		},
+		{ cat: 0, dog: 0, other: 0 }
+	);
+
+	const totalPets = pets.length;
+
+	const speciesSplit = [
+		{ name: "Cat", value: getPercent(counts.cat, totalPets), color: "#7AADA1" },
+		{ name: "Dog", value: getPercent(counts.dog, totalPets), color: "#C4857A" },
+		{ name: "Other", value: getPercent(counts.other, totalPets), color: "#5A78C4" },
+	];
 	return (
 		<AdminLayout
 			title="Dashboard"
@@ -44,7 +71,7 @@ export default function AdminDashboard() {
 			<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
 				<StatCard
 					label="Total Users"
-					value={stats.totalUsers.toLocaleString()}
+					value={total.toLocaleString()}
 					icon={Users}
 					trend={{ value: "8.5%", up: true }}
 					iconBg="primary"
