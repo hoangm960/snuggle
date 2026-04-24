@@ -1,10 +1,10 @@
-# Snuggles
+# Snuggle
 
 A full-stack pet adoption platform where users can browse, list, and adopt pets.
 
 ## Description
 
-Snuggles is a pet adoption platform built with Next.js and Express.js. Users can browse available pets, create listings for pets they're rehoming, and manage their adoption profiles. The platform uses Firebase for authentication and Firestore for data storage.
+Snuggle is a pet adoption platform built with Next.js and Express.js. Users can browse available pets, create listings for pets they're rehoming, and manage their adoption profiles. The platform uses Firebase for authentication and Firestore for data storage.
 
 For tech stack and folder structure, see [SPEC.md](./SPEC.md).
 
