@@ -260,7 +260,6 @@ export const inviteUser = async ({
 	const existingUsers = await usersCollection.where("email", "==", emailLower).get();
 	if (!existingUsers.empty) {
 		const existingUser = existingUsers.docs[0];
-		const userData = existingUser.data() as User;
 		await usersCollection.doc(existingUser.id).update({
 			role,
 			updatedAt: new Date(),
