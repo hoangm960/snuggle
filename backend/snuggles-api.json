@@ -117,6 +117,113 @@
 			]
 		},
 		{
+			"name": "KYC Verification (Admin)",
+			"item": [
+				{
+					"name": "List pending verifications",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/kyc/pending",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "kyc", "pending"]
+						},
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						]
+					}
+				},
+				{
+					"name": "Get KYC statistics",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/kyc/stats",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "kyc", "stats"]
+						},
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						]
+					}
+				},
+				{
+					"name": "Get verification by ID",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/kyc/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "kyc", ":id"]
+						},
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						]
+					}
+				},
+				{
+					"name": "Approve verification",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "{{baseUrl}}/api/kyc/:id/approve",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "kyc", ":id", "approve"]
+						},
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						]
+					}
+				},
+				{
+					"name": "Reject verification",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "{{baseUrl}}/api/kyc/:id/reject",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "kyc", ":id", "reject"]
+						},
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"reason\": \"\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
 			"name": "Pets",
 			"item": [
 				{
@@ -1086,9 +1193,9 @@
 					"request": {
 						"method": "GET",
 						"url": {
-							"raw": "{{baseUrl}}/api/users/me/kyc",
+							"raw": "{{baseUrl}}/api/kyc/me",
 							"host": ["{{baseUrl}}"],
-							"path": ["api", "users", "me", "kyc"]
+							"path": ["api", "kyc", "me"]
 						},
 						"header": [
 							{
@@ -1103,9 +1210,9 @@
 					"request": {
 						"method": "POST",
 						"url": {
-							"raw": "{{baseUrl}}/api/users/me/kyc",
+							"raw": "{{baseUrl}}/api/kyc/me",
 							"host": ["{{baseUrl}}"],
-							"path": ["api", "users", "me", "kyc"]
+							"path": ["api", "kyc", "me"]
 						},
 						"header": [
 							{
@@ -1120,36 +1227,6 @@
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"idDocumentURL\": \"\",\n  \"selfieURL\": \"\",\n  \"kycProvider\": \"\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						}
-					}
-				},
-				{
-					"name": "Review KYC (admin)",
-					"request": {
-						"method": "PUT",
-						"url": {
-							"raw": "{{baseUrl}}/api/users/me/kyc/:userId/:id/review",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "users", "me", "kyc", ":userId", ":id", "review"]
-						},
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{authToken}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"status\": \"approved\",\n  \"rejectionReason\": \"\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
