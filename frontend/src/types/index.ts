@@ -40,3 +40,25 @@ export interface ApiResponse<T = unknown> {
 	message?: string;
 	error?: string;
 }
+
+export interface Chat {
+	id?: string;
+	type: "application" | "support";
+	applicationId?: string;
+	participantIds: string[];
+	claimedBy?: string;
+	claimedAt?: Date;
+	lastMessage?: string;
+	lastMessageAt?: Date;
+	createdAt: Date;
+}
+
+export interface Message {
+	id?: string;
+	chatId?: string;
+	senderId: string;
+	content: string;
+	type: "text" | "image" | "system";
+	isRead: boolean;
+	sentAt: Date;
+}
