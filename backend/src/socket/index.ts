@@ -70,18 +70,18 @@ export const initializeSocket = (httpServer: HttpServer): Server => {
 	io.on("connection", (socket: AuthenticatedSocket) => {
 		console.log(`User connected: ${socket.userId}`);
 
-		socket.on("join_chat", (applicationId: string) => {
+		socket.on("join_chat", (chatId: string) => {
 			if (!socket.userId) return;
 
-			const room = `chat:${applicationId}`;
+			const room = `chat:${chatId}`;
 			socket.join(room);
 			console.log(`User ${socket.userId} joined room: ${room}`);
 		});
 
-		socket.on("leave_chat", (applicationId: string) => {
+		socket.on("leave_chat", (chatId: string) => {
 			if (!socket.userId) return;
 
-			const room = `chat:${applicationId}`;
+			const room = `chat:${chatId}`;
 			socket.leave(room);
 			console.log(`User ${socket.userId} left room: ${room}`);
 		});

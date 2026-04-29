@@ -12,6 +12,8 @@ import {
 import {
 	getAllChats,
 	getChatMessages,
+	getPendingChats,
+	acceptChat,
 } from "../controllers/chatController";
 import { authenticate } from "../middleware/auth";
 import { requireAdmin } from "../middleware/admin";
@@ -159,6 +161,18 @@ router.get(
 );
 
 router.get(
+	"/chats/pending",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		const chats = await getPendingChats();
+
+		res.status(200).json({
+			success: true,
+			data: chats,
+		});
+	})
+);
+
+router.get(
 	"/chats/:id/messages",
 	asyncHandler(async (req: AuthRequest, res: Response) => {
 		const { id } = req.params;
@@ -172,6 +186,18 @@ router.get(
 		res.status(200).json({
 			success: true,
 			data: messages,
+		});
+	})
+);
+
+router.post(
+	"/chats/:id/accept",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		await acceptChat(req, res);
+
+		res.status(200).json({
+			success: true,
+			message: "Chat claimed successfully",
 		});
 	})
 );
