@@ -20,23 +20,30 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
 	const [error, setError] = useState<string | null>(null);
 	const [isOtherTyping, setIsOtherTyping] = useState(false);
 	const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+	const messagesEndRef = useRef<HTMLDivElement>(null);
 
-	const handleNewMessage = useCallback((message: Message) => {
-		if (message.chatId === chat?.id) {
-			setMessages((prev) => {
-				if (prev.some((m) => m.id === message.id)) return prev;
-				return [...prev, message];
-			});
-		}
-	}, [chat?.id]);
+	const handleNewMessage = useCallback(
+		(message: Message) => {
+			if (message.chatId === chat?.id) {
+				setMessages((prev) => {
+					if (prev.some((m) => m.id === message.id)) return prev;
+					return [...prev, message];
+				});
+			}
+		},
+		[chat?.id]
+	);
 
-	const handleUserTyping = useCallback((data: { chatId: string; userId: string }) => {
-		if (data.chatId === chat?.id && data.userId !== user?.id && data.userId !== user?.uid) {
-			setIsOtherTyping(true);
-			if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-			typingTimeoutRef.current = setTimeout(() => setIsOtherTyping(false), 3000);
-		}
-	}, [chat?.id, user?.id, user?.uid]);
+	const handleUserTyping = useCallback(
+		(data: { chatId: string; userId: string }) => {
+			if (data.chatId === chat?.id && data.userId !== user?.id) {
+				setIsOtherTyping(true);
+				if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+				typingTimeoutRef.current = setTimeout(() => setIsOtherTyping(false), 3000);
+			}
+		},
+		[chat?.id, user?.id]
+	);
 
 	const { joinChat, leaveChat, sendMessage, sendTyping } = useSocket({
 		onNewMessage: handleNewMessage,
@@ -81,6 +88,10 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
 	}, [loadChat]);
 
 	useEffect(() => {
+		messagesEndRef.current?.scrollIntoView();
+	}, [messages]);
+
+	useEffect(() => {
 		if (!chat?.id) return;
 		const chatId = chat.id;
 		joinChat(chatId);
@@ -120,7 +131,7 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
 
 	return (
 		<div
-			className="fixed bottom-20 right-6 z-50 w-80 overflow-hidden rounded-xl shadow-2xl"
+			className="fixed bottom-20 right-6 z-50 overflow-hidden rounded-xl shadow-2xl"
 			style={{
 				height: isMinimized ? "auto" : "450px",
 				backgroundColor: "white",
@@ -139,19 +150,44 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
 						aria-label={isMinimized ? "Expand" : "Minimize"}
 					>
 						{isMinimized ? (
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+							>
 								<polyline points="17 11 12 6 7 11" />
 								<polyline points="17 18 12 13 7 18" />
 							</svg>
 						) : (
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+							>
 								<polyline points="17 6 12 11 7 6" />
 								<polyline points="17 13 12 18 7 13" />
 							</svg>
 						)}
 					</button>
-					<button onClick={onClose} className="p-1 text-white hover:opacity-80" aria-label="Close">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+					<button
+						onClick={onClose}
+						className="p-1 text-white hover:opacity-80"
+						aria-label="Close"
+					>
+						<svg
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="2"
+						>
 							<line x1="18" y1="6" x2="6" y2="18" />
 							<line x1="6" y1="6" x2="18" y2="18" />
 						</svg>
@@ -177,17 +213,21 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
 							</div>
 						) : messages.length === 0 ? (
 							<div className="flex h-full items-center justify-center text-center text-gray-400">
-								<div className="text-sm">No messages yet. Start the conversation!</div>
+								<div className="text-sm">
+									No messages yet. Start the conversation!
+								</div>
 							</div>
-) : (
+						) : (
 							messages.map((msg) => {
-								const isOwnMessage = msg.senderId === user?.uid || msg.senderId === user?.id;
+								const isOwnMessage = msg.senderId === user?.id;
 								return (
 									<div
 										key={msg.id}
 										className="mb-2 flex"
 										style={{
-											justifyContent: isOwnMessage ? "flex-end" : "flex-start",
+											justifyContent: isOwnMessage
+												? "flex-end"
+												: "flex-start",
 										}}
 									>
 										<div
@@ -204,8 +244,11 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
 								);
 							})
 						)}
+						<div ref={messagesEndRef} />
 						{isOtherTyping && (
-							<div className="text-xs text-gray-400 px-3 py-1">Someone is typing...</div>
+							<div className="text-xs text-gray-400 px-3 py-1">
+								Someone is typing...
+							</div>
 						)}
 					</div>
 
@@ -239,3 +282,4 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
 		</div>
 	);
 }
+
