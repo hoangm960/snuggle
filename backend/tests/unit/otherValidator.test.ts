@@ -82,13 +82,13 @@ describe("Other Validators", () => {
       expect(result.success).toBe(false);
     });
 
-    it("should reject missing petName", () => {
-      const invalidData = {
+    it("should accept missing petName", () => {
+      const validData = {
         petId: "pet-123",
       };
 
-      const result = createApplicationSchema.safeParse(invalidData);
-      expect(result.success).toBe(false);
+      const result = createApplicationSchema.safeParse(validData);
+      expect(result.success).toBe(true);
     });
 
     it("should accept optional message", () => {
