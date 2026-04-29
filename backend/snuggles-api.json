@@ -1241,6 +1241,139 @@
 					}
 				}
 			]
+		},
+		{
+			"name": "Chats",
+			"item": [
+				{
+					"name": "Get user's chats",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/chats",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "chats"]
+						},
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						]
+					}
+				},
+				{
+					"name": "Get chat by ID",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/chats/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "chats", ":id"]
+						},
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						]
+					}
+				},
+				{
+					"name": "Get messages in chat",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/chats/:id/messages",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "chats", ":id", "messages"]
+						},
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						]
+					}
+				},
+				{
+					"name": "Create new chat",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "{{baseUrl}}/api/chats",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "chats"]
+						},
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"participantId\": \"\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "Send message",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "{{baseUrl}}/api/chats/:id/messages",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "chats", ":id", "messages"]
+						},
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"content\": \"\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "Mark message as read",
+					"request": {
+						"method": "PUT",
+						"url": {
+							"raw": "{{baseUrl}}/api/chats/:id/messages/:messageId/read",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "chats", ":id", "messages", ":messageId", "read"]
+						},
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						]
+					}
+				}
+			]
 		}
 	]
 }

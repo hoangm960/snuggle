@@ -173,8 +173,11 @@ export interface AdoptionContract {
 
 export interface Chat {
 	id?: string;
-	applicationId: string;
+	type: "application" | "support";
+	applicationId?: string;
 	participantIds: string[];
+	claimedBy?: string | null;
+	claimedAt?: Date;
 	lastMessage?: string;
 	lastMessageAt?: Date;
 	createdAt: Date;
