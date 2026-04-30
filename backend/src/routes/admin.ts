@@ -7,11 +7,20 @@ import {
 	updateUserRole,
 	updateUserStatus,
 	inviteUser,
+	deleteUser,
 } from "../controllers/adminController";
+import {
+	getAllChats,
+	getChatMessages,
+	getPendingChats,
+	acceptChat,
+} from "../controllers/chatController";
 import { authenticate } from "../middleware/auth";
 import { requireAdmin } from "../middleware/admin";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { AppError } from "../middleware/errorHandler";
+import { validate } from "../middleware/validate";
+import { inviteUserSchema, updateUserSchema } from "../utils/validators/otherValidator";
 
 const router = Router();
 
@@ -20,25 +29,13 @@ router.use(requireAdmin);
 
 router.post(
 	"/invite",
+	validate(inviteUserSchema),
 	asyncHandler(async (req: AuthRequest, res: Response) => {
 		const { email, role } = req.body;
 		const adminId = req.user?.uid;
 
 		if (!adminId) {
 			throw new AppError("Unauthorized", 401);
-		}
-
-		if (!email || !role) {
-			throw new AppError("Email and role are required", 400);
-		}
-
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		if (!emailRegex.test(email)) {
-			throw new AppError("Invalid email format", 400);
-		}
-
-		if (role !== "visitor" && role !== "admin") {
-			throw new AppError("Invalid role value", 400);
 		}
 
 		const adminName = req.user?.displayName || "Admin";
@@ -96,6 +93,7 @@ router.get(
 
 router.put(
 	"/users/:id",
+	validate(updateUserSchema),
 	asyncHandler(async (req: AuthRequest, res: Response) => {
 		const { id } = req.params;
 		const { role, accountStatus } = req.body;
@@ -112,16 +110,10 @@ router.put(
 		let updatedUser;
 
 		if (role) {
-			if (role !== "visitor" && role !== "admin") {
-				throw new AppError("Invalid role value", 400);
-			}
 			updatedUser = await updateUserRole(adminId, id, role);
 		}
 
 		if (accountStatus) {
-			if (accountStatus !== "active" && accountStatus !== "suspended") {
-				throw new AppError("Invalid status value", 400);
-			}
 			updatedUser = await updateUserStatus(adminId, id, accountStatus);
 		}
 
@@ -129,6 +121,83 @@ router.put(
 			success: true,
 			data: updatedUser,
 			message: "User updated successfully",
+		});
+	})
+);
+
+router.delete(
+	"/users/:id",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		const { id } = req.params;
+		const adminId = req.user?.uid;
+
+		if (!adminId) {
+			throw new AppError("Unauthorized", 401);
+		}
+
+		const result = await deleteUser(adminId, id);
+
+		res.status(200).json({
+			success: result.success,
+			message: result.message,
+		});
+	})
+);
+
+router.get(
+	"/chats",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		const { limit } = req.query;
+
+		const chats = await getAllChats({
+			limit: limit ? parseInt(limit as string, 10) : 20,
+		});
+
+		res.status(200).json({
+			success: true,
+			data: chats,
+		});
+	})
+);
+
+router.get(
+	"/chats/pending",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		const chats = await getPendingChats();
+
+		res.status(200).json({
+			success: true,
+			data: chats,
+		});
+	})
+);
+
+router.get(
+	"/chats/:id/messages",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		const { id } = req.params;
+		const { limit } = req.query;
+
+		const messages = await getChatMessages({
+			chatId: id,
+			limit: limit ? parseInt(limit as string, 10) : 50,
+		});
+
+		res.status(200).json({
+			success: true,
+			data: messages,
+		});
+	})
+);
+
+router.post(
+	"/chats/:id/accept",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		await acceptChat(req, res);
+
+		res.status(200).json({
+			success: true,
+			message: "Chat claimed successfully",
 		});
 	})
 );

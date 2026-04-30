@@ -4,9 +4,11 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import { createServer } from "http";
 
 import { logger } from "./utils/logger";
 import { errorHandler, notFound } from "./middleware/errorHandler";
+import { initializeSocket } from "./socket";
 import petRoutes from "./routes/pets";
 import authRoutes from "./routes/auth";
 import adminRoutes from "./routes/admin";
@@ -17,6 +19,7 @@ import savedSearchRoutes from "./routes/savedSearches";
 import adopterProfileRoutes from "./routes/adopterProfile";
 import reviewRoutes from "./routes/reviews";
 import kycRoutes from "./routes/kyc";
+import chatRoutes from "./routes/chat";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -41,11 +44,15 @@ app.use("/api/users/me/saved-searches", savedSearchRoutes);
 app.use("/api/users/me/adopter-profile", adopterProfileRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/kyc", kycRoutes);
+app.use("/api/chats", chatRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+const httpServer = createServer(app);
+initializeSocket(httpServer);
+
+httpServer.listen(PORT, () => {
 	console.log(`Server running on port ${PORT}`);
 });
 

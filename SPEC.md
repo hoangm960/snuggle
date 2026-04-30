@@ -1,6 +1,14 @@
 # Snuggle - System Specification
 
-Version 1.3
+Version 1.2
+
+## Revision History
+
+| Date       | Version | Description                                | Author                                             |
+|------------|----------|--------------------------------------------|----------------------------------------------------|
+| 20/03/2026 | 1.0      | Initial draft of use-case specification      | Le Thi Que My, Hoang Nhat Minh, Huynh Nhat Huyen, Mai Le Khanh Trinh |
+| 30/03/2026 | 1.1      | Add use-cases                               | Que My                                             |
+| 23/04/2026 | 1.2      | Separate Chat Bot + Chat usecase into 2 separate usecases | Que My |
 
 ## Table of Contents
 
@@ -587,29 +595,53 @@ There are two main views for 2 different users for this website: the Admin manag
 
 #### 1.2.3.5 Real-time Chat System
 
-| Use case Name     | Audit AI & Real-time Chat                                                                                                                            |
+| Use case Name     | Real-time Chat Moderation                                                                                                                            |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Brief description | Admin monitors AI chatbot performance and audits real-time chat transcripts between shelters and adopters to ensure professional conduct and safety. |
+| Brief description | Admin monitors peer-to-peer transcripts between shelters and adopters to enforce community guidelines and ensure user safety. |
 | Actors            | Admin                                                                                                                                                |
 | Basic Flow        | See below                                                                                                                                            |
 | Alternative Flows | See below                                                                                                                                            |
-| Pre-conditions    | Chat/AI interactions are being logged in Firestore.                                                                                                  |
-| Post-conditions   | Communication quality and safety standards are maintained                                                                                            |
+| Pre-conditions    | Peer-to-peer chat logs are being stored in Firestore; Automated flagging system is active.                                                                                                  |
+| Post-conditions   | Professional conduct is maintained; Users violating safety policies are restricted.                                                                                            |
 
 **Basic Flow:**
 
-1. Admin accesses the "Communication Logs" section.
-2. Admin views transcripts of AI bot interactions to check for accuracy in "Expert Advice".
-3. Admin reviews flagged chat messages between users for potential abuse or policy violations.
-4. Admin updates the AI bot's knowledge base or intervenes in a chat if necessary.
+1. Admin accesses the "Communication Logs" or "Flagged Chats" section.
+2. Admin reviews messages flagged by the system for potential abuse, scams, or policy violations.
+3. Admin reads the context of the conversation between the shelter and the adopter.
+4. Admin takes action (e.g., issues a warning, bans a user, or dismisses the flag).
 
 **Alternative Flows:**
 
-- **Bot Error**: Admin identifies the AI is giving incorrect medical advice and manually overrides the response.
+- **Direct Intervention**: Admin joins a live chat session to mediate a conflict or clarify a policy in real-time.
 
 ---
 
-#### 1.2.3.6 Digital Adoption Contract
+#### 1.2.3.6 AI Performance Optimization
+
+| Use case Name     | Audit & Refine AI Responses                                                                                                                            |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Brief description | Admin monitors AI chatbot interactions to ensure technical accuracy and updates the knowledge base to improve future performance. |
+| Actors            | Admin                                                                                                                                                |
+| Basic Flow        | See below                                                                                                                                            |
+| Alternative Flows | See below                                                                                                                                            |
+| Pre-conditions    | AI bot interactions are being logged in Firestore; Expert Advice knowledge base is active.                                                                                                  |
+| Post-conditions   | AI response accuracy is improved; Knowledge base is up-to-date.                                                                                            |
+
+**Basic Flow:**
+
+1. Admin accesses the "AI Insights/Logs" dashboard.
+2. Admin filters logs by "Low Confidence" or "Expert Advice" categories.
+3. Admin reviews the bot's response against established animal welfare protocols.
+4. Admin updates the AI's knowledge base or prompts to correct recurring misinformation.
+
+**Alternative Flows:**
+
+- **Incorrect Advice Override**: Admin identifies a specific incorrect medical/behavioral response and manually pushes a correction to the user or flags the entry for immediate developer review.
+
+---
+
+#### 1.2.3.7 Digital Adoption Contract
 
 | Use case Name     | Review & Execute Adoption Contracts                                                                                             |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -630,7 +662,7 @@ There are two main views for 2 different users for this website: the Admin manag
 
 ---
 
-#### 1.2.3.7 Post Management
+#### 1.2.3.8 Post Management
 
 | Use case Name     | Moderate Post-Adoption Journal                                                                                                                                  |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -655,7 +687,7 @@ There are two main views for 2 different users for this website: the Admin manag
 
 ---
 
-#### 1.2.3.8 Health Record Management
+#### 1.2.3.9 Health Record Management
 
 | Use case Name     | Manage Pet Medical Histories                                                                                                          |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
@@ -679,7 +711,7 @@ There are two main views for 2 different users for this website: the Admin manag
 
 ---
 
-#### 1.2.3.9 Rate & Review Management
+#### 1.2.3.10 Rate & Review Management
 
 | Use case Name     | Moderate Shelter Ratings & Reviews                                                                                           |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------- |

@@ -347,3 +347,38 @@ export const deleteInvite = async (token: string): Promise<void> => {
 		await invitationsCollection.doc(invites.docs[0].id).delete();
 	}
 };
+
+export const deleteUser = async (
+	adminId: string,
+	targetUserId: string
+): Promise<{ success: boolean; message: string }> => {
+	if (adminId === targetUserId) {
+		throw new Error("Action Denied: You cannot delete your own account");
+	}
+
+	const userDoc = await usersCollection.doc(targetUserId).get();
+
+	if (!userDoc.exists) {
+		throw new Error("User not found");
+	}
+
+	const userData = userDoc.data();
+	const userEmail = userData?.email;
+
+	await usersCollection.doc(targetUserId).delete();
+
+	await logAdminAction(adminId, "DELETE_USER", targetUserId, {
+		email: userEmail,
+	});
+
+	try {
+		await auth.deleteUser(targetUserId);
+	} catch (error) {
+		console.error(`Failed to delete Firebase Auth user ${targetUserId}:`, error);
+	}
+
+	return {
+		success: true,
+		message: `User ${userEmail || targetUserId} has been deleted successfully`,
+	};
+};

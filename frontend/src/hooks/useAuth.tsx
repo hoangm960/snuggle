@@ -50,6 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				const authenticated = isAuthenticated();
 				if (!authenticated || !storedUser) {
 					setUser({
+						id: fbUser.uid,
 						email: fbUser.email || "",
 						displayName: fbUser.displayName || "",
 						role: "adopter",

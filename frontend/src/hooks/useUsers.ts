@@ -32,6 +32,7 @@ interface UseUsersReturn {
 		email: string,
 		role: "visitor" | "admin"
 	) => Promise<{ success: boolean; message: string }>;
+	deleteUser: (userId: string) => Promise<{ success: boolean; message: string }>;
 }
 
 export const useUsers = (): UseUsersReturn => {
@@ -99,6 +100,21 @@ export const useUsers = (): UseUsersReturn => {
 		}
 	};
 
+	const deleteUser = async (
+		userId: string
+	): Promise<{ success: boolean; message: string }> => {
+		try {
+			const response = await api.delete(`/admin/users/${userId}`);
+			if (response.data.success) {
+				setUsers((prev) => prev.filter((u) => u.id !== userId));
+			}
+			return { success: response.data.success, message: response.data.message };
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : "Failed to delete user";
+			return { success: false, message };
+		}
+	};
+
 	return {
 		users,
 		loading,
@@ -108,5 +124,6 @@ export const useUsers = (): UseUsersReturn => {
 		updateUserRole,
 		updateUserStatus,
 		inviteUser,
+		deleteUser,
 	};
 };
