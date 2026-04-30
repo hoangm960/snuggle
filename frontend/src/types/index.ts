@@ -62,3 +62,31 @@ export interface Message {
 	isRead: boolean;
 	sentAt: Date;
 }
+
+export interface KycVerification {
+	id?: string;
+	userId?: string;
+	status: "pending" | "approved" | "rejected";
+	fullName?: string;
+	dateOfBirth?: string;
+	idNumber?: string;
+	phone?: string;
+	idDocumentURL?: string;
+	financialDocumentURL?: string;
+	kycProvider?: string;
+	rejectionReason?: string;
+	attemptCount: number;
+	submittedAt: Date;
+	reviewedAt?: Date;
+}
+
+export interface KycStatusResponse {
+	kyc: KycVerification | null;
+	user: {
+		id: string;
+		email: string;
+		displayName: string;
+		photoURL?: string;
+		isKycVerified: boolean;
+	} | null;
+}
