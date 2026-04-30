@@ -53,8 +53,12 @@ export interface KycVerification {
 	id?: string;
 	userId?: string;
 	status: "pending" | "approved" | "rejected";
+	fullName?: string;
+	dateOfBirth?: string;
+	idNumber?: string;
+	phone?: string;
 	idDocumentURL?: string;
-	selfieURL?: string;
+	financialDocumentURL?: string;
 	kycProvider?: string;
 	rejectionReason?: string;
 	attemptCount: number;
