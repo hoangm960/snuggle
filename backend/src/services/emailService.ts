@@ -359,3 +359,85 @@ export const sendKYCRejectedEmail = async ({
 		throw new Error("Failed to send KYC rejection email");
 	}
 };
+
+export interface OtpEmailParams {
+	to: string;
+	displayName: string;
+	code: string;
+}
+
+export const sendOtpEmail = async ({
+	to,
+	displayName,
+	code,
+}: OtpEmailParams): Promise<void> => {
+	const htmlContent = `
+		<!DOCTYPE html>
+		<html>
+		<head>
+			<meta charset="utf-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		</head>
+		<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5;">
+			<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+				<tr>
+					<td align="center">
+						<table width="100%" cellpadding="0" cellspacing="0" style="max-width: 500px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+							<tr>
+								<td style="background: linear-gradient(135deg, #5D9C59 0%, #7CB342 100%); padding: 32px; text-align: center;">
+									<h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Snuggles</h1>
+								</td>
+							</tr>
+							<tr>
+								<td style="padding: 32px;">
+									<h2 style="margin: 0 0 16px; color: #1a1a1a; font-size: 22px; font-weight: 600;">Your Verification Code</h2>
+									<p style="margin: 0 0 16px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+										Hi${displayName ? ` ${displayName}` : ""},
+									</p>
+									<p style="margin: 0 0 24px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+										Use the code below to complete your identity verification on Snuggles.
+									</p>
+									<table width="100%" cellpadding="0" cellspacing="0">
+										<tr>
+											<td align="center" style="padding: 16px 0;">
+												<div style="background: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px; padding: 20px 40px;">
+													<span style="font-size: 36px; font-weight: 700; color: #16a34a; letter-spacing: 8px; font-family: monospace;">
+														${code}
+													</span>
+												</div>
+											</td>
+										</tr>
+									</table>
+									<p style="margin: 24px 0 0; color: #888888; font-size: 13px; line-height: 1.6;">
+										This code will expire in 10 minutes. Do not share this code with anyone.
+									</p>
+								</td>
+							</tr>
+							<tr>
+								<td style="background-color: #f9f9f9; padding: 24px; text-align: center;">
+									<p style="margin: 0; color: #888888; font-size: 13px;">
+										&copy; ${new Date().getFullYear()} Snuggles. All rights reserved.
+									</p>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+		</body>
+		</html>
+	`;
+
+	try {
+		await transporter.sendMail({
+			from,
+			to,
+			subject: "Your Snuggles Verification Code",
+			html: htmlContent,
+		});
+		console.log(`OTP email sent to ${to}`);
+	} catch (error) {
+		console.error(`Failed to send OTP email to ${to}:`, error);
+		throw new Error("Failed to send verification code email");
+	}
+};

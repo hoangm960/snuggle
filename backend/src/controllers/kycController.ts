@@ -7,8 +7,12 @@ const kycCollection = db.collection("kycVerifications");
 const usersCollection = db.collection("users");
 
 export interface SubmitKYCParams {
+	fullName: string;
+	dateOfBirth: string;
+	idNumber: string;
+	phone: string;
 	idDocumentURL: string;
-	selfieURL: string;
+	financialDocumentURL: string;
 	kycProvider?: string;
 }
 
@@ -282,8 +286,12 @@ export const submitKYC = async (
 	const docRef = await kycCollection.add({
 		userId,
 		status: "pending",
+		fullName: params.fullName,
+		dateOfBirth: params.dateOfBirth,
+		idNumber: params.idNumber,
+		phone: params.phone,
 		idDocumentURL: params.idDocumentURL,
-		selfieURL: params.selfieURL,
+		financialDocumentURL: params.financialDocumentURL,
 		kycProvider: params.kycProvider || "manual",
 		rejectionReason: null,
 		attemptCount: 1,

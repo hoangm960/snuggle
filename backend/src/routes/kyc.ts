@@ -10,10 +10,13 @@ import {
 	submitKYC,
 	SubmitKYCParams,
 } from "../controllers/kycController";
+import { uploadKycFile } from "../controllers/kycUploadController";
+import { sendOtpHandler, verifyOtpHandler } from "../controllers/kycOtpController";
 import { authenticate } from "../middleware/auth";
 import { requireAdmin } from "../middleware/admin";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { AppError } from "../middleware/errorHandler";
+import { upload } from "../middleware/upload";
 
 const router = Router();
 
@@ -38,6 +41,14 @@ router.get(
 );
 
 router.post(
+	"/upload",
+	upload.single("file"),
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		await uploadKycFile(req, res);
+	})
+);
+
+router.post(
 	"/me",
 	asyncHandler(async (req: AuthRequest, res: Response) => {
 		const userId = req.user?.uid;
@@ -46,27 +57,44 @@ router.post(
 			throw new AppError("Unauthorized", 401);
 		}
 
-		const { idDocumentURL, selfieURL, kycProvider } = req.body as SubmitKYCParams;
+		const body = req.body as SubmitKYCParams;
 
-		if (!idDocumentURL || typeof idDocumentURL !== "string") {
-			throw new AppError("ID document URL is required", 400);
+		const requiredFields: (keyof SubmitKYCParams)[] = [
+			"fullName",
+			"dateOfBirth",
+			"idNumber",
+			"phone",
+			"idDocumentURL",
+			"financialDocumentURL",
+		];
+
+		for (const field of requiredFields) {
+			if (!body[field] || typeof body[field] !== "string") {
+				throw new AppError(`${field} is required`, 400);
+			}
 		}
 
-		if (!selfieURL || typeof selfieURL !== "string") {
-			throw new AppError("Selfie URL is required", 400);
-		}
-
-		const kyc = await submitKYC(userId, {
-			idDocumentURL,
-			selfieURL,
-			kycProvider,
-		});
+		const kyc = await submitKYC(userId, body);
 
 		res.status(201).json({
 			success: true,
 			message: "KYC verification submitted successfully",
 			data: kyc,
 		});
+	})
+);
+
+router.post(
+	"/otp/send",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		await sendOtpHandler(req, res);
+	})
+);
+
+router.post(
+	"/otp/verify",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		await verifyOtpHandler(req, res);
 	})
 );
 
