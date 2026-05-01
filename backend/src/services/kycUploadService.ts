@@ -1,5 +1,7 @@
 import { storage } from "../config/firebase";
 
+const SIGNED_URL_EXPIRY_MINUTES = 60 * 24 * 7;
+
 export const uploadKycDocument = async (
 	userId: string,
 	file: Express.Multer.File,
@@ -26,9 +28,11 @@ export const uploadKycDocument = async (
 
 		blobStream.on("finish", async () => {
 			try {
-				await blob.makePublic();
-				const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
-				resolve(publicUrl);
+				const [signedUrl] = await blob.getSignedUrl({
+					action: "read",
+					expires: Date.now() + SIGNED_URL_EXPIRY_MINUTES * 60 * 1000,
+				});
+				resolve(signedUrl);
 			} catch (err) {
 				reject(err);
 			}

@@ -1,5 +1,6 @@
 import { db } from "../config/firebase";
 import { sendOtpEmail } from "./emailService";
+import crypto from "crypto";
 
 const otpCollection = db.collection("kycOtpTokens");
 
@@ -29,7 +30,7 @@ export const generateAndSendOtp = async (
 		await doc.ref.delete();
 	}
 
-	const code = Math.floor(100000 + Math.random() * 900000).toString();
+	const code = crypto.randomInt(100000, 1000000).toString();
 	const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
 	await otpCollection.add({

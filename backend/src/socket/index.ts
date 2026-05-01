@@ -7,18 +7,6 @@ interface AuthenticatedSocket extends Socket {
 	userId?: string;
 }
 
-interface SocketEvents {
-	join_chat: string;
-	send_message: {
-		chatId: string;
-		content: string;
-	};
-	typing: {
-		chatId: string;
-	};
-	leave_chat: string;
-}
-
 const isCustomToken = (token: string): boolean => {
 	try {
 		const decoded = jwt.decode(token);

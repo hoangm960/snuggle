@@ -11,11 +11,7 @@ export const ekycApi = {
 		const formData = new FormData();
 		formData.append("file", file);
 		formData.append("type", type);
-		const response = await api.post<ApiResponse<{ url: string }>>("/kyc/upload", formData, {
-			headers: {
-				"Content-Type": "multipart/form-data",
-			},
-		});
+		const response = await api.post<ApiResponse<{ url: string }>>("/kyc/upload", formData);
 		return response.data.data!.url;
 	},
 

@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { ekycApi } from "@/lib/ekycApi";
 
 interface UseKycOtpReturn {
 	loading: boolean;
@@ -18,7 +19,6 @@ export function useKycOtp(): UseKycOtpReturn {
 		setLoading(true);
 		setError(null);
 		try {
-			const { ekycApi } = await import("@/lib/ekycApi");
 			await ekycApi.sendOtp();
 			setOtpSent(true);
 		} catch (err: unknown) {
@@ -35,7 +35,6 @@ export function useKycOtp(): UseKycOtpReturn {
 		setLoading(true);
 		setError(null);
 		try {
-			const { ekycApi } = await import("@/lib/ekycApi");
 			await ekycApi.verifyOtp(code);
 		} catch (err: unknown) {
 			const message =
