@@ -20,7 +20,14 @@ describe("chatApi", () => {
 	describe("getChats", () => {
 		it("should fetch chats successfully", async () => {
 			const mockChats: Chat[] = [
-				{ id: "chat1", participants: ["user1"], type: "support", status: "open", createdAt: new Date(), updatedAt: new Date() },
+				{
+					id: "chat1",
+					participants: ["user1"],
+					type: "support",
+					status: "open",
+					createdAt: new Date(),
+					updatedAt: new Date(),
+				},
 			];
 			(api.get as any).mockResolvedValue({ data: { data: mockChats } });
 
@@ -41,7 +48,14 @@ describe("chatApi", () => {
 
 	describe("getChat", () => {
 		it("should fetch single chat by id", async () => {
-			const mockChat: Chat = { id: "chat1", participants: ["user1"], type: "support", status: "open", createdAt: new Date(), updatedAt: new Date() };
+			const mockChat: Chat = {
+				id: "chat1",
+				participants: ["user1"],
+				type: "support",
+				status: "open",
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
 			(api.get as any).mockResolvedValue({ data: { data: mockChat } });
 
 			const result = await chatApi.getChat("chat1");
@@ -53,7 +67,15 @@ describe("chatApi", () => {
 
 	describe("getMessages", () => {
 		it("should fetch messages with default params", async () => {
-			const mockMessages: Message[] = [{ id: "msg1", chatId: "chat1", senderId: "user1", content: "Hello", createdAt: new Date() }];
+			const mockMessages: Message[] = [
+				{
+					id: "msg1",
+					chatId: "chat1",
+					senderId: "user1",
+					content: "Hello",
+					createdAt: new Date(),
+				},
+			];
 			(api.get as any).mockResolvedValue({ data: { data: mockMessages } });
 
 			const result = await chatApi.getMessages("chat1");
@@ -68,13 +90,21 @@ describe("chatApi", () => {
 
 			await chatApi.getMessages("chat1", 20, "msg-before");
 
-			expect(api.get).toHaveBeenCalledWith("/chats/chat1/messages?limit=20&before=msg-before");
+			expect(api.get).toHaveBeenCalledWith(
+				"/chats/chat1/messages?limit=20&before=msg-before"
+			);
 		});
 	});
 
 	describe("sendMessage", () => {
 		it("should send a message successfully", async () => {
-			const mockMessage: Message = { id: "msg1", chatId: "chat1", senderId: "user1", content: "Hello", createdAt: new Date() };
+			const mockMessage: Message = {
+				id: "msg1",
+				chatId: "chat1",
+				senderId: "user1",
+				content: "Hello",
+				createdAt: new Date(),
+			};
 			(api.post as any).mockResolvedValue({ data: { data: mockMessage } });
 
 			const result = await chatApi.sendMessage("chat1", "Hello");
@@ -86,7 +116,14 @@ describe("chatApi", () => {
 
 	describe("createSupportChat", () => {
 		it("should create support chat successfully", async () => {
-			const mockChat: Chat = { id: "chat1", participants: ["user1"], type: "support", status: "open", createdAt: new Date(), updatedAt: new Date() };
+			const mockChat: Chat = {
+				id: "chat1",
+				participants: ["user1"],
+				type: "support",
+				status: "open",
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
 			(api.post as any).mockResolvedValue({ data: { data: mockChat } });
 
 			const result = await chatApi.createSupportChat();
@@ -98,8 +135,17 @@ describe("chatApi", () => {
 
 	describe("getSupportChatStatus", () => {
 		it("should return status with chat when hasChat is true", async () => {
-			const mockChat: Chat = { id: "chat1", participants: ["user1"], type: "support", status: "open", createdAt: new Date(), updatedAt: new Date() };
-			(api.get as any).mockResolvedValue({ data: { data: { hasChat: true, chat: mockChat, isClaimed: true } } });
+			const mockChat: Chat = {
+				id: "chat1",
+				participants: ["user1"],
+				type: "support",
+				status: "open",
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			};
+			(api.get as any).mockResolvedValue({
+				data: { data: { hasChat: true, chat: mockChat, isClaimed: true } },
+			});
 
 			const result = await chatApi.getSupportChatStatus();
 

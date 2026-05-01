@@ -58,10 +58,7 @@ export const generateAndSendOtp = async (
 	}
 };
 
-export const verifyOtpCode = async (
-	userId: string,
-	code: string
-): Promise<boolean> => {
+export const verifyOtpCode = async (userId: string, code: string): Promise<boolean> => {
 	const snapshot = await otpCollection
 		.where("userId", "==", userId)
 		.where("code", "==", code)

@@ -6,12 +6,12 @@ const TEST_SECRET = "test-secret-key-for-testing";
 
 const mockAdmins: any[] = [];
 const mockChats = [
-  { id: 'chat-1', participants: ['user-1', 'user-2'], lastMessage: { content: 'Hello' } },
-  { id: 'chat-2', participants: ['user-1', 'user-3'], lastMessage: { content: 'Hi' } },
+	{ id: "chat-1", participants: ["user-1", "user-2"], lastMessage: { content: "Hello" } },
+	{ id: "chat-2", participants: ["user-1", "user-3"], lastMessage: { content: "Hi" } },
 ];
 const mockMessages = [
-  { id: 'msg-1', chatId: 'chat-1', senderId: 'user-2', content: 'Hello!', isRead: false },
-  { id: 'msg-2', chatId: 'chat-1', senderId: 'user-1', content: 'Hi there!', isRead: true },
+	{ id: "msg-1", chatId: "chat-1", senderId: "user-2", content: "Hello!", isRead: false },
+	{ id: "msg-2", chatId: "chat-1", senderId: "user-1", content: "Hi there!", isRead: true },
 ];
 const mockStats = {
 	totalPets: 150,
@@ -67,11 +67,11 @@ const createTestApp = (): Express => {
 		res.json({ success: true, message: "User deleted" });
 	});
 
-	app.get('/api/admin/chats', adminCheck, (_req, res) => {
+	app.get("/api/admin/chats", adminCheck, (_req, res) => {
 		res.json({ success: true, data: mockChats });
 	});
 
-	app.get('/api/admin/chats/:id/messages', adminCheck, (req, res) => {
+	app.get("/api/admin/chats/:id/messages", adminCheck, (req, res) => {
 		const messages = mockMessages.filter((m) => m.chatId === req.params.id);
 		res.json({ success: true, data: messages });
 	});
@@ -152,55 +152,53 @@ describe("Admin Routes", () => {
 		});
 	});
 
-	describe('GET /api/admin/chats', () => {
-		it('should return all chats with admin token', async () => {
+	describe("GET /api/admin/chats", () => {
+		it("should return all chats with admin token", async () => {
 			const response = await request(app)
-				.get('/api/admin/chats')
-				.set('Authorization', `Bearer ${adminToken}`);
+				.get("/api/admin/chats")
+				.set("Authorization", `Bearer ${adminToken}`);
 
 			expect(response.status).toBe(200);
 			expect(response.body.success).toBe(true);
 			expect(response.body.data).toHaveLength(2);
 		});
 
-		it('should return 401 without token', async () => {
-			const response = await request(app).get('/api/admin/chats');
+		it("should return 401 without token", async () => {
+			const response = await request(app).get("/api/admin/chats");
 
 			expect(response.status).toBe(401);
 		});
 
-		it('should return 403 with non-admin token', async () => {
+		it("should return 403 with non-admin token", async () => {
 			const response = await request(app)
-				.get('/api/admin/chats')
-				.set('Authorization', `Bearer ${userToken}`);
+				.get("/api/admin/chats")
+				.set("Authorization", `Bearer ${userToken}`);
 
 			expect(response.status).toBe(403);
 		});
 	});
 
-	describe('GET /api/admin/chats/:id/messages', () => {
-		it('should return messages in chat with admin token', async () => {
+	describe("GET /api/admin/chats/:id/messages", () => {
+		it("should return messages in chat with admin token", async () => {
 			const response = await request(app)
-				.get('/api/admin/chats/chat-1/messages')
-				.set('Authorization', `Bearer ${adminToken}`);
+				.get("/api/admin/chats/chat-1/messages")
+				.set("Authorization", `Bearer ${adminToken}`);
 
 			expect(response.status).toBe(200);
 			expect(response.body.success).toBe(true);
 			expect(response.body.data).toHaveLength(2);
 		});
 
-		it('should return 401 without token', async () => {
-			const response = await request(app).get(
-				'/api/admin/chats/chat-1/messages'
-			);
+		it("should return 401 without token", async () => {
+			const response = await request(app).get("/api/admin/chats/chat-1/messages");
 
 			expect(response.status).toBe(401);
 		});
 
-		it('should return 403 with non-admin token', async () => {
+		it("should return 403 with non-admin token", async () => {
 			const response = await request(app)
-				.get('/api/admin/chats/chat-1/messages')
-				.set('Authorization', `Bearer ${userToken}`);
+				.get("/api/admin/chats/chat-1/messages")
+				.set("Authorization", `Bearer ${userToken}`);
 
 			expect(response.status).toBe(403);
 		});

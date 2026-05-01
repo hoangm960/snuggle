@@ -3,7 +3,16 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "../_components/AdminLayout";
 import { useUsers, User } from "@/hooks/useUsers";
-import { Search, MoreHorizontal, UserPlus, Loader2, X, Shield, ShieldOff, Trash2 } from "lucide-react";
+import {
+	Search,
+	MoreHorizontal,
+	UserPlus,
+	Loader2,
+	X,
+	Shield,
+	ShieldOff,
+	Trash2,
+} from "lucide-react";
 
 const roleColor: Record<User["role"], string> = {
 	visitor: "bg-primary-soft text-primary-deep",
@@ -112,7 +121,9 @@ export default function UsersPage() {
 		const success = await updateUserStatus(userId, newStatus);
 		setActionMessage({
 			type: success ? "success" : "error",
-			text: success ? `User ${newStatus === "active" ? "activated" : "suspended"} successfully` : "Failed to update status",
+			text: success
+				? `User ${newStatus === "active" ? "activated" : "suspended"} successfully`
+				: "Failed to update status",
 		});
 		setTimeout(() => setActionMessage(null), 3000);
 	};
@@ -284,18 +295,25 @@ export default function UsersPage() {
 																{u.role === "admin" ? (
 																	<>
 																		<Shield className="size-4" />
-																		<span>Demote to Visitor</span>
+																		<span>
+																			Demote to Visitor
+																		</span>
 																	</>
 																) : (
 																	<>
-																	<Shield className="size-4" />
-																		<span>Promote to Admin</span>
-																</>
+																		<Shield className="size-4" />
+																		<span>
+																			Promote to Admin
+																		</span>
+																	</>
 																)}
 															</button>
 															<button
 																onClick={() =>
-																	handleStatusToggle(u.id, u.accountStatus)
+																	handleStatusToggle(
+																		u.id,
+																		u.accountStatus
+																	)
 																}
 																className="w-full px-3 py-2 text-left text-sm hover:bg-secondary flex items-center gap-2"
 															>
@@ -308,7 +326,7 @@ export default function UsersPage() {
 																	<>
 																		<Shield className="size-4" />
 																		<span>Activate User</span>
-																</>
+																	</>
 																)}
 															</button>
 															<button
@@ -427,9 +445,7 @@ export default function UsersPage() {
 								<Trash2 className="size-6 text-destructive" />
 							</div>
 							<div>
-								<h2 className="font-display text-xl font-semibold">
-									Delete User
-								</h2>
+								<h2 className="font-display text-xl font-semibold">Delete User</h2>
 								<p className="text-sm text-muted-foreground">
 									This action cannot be undone.
 								</p>
@@ -440,10 +456,9 @@ export default function UsersPage() {
 								Are you sure you want to delete{" "}
 								<strong className="font-semibold">
 									{deleteTarget.displayName || "this user"}
-								</strong>
-								{" "}({deleteTarget.email})? Their account
-								and all associated data will be permanently
-								removed.
+								</strong>{" "}
+								({deleteTarget.email})? Their account and all associated data will
+								be permanently removed.
 							</p>
 						</div>
 						<div className="flex gap-3">
@@ -458,9 +473,7 @@ export default function UsersPage() {
 								disabled={deleteLoading}
 								className="flex-1 h-11 rounded-2xl bg-destructive text-destructive-foreground text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
 							>
-								{deleteLoading ? (
-									<Loader2 className="size-4 animate-spin" />
-								) : null}
+								{deleteLoading ? <Loader2 className="size-4 animate-spin" /> : null}
 								{deleteLoading ? "Deleting..." : "Delete User"}
 							</button>
 						</div>

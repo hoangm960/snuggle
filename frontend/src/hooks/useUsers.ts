@@ -100,9 +100,7 @@ export const useUsers = (): UseUsersReturn => {
 		}
 	};
 
-	const deleteUser = async (
-		userId: string
-	): Promise<{ success: boolean; message: string }> => {
+	const deleteUser = async (userId: string): Promise<{ success: boolean; message: string }> => {
 		try {
 			const response = await api.delete(`/admin/users/${userId}`);
 			if (response.data.success) {

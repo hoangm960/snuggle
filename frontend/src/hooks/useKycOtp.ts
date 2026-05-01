@@ -22,8 +22,7 @@ export function useKycOtp(): UseKycOtpReturn {
 			await ekycApi.sendOtp();
 			setOtpSent(true);
 		} catch (err: unknown) {
-			const message =
-				err instanceof Error ? err.message : "Failed to send verification code";
+			const message = err instanceof Error ? err.message : "Failed to send verification code";
 			setError(message);
 			throw err;
 		} finally {
@@ -37,8 +36,7 @@ export function useKycOtp(): UseKycOtpReturn {
 		try {
 			await ekycApi.verifyOtp(code);
 		} catch (err: unknown) {
-			const message =
-				err instanceof Error ? err.message : "Invalid verification code";
+			const message = err instanceof Error ? err.message : "Invalid verification code";
 			setError(message);
 			throw err;
 		} finally {

@@ -133,10 +133,12 @@ export const createChat = async (req: AuthRequest, res: Response): Promise<void>
 			throw new AppError("Application not found", 404);
 		}
 
-		const applicationData = applicationDoc.data() as {
-			adopterId: string;
-			shelterId: string;
-		} | undefined;
+		const applicationData = applicationDoc.data() as
+			| {
+					adopterId: string;
+					shelterId: string;
+			  }
+			| undefined;
 
 		if (!applicationData) {
 			throw new AppError("Application data not found", 404);
@@ -156,10 +158,7 @@ export const createChat = async (req: AuthRequest, res: Response): Promise<void>
 			return;
 		}
 
-		const participantIds = [
-			applicationData.adopterId,
-			applicationData.shelterId,
-		];
+		const participantIds = [applicationData.adopterId, applicationData.shelterId];
 
 		const chatData: Omit<Chat, "id"> = {
 			type: "application",
@@ -294,10 +293,7 @@ export const getPendingChats = async (): Promise<Chat[]> => {
 	return chats;
 };
 
-export const acceptChat = async (
-	req: AuthRequest,
-	_res: Response
-): Promise<void> => {
+export const acceptChat = async (req: AuthRequest, _res: Response): Promise<void> => {
 	if (!req.user) {
 		throw new AppError("Unauthorized", 401);
 	}
@@ -439,9 +435,7 @@ interface AdminMessageOptions {
 	limit?: number;
 }
 
-export const getChatMessages = async (
-	options: AdminMessageOptions
-): Promise<Message[]> => {
+export const getChatMessages = async (options: AdminMessageOptions): Promise<Message[]> => {
 	const { chatId, limit = 50 } = options;
 
 	const query = messagesCollection

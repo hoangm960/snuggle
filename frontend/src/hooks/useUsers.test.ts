@@ -54,7 +54,9 @@ describe("useUsers", () => {
 	});
 
 	it("should initialize with empty users and loading false", async () => {
-		(apiModule.default.get as any).mockResolvedValue({ data: { data: { users: [], total: 0 } } });
+		(apiModule.default.get as any).mockResolvedValue({
+			data: { data: { users: [], total: 0 } },
+		});
 
 		const { result } = renderHook(() => useUsers());
 
@@ -90,7 +92,13 @@ describe("useUsers", () => {
 		const { result } = renderHook(() => useUsers());
 
 		await act(async () => {
-			await result.current.fetchUsers({ search: "user1", role: "visitor", status: "active", page: 1, limit: 10 });
+			await result.current.fetchUsers({
+				search: "user1",
+				role: "visitor",
+				status: "active",
+				page: 1,
+				limit: 10,
+			});
 		});
 
 		expect(apiModule.default.get).toHaveBeenCalledWith(expect.stringContaining("search=user1"));
@@ -167,7 +175,9 @@ describe("useUsers", () => {
 		});
 
 		expect(success!).toBe(true);
-		expect(apiModule.default.put).toHaveBeenCalledWith("/admin/users/1", { accountStatus: "suspended" });
+		expect(apiModule.default.put).toHaveBeenCalledWith("/admin/users/1", {
+			accountStatus: "suspended",
+		});
 	});
 
 	it("should invite user successfully", async () => {
