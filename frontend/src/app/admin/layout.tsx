@@ -9,14 +9,14 @@ export default function AdminRootLayout({ children }: { children: ReactNode }) {
 	const router = useRouter();
 
 	useEffect(() => {
-		if (!loading && !user) {
-			router.push("/login?redirect=/admin");
+		if (!loading) {
+			if (!user) {
+				router.push("/login?redirect=/admin");
+			} else if (user.role !== "admin") {
+				router.push("/home");
+			}
 		}
 	}, [user, loading, router]);
-
-	if (loading || !user) {
-		return null;
-	}
 
 	return (
 		<div
