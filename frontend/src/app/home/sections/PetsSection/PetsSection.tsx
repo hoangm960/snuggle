@@ -77,50 +77,50 @@ export default function PetsSection() {
 				</div>
 
 				{/* ✅ Responsive grid (NO JS) */}
-			{loading ? (
-				<PetCardSkeletonCarousel count={3} />
-			) : (
-				<div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-					{petList.slice(petIndex, petIndex + visibleCount).map((pet) => (
-						<div
-							key={pet.id}
-							className="rounded-3xl overflow-hidden bg-white shadow-lg"
-						>
-							<div className="relative w-full pt-[75%] overflow-hidden">
-								<img
-									src={
-										pet.thumbnail ||
-										pet.photoUrls?.[0] ||
-										"/images/pets/placeholder.png"
-									}
-									alt={pet.name}
-									className="absolute inset-0 w-full h-full object-cover"
-								/>
+				{loading ? (
+					<PetCardSkeletonCarousel count={3} />
+				) : (
+					<div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+						{petList.slice(petIndex, petIndex + visibleCount).map((pet) => (
+							<div
+								key={pet.id}
+								className="rounded-3xl overflow-hidden bg-white shadow-lg"
+							>
+								<div className="relative w-full pt-[75%] overflow-hidden">
+									<img
+										src={
+											pet.thumbnail ||
+											pet.photoUrls?.[0] ||
+											"/images/pets/placeholder.png"
+										}
+										alt={pet.name}
+										className="absolute inset-0 w-full h-full object-cover"
+									/>
 
-								<div className="absolute top-4 right-4 bg-white rounded-full px-3 py-1 text-[11px] font-semibold text-[#7AADA1]">
-									{pet.status || "Available"}
+									<div className="absolute top-4 right-4 bg-white rounded-full px-3 py-1 text-[11px] font-semibold text-[#7AADA1]">
+										{pet.status || "Available"}
+									</div>
+								</div>
+								<div className="p-5 md:p-6">
+									<h3 className="font-semibold text-[#111] text-[16px]">
+										{pet.name}
+									</h3>
+
+									<p className="mb-5 text-[13px] text-[#888]">
+										{pet.breed} · {pet.ageMonths} month
+										{pet.ageMonths === 1 ? "" : "s"}
+									</p>
+									<Link
+										href="/register" // TODO: redirect to pet detail page if already login
+										className="block text-center py-3 rounded-full bg-[#F0F7F5] text-[#7AADA1] text-[13px] font-semibold hover:opacity-80"
+									>
+										Adopt Me
+									</Link>
 								</div>
 							</div>
-							<div className="p-5 md:p-6">
-								<h3 className="font-semibold text-[#111] text-[16px]">
-									{pet.name}
-								</h3>
-
-								<p className="mb-5 text-[13px] text-[#888]">
-									{pet.breed} · {pet.age} year
-									{pet.age === 1 ? "" : "s"}
-								</p>
-								<Link
-									href="/register"
-									className="block text-center py-3 rounded-full bg-[#F0F7F5] text-[#7AADA1] text-[13px] font-semibold hover:opacity-80"
-								>
-									Adopt Me
-								</Link>
-							</div>
-						</div>
-					))}
-				</div>
-			)}
+						))}
+					</div>
+				)}
 
 				{/* Dots */}
 				<div className="flex justify-center gap-2 mt-10">

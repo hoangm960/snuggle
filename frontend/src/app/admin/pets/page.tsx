@@ -45,6 +45,7 @@ const defaultForm = {
 	image: null as File | null,
 	imagePreview: null as string | null,
 	status: "available" as "available" | "pending" | "adopted",
+	species: "",
 	isVaccinated: false,
 	isNeutered: false,
 };
@@ -61,7 +62,8 @@ export default function PetsPage() {
 	const filtered = (pets || []).filter((p) => {
 		const matchSearch =
 			p.name.toLowerCase().includes(search.toLowerCase()) ||
-			p.breed.toLowerCase().includes(search.toLowerCase());
+			p.breed.toLowerCase().includes(search.toLowerCase()) ||
+			p.species.toLowerCase().includes(search.toLowerCase());
 		const matchStatus = status === "All" || p.status?.toLowerCase() === status.toLowerCase();
 
 		return matchSearch && matchStatus;
@@ -84,7 +86,7 @@ export default function PetsPage() {
 
 			const baseData = {
 				name: form.name,
-				species: "dog" as const,
+				species: form.species,
 				breed: form.breed,
 				//age: ageInYears,
 				ageMonths: form.ageMonths,
@@ -129,6 +131,7 @@ export default function PetsPage() {
 			breed: pet.breed,
 			ageMonths: pet.ageMonths ?? (pet.age ?? 0) * 12,
 			gender: pet.gender,
+			species: pet.species,
 			description: pet.description || "",
 			image: null,
 			imagePreview: pet.thumbnail || null,
@@ -326,6 +329,20 @@ export default function PetsPage() {
 									placeholder="Name"
 									className="h-11 rounded-2xl border border-input bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
 								/>
+								<select
+									value={form.species}
+									onChange={(e) =>
+										setForm({
+											...form,
+											species: e.target.value as "cat" | "dog" | "other",
+										})
+									}
+									className="h-11 rounded-2xl border border-input bg-card px-3 text-sm"
+								>
+									<option value="cat">Cat</option>
+									<option value="dog">Dog</option>
+									<option value="other">Other</option>
+								</select>
 								<input
 									value={form.breed}
 									onChange={(e) => setForm({ ...form, breed: e.target.value })}

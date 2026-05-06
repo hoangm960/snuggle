@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
+import { useAuth } from "@/hooks/useAuth";
+import { useKycOtp } from "@/hooks/useKycOtp";
+import { ekycApi } from "@/lib/ekycApi";
+import { KycStatusResponse } from "@/types";
 
 const STEPS = [
 	{
@@ -51,6 +56,17 @@ const WHY_ITEMS = [
 ];
 
 export default function EKYCPage() {
+	const router = useRouter();
+	const { user, loading: authLoading } = useAuth();
+	const {
+		sendOtp,
+		confirmOtp,
+		loading: otpLoading,
+		error: otpError,
+		otpSent,
+		reset: resetOtp,
+	} = useKycOtp();
+
 	const [activeStep, setActiveStep] = useState(0);
 	const [formData, setFormData] = useState({
 		fullName: "",
@@ -58,6 +74,324 @@ export default function EKYCPage() {
 		idNumber: "",
 		phone: "",
 	});
+
+	const [idFile, setIdFile] = useState<File | null>(null);
+	const [financialFile, setFinancialFile] = useState<File | null>(null);
+	const [idDocumentURL, setIdDocumentURL] = useState("");
+	const [financialDocumentURL, setFinancialDocumentURL] = useState("");
+
+	const [otpCode, setOtpCode] = useState("");
+	const [otpVerified, setOtpVerified] = useState(false);
+
+	const [submitting, setSubmitting] = useState(false);
+	const [uploading, setUploading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const [success, setSuccess] = useState(false);
+	const [kycStatus, setKycStatus] = useState<KycStatusResponse | null>(null);
+	const [statusLoading, setStatusLoading] = useState(true);
+
+	const idInputRef = useRef<HTMLInputElement | null>(null);
+	const financialInputRef = useRef<HTMLInputElement | null>(null);
+
+	useEffect(() => {
+		if (!authLoading && !user) {
+			router.push("/login?redirect=/ekyc");
+			return;
+		}
+		if (user) {
+			fetchKycStatus();
+		}
+	}, [user, authLoading, router]);
+
+	const fetchKycStatus = async () => {
+		try {
+			const status = await ekycApi.getMyStatus();
+			setKycStatus(status);
+		} catch {
+			// Not an error - user may not have submitted yet
+		} finally {
+			setStatusLoading(false);
+		}
+	};
+
+	const handleFileSelect = (type: "id" | "financial", file: File) => {
+		if (type === "id") {
+			setIdFile(file);
+		} else {
+			setFinancialFile(file);
+		}
+	};
+
+	const handleStepNext = async () => {
+		setError(null);
+
+		if (activeStep === 0) {
+			const { fullName, dateOfBirth, idNumber, phone } = formData;
+			if (!fullName || !dateOfBirth || !idNumber || !phone) {
+				setError("Please fill in all fields");
+				return;
+			}
+			setActiveStep(1);
+		} else if (activeStep === 1) {
+			if (!idFile) {
+				setError("Please upload your ID document");
+				return;
+			}
+			setUploading(true);
+			try {
+				const url = await ekycApi.uploadFile(idFile, "id");
+				setIdDocumentURL(url);
+				setActiveStep(2);
+			} catch (err: unknown) {
+				setError(err instanceof Error ? err.message : "Failed to upload ID document");
+			} finally {
+				setUploading(false);
+			}
+		} else if (activeStep === 2) {
+			if (!financialFile) {
+				setError("Please upload your financial document");
+				return;
+			}
+			setUploading(true);
+			try {
+				const url = await ekycApi.uploadFile(financialFile, "financial");
+				setFinancialDocumentURL(url);
+				setActiveStep(3);
+			} catch (err: unknown) {
+				setError(
+					err instanceof Error ? err.message : "Failed to upload financial document"
+				);
+			} finally {
+				setUploading(false);
+			}
+		}
+	};
+
+	const handleSendOtp = async () => {
+		setError(null);
+		try {
+			await sendOtp();
+		} catch (err: unknown) {
+			setError(err instanceof Error ? err.message : "Failed to send verification code");
+		}
+	};
+
+	const handleSubmit = async () => {
+		setError(null);
+		setSubmitting(true);
+
+		try {
+			if (!otpVerified) {
+				await confirmOtp(otpCode);
+				setOtpVerified(true);
+			}
+
+			await ekycApi.submitKyc({
+				fullName: formData.fullName,
+				dateOfBirth: formData.dateOfBirth,
+				idNumber: formData.idNumber,
+				phone: formData.phone,
+				idDocumentURL,
+				financialDocumentURL,
+			});
+
+			setSuccess(true);
+		} catch (err: unknown) {
+			setError(err instanceof Error ? err.message : "Failed to submit verification");
+		} finally {
+			setSubmitting(false);
+		}
+	};
+
+	if (statusLoading) {
+		return (
+			<div
+				className="flex flex-col min-h-screen w-full items-center justify-center"
+				style={{ fontFamily: "'Poppins', sans-serif", background: "#F9F6F2" }}
+			>
+				<p style={{ color: "#666", fontSize: "14px" }}>Loading...</p>
+			</div>
+		);
+	}
+
+	if (!authLoading && !user) {
+		return null;
+	}
+
+	if (kycStatus?.kyc?.status === "approved" || kycStatus?.user?.isKycVerified) {
+		return (
+			<div
+				className="flex flex-col min-h-screen w-full"
+				style={{ fontFamily: "'Poppins', sans-serif" }}
+			>
+				<Navbar activeLink="eKYC" />
+				<div
+					className="flex flex-1 items-center justify-center"
+					style={{ background: "#F9F6F2" }}
+				>
+					<div className="text-center px-6">
+						<div
+							style={{
+								width: "80px",
+								height: "80px",
+								borderRadius: "50%",
+								background: "#22c55e",
+								display: "flex",
+								alignItems: "center",
+								justifyContent: "center",
+								margin: "0 auto 24px",
+							}}
+						>
+							<svg
+								width="40"
+								height="40"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="#fff"
+								strokeWidth="2.5"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
+								<path d="M20 6L9 17l-5-5" />
+							</svg>
+						</div>
+						<h2
+							style={{
+								color: "#1C1C1C",
+								fontFamily: "'Space Grotesk', sans-serif",
+								fontSize: "24px",
+								fontWeight: 700,
+								marginBottom: "12px",
+							}}
+						>
+							You are already verified!
+						</h2>
+						<p style={{ color: "#666", fontSize: "14px", marginBottom: "24px" }}>
+							Your eKYC verification has been approved. You can now browse and apply
+							for pet adoptions.
+						</p>
+						<Link
+							href="/pets"
+							style={{
+								display: "inline-block",
+								padding: "12px 28px",
+								borderRadius: "12px",
+								background: "#7AADA1",
+								color: "#fff",
+								fontFamily: "'Space Grotesk', sans-serif",
+								fontSize: "14px",
+								fontWeight: 600,
+								textDecoration: "none",
+							}}
+						>
+							Browse Pets
+						</Link>
+					</div>
+				</div>
+			</div>
+		);
+	}
+
+	if (kycStatus?.kyc?.status === "pending") {
+		return (
+			<div
+				className="flex flex-col min-h-screen w-full"
+				style={{ fontFamily: "'Poppins', sans-serif" }}
+			>
+				<Navbar activeLink="eKYC" />
+				<div
+					className="flex flex-1 items-center justify-center"
+					style={{ background: "#F9F6F2" }}
+				>
+					<div className="text-center px-6">
+						<div
+							style={{
+								width: "80px",
+								height: "80px",
+								borderRadius: "50%",
+								background: "#f59e0b",
+								display: "flex",
+								alignItems: "center",
+								justifyContent: "center",
+								margin: "0 auto 24px",
+							}}
+						>
+							<svg
+								width="40"
+								height="40"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="#fff"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
+								<circle cx="12" cy="12" r="10" />
+								<polyline points="12 6 12 12 16 14" />
+							</svg>
+						</div>
+						<h2
+							style={{
+								color: "#1C1C1C",
+								fontFamily: "'Space Grotesk', sans-serif",
+								fontSize: "24px",
+								fontWeight: 700,
+								marginBottom: "12px",
+							}}
+						>
+							Verification Pending
+						</h2>
+						<p style={{ color: "#666", fontSize: "14px", marginBottom: "24px" }}>
+							Your eKYC submission is being reviewed. You will receive an email
+							notification once the review is complete.
+						</p>
+						{kycStatus.kyc.rejectionReason && (
+							<div
+								style={{
+									background: "#fef2f2",
+									border: "1px solid #fecaca",
+									borderRadius: "12px",
+									padding: "16px",
+									maxWidth: "400px",
+									margin: "0 auto 24px",
+								}}
+							>
+								<p
+									style={{
+										color: "#991b1b",
+										fontSize: "13px",
+										fontWeight: 600,
+										marginBottom: "4px",
+									}}
+								>
+									Previous rejection reason:
+								</p>
+								<p style={{ color: "#7f1d1d", fontSize: "13px" }}>
+									{kycStatus.kyc.rejectionReason}
+								</p>
+							</div>
+						)}
+						<Link
+							href="/pets"
+							style={{
+								display: "inline-block",
+								padding: "12px 28px",
+								borderRadius: "12px",
+								background: "#7AADA1",
+								color: "#fff",
+								fontFamily: "'Space Grotesk', sans-serif",
+								fontSize: "14px",
+								fontWeight: 600,
+								textDecoration: "none",
+							}}
+						>
+							Browse Pets
+						</Link>
+					</div>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div
@@ -71,7 +405,6 @@ export default function EKYCPage() {
 				className="relative overflow-hidden"
 				style={{ background: "#F9F6F2", minHeight: "480px" }}
 			>
-				{/* Decorative teal blob */}
 				<div
 					style={{
 						position: "absolute",
@@ -90,9 +423,7 @@ export default function EKYCPage() {
 					className="relative max-w-6xl mx-auto px-6 md:px-10 lg:px-20 flex flex-col lg:flex-row items-center gap-12"
 					style={{ paddingTop: "80px", paddingBottom: "80px", zIndex: 1 }}
 				>
-					{/* Text */}
 					<div className="flex-1">
-						{/* Breadcrumb */}
 						<div className="flex items-center gap-2 mb-6">
 							<Link
 								href="/home"
@@ -100,212 +431,272 @@ export default function EKYCPage() {
 									color: "#7AADA1",
 									fontSize: "13px",
 									fontFamily: "'Space Grotesk', sans-serif",
+									textDecoration: "none",
 								}}
-								className="hover:underline"
 							>
 								Home
 							</Link>
-							{/* arrow copy icon */}
-							<img
-								src="/images/ekyc/arrow copy.svg"
-								alt=""
-								aria-hidden="true"
-								style={{
-									width: "8px",
-									height: "13px",
-									transform: "rotate(180deg)",
-									opacity: 0.6,
-								}}
-							/>
+							<span style={{ color: "#bbb" }}>/</span>
 							<span
 								style={{
-									color: "#7AADA1",
+									color: "#216959",
 									fontSize: "13px",
 									fontFamily: "'Space Grotesk', sans-serif",
-									fontWeight: 600,
+									fontWeight: 500,
 								}}
 							>
-								eKYC
+								eKYC Verification
 							</span>
 						</div>
 
-						<p
-							className="font-semibold mb-3"
-							style={{
-								color: "#7AADA1",
-								fontFamily: "'Space Grotesk', sans-serif",
-								fontSize: "12px",
-								letterSpacing: "0.12em",
-							}}
-						>
-							IDENTITY VERIFICATION
-						</p>
 						<h1
 							style={{
-								color: "#3D2C1E",
-								fontFamily: "'Space Grotesk', sans-serif",
-								fontSize: "clamp(28px, 4.5vw, 52px)",
-								fontWeight: 700,
-								lineHeight: 1.15,
+								fontFamily: "'Francois One', sans-serif",
+								fontSize: "clamp(32px, 5vw, 56px)",
+								color: "#216959",
+								lineHeight: "1.1",
+								marginBottom: "16px",
 							}}
-							className="mb-5"
 						>
-							eKYC — Know Your
+							Verified Identity.
 							<br />
-							Customer
+							Trusted Adoption.
 						</h1>
+
 						<p
-							className="mb-8"
 							style={{
-								color: "#7A6055",
+								color: "#555",
 								fontSize: "15px",
-								lineHeight: "1.8",
-								maxWidth: "440px",
+								lineHeight: "1.7",
+								maxWidth: "420px",
+								marginBottom: "32px",
 							}}
 						>
-							Before welcoming a pet into your home, Snuggle requires a quick identity
-							check. Our secure eKYC process protects both animals and adopters,
-							ensuring every match is built on trust.
+							Our streamlined eKYC process ensures every pet is matched with a
+							verified, responsible owner — keeping animals safe and adopters
+							confident.
 						</p>
-						<div className="flex flex-wrap gap-4">
-							<button
-								onClick={() =>
-									document
-										.getElementById("start-verification")
-										?.scrollIntoView({ behavior: "smooth" })
-								}
-								className="flex items-center justify-center text-white font-semibold hover:opacity-90 transition-opacity"
+
+						<div className="flex gap-4 flex-wrap">
+							<a
+								href="#start-verification"
 								style={{
-									padding: "13px 32px",
-									borderRadius: "40px",
-									backgroundColor: "#7AADA1",
+									padding: "14px 32px",
+									borderRadius: "12px",
+									background: "#7AADA1",
+									color: "#fff",
 									fontFamily: "'Space Grotesk', sans-serif",
 									fontSize: "14px",
+									fontWeight: 600,
+									textDecoration: "none",
+									display: "inline-block",
 								}}
 							>
 								Start Verification
-							</button>
-							<button
-								onClick={() =>
-									document
-										.getElementById("how-it-works")
-										?.scrollIntoView({ behavior: "smooth" })
-								}
-								className="flex items-center justify-center font-semibold hover:opacity-80 transition-opacity"
+							</a>
+							<a
+								href="#how-it-works"
 								style={{
-									padding: "13px 32px",
-									borderRadius: "40px",
-									border: "1.5px solid #3D2C1E",
-									color: "#3D2C1E",
+									padding: "14px 28px",
+									borderRadius: "12px",
+									border: "1px solid #C8DDD9",
+									background: "#fff",
+									color: "#216959",
 									fontFamily: "'Space Grotesk', sans-serif",
 									fontSize: "14px",
+									fontWeight: 600,
+									textDecoration: "none",
+									display: "inline-block",
 								}}
 							>
 								How It Works
-							</button>
+							</a>
 						</div>
 					</div>
 
-					{/* Visual — hand + image card */}
-					<div
-						className="flex-1 flex justify-center items-center relative"
-						style={{ minHeight: "320px" }}
-					>
-						{/* Background card */}
+					<div className="flex-1 relative flex justify-center">
 						<div
 							style={{
-								position: "absolute",
-								right: "0",
-								top: "50%",
-								transform: "translateY(-50%)",
-								width: "280px",
-								height: "280px",
-								borderRadius: "32px",
-								background: "linear-gradient(135deg, #216959 0%, #7AADA1 100%)",
-								zIndex: 0,
-							}}
-						/>
-
-						{/* visual.png image */}
-						<div style={{ position: "relative", zIndex: 1 }}>
-							<img
-								src="/images/ekyc/visual.png"
-								alt="eKYC Verification Visual"
-								style={{
-									width: "260px",
-									height: "auto",
-									borderRadius: "24px",
-									boxShadow: "0 16px 48px rgba(0,0,0,0.18)",
-									display: "block",
-								}}
-								onError={(e) => {
-									(e.target as HTMLImageElement).style.display = "none";
-								}}
-							/>
-						</div>
-
-						{/* Hand icon badge */}
-						<div
-							style={{
-								position: "absolute",
-								bottom: "20px",
-								left: "20px",
-								width: "72px",
-								height: "72px",
-								borderRadius: "50%",
-								background: "#fff",
-								boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+								width: "100%",
+								maxWidth: "380px",
+								borderRadius: "28px",
+								background: "linear-gradient(135deg, #3D2C1E 0%, #6B4F3A 100%)",
+								padding: "32px 28px",
 								display: "flex",
-								alignItems: "center",
-								justifyContent: "center",
-								zIndex: 2,
-							}}
-						>
-							<img
-								src="/images/ekyc/Hand.svg"
-								alt="Biometric verification"
-								style={{ width: "40px", height: "40px" }}
-							/>
-						</div>
-
-						{/* Verified badge */}
-						<div
-							style={{
-								position: "absolute",
-								top: "10px",
-								right: "0",
-								background: "#fff",
-								borderRadius: "12px",
-								padding: "8px 14px",
-								boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
-								display: "flex",
-								alignItems: "center",
-								gap: "8px",
-								zIndex: 2,
+								flexDirection: "column",
+								gap: "20px",
 							}}
 						>
 							<div
 								style={{
-									width: "8px",
-									height: "8px",
-									borderRadius: "50%",
-									background: "#22c55e",
-									flexShrink: 0,
-								}}
-							/>
-							<span
-								style={{
-									fontFamily: "'Space Grotesk', sans-serif",
-									fontSize: "12px",
-									fontWeight: 600,
-									color: "#216959",
-									whiteSpace: "nowrap",
+									background: "rgba(255,255,255,0.10)",
+									borderRadius: "16px",
+									padding: "16px",
+									display: "flex",
+									gap: "12px",
+									alignItems: "center",
 								}}
 							>
-								Secure & Verified
-							</span>
+								<div
+									style={{
+										width: "44px",
+										height: "44px",
+										borderRadius: "50%",
+										background: "#7AADA1",
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "center",
+										flexShrink: 0,
+									}}
+								>
+									<img
+										src="/images/ekyc/Login/user.svg"
+										alt="User"
+										style={{ width: "28px", height: "28px" }}
+									/>
+								</div>
+								<div>
+									<div
+										style={{
+											background: "rgba(255,255,255,0.3)",
+											height: "8px",
+											width: "90px",
+											borderRadius: "4px",
+											marginBottom: "6px",
+										}}
+									/>
+									<div
+										style={{
+											background: "rgba(255,255,255,0.15)",
+											height: "7px",
+											width: "60px",
+											borderRadius: "4px",
+										}}
+									/>
+								</div>
+								<div
+									style={{
+										marginLeft: "auto",
+										background: "#7AADA1",
+										borderRadius: "6px",
+										padding: "3px 8px",
+									}}
+								>
+									<span
+										style={{
+											color: "#fff",
+											fontSize: "10px",
+											fontWeight: 700,
+											fontFamily: "'Space Grotesk', sans-serif",
+										}}
+									>
+										VERIFIED
+									</span>
+								</div>
+							</div>
+
+							<div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+								{[
+									"/images/ekyc/Icons.svg",
+									"/images/ekyc/Icons-2.svg",
+									"/images/ekyc/Icons-3.svg",
+								].map((src, i) => (
+									<div
+										key={i}
+										style={{
+											width: "46px",
+											height: "46px",
+											borderRadius: "12px",
+											background: "rgba(255,255,255,0.12)",
+											display: "flex",
+											alignItems: "center",
+											justifyContent: "center",
+										}}
+									>
+										<img
+											src={src}
+											alt=""
+											style={{
+												width: "22px",
+												height: "22px",
+												filter: "brightness(10)",
+											}}
+										/>
+									</div>
+								))}
+							</div>
+
+							<div>
+								<div className="flex justify-between mb-2">
+									<span
+										style={{
+											color: "rgba(255,255,255,0.6)",
+											fontSize: "11px",
+											fontFamily: "'Space Grotesk', sans-serif",
+										}}
+									>
+										Verification Progress
+									</span>
+									<span
+										style={{
+											color: "#7AADA1",
+											fontSize: "11px",
+											fontFamily: "'Space Grotesk', sans-serif",
+											fontWeight: 700,
+										}}
+									>
+										100%
+									</span>
+								</div>
+								<div
+									style={{
+										height: "5px",
+										background: "rgba(255,255,255,0.15)",
+										borderRadius: "3px",
+									}}
+								>
+									<div
+										style={{
+											height: "100%",
+											width: "100%",
+											background: "#7AADA1",
+											borderRadius: "3px",
+										}}
+									/>
+								</div>
+							</div>
 						</div>
+
+						<img
+							src="/images/ekyc/Hand.svg"
+							alt=""
+							style={{
+								position: "absolute",
+								bottom: "-20px",
+								right: "-20px",
+								width: "80px",
+								height: "80px",
+								filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.15))",
+							}}
+						/>
 					</div>
+				</div>
+
+				<div
+					style={{
+						position: "absolute",
+						bottom: "-2px",
+						left: 0,
+						right: 0,
+						display: "flex",
+						justifyContent: "center",
+					}}
+				>
+					<img
+						src="/images/ekyc/arrow copy.svg"
+						alt=""
+						style={{ width: "24px", height: "36px" }}
+					/>
 				</div>
 			</section>
 
@@ -390,7 +781,6 @@ export default function EKYCPage() {
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
 						{STEPS.map((s, i) => (
 							<div key={i} className="flex flex-col items-start">
-								{/* Step number + connector */}
 								<div className="flex items-center gap-3 mb-5 w-full">
 									<div
 										style={{
@@ -466,7 +856,6 @@ export default function EKYCPage() {
 				style={{ background: "#F9F6F2" }}
 			>
 				<div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-14 items-center">
-					{/* Left — image/visual block */}
 					<div className="flex-1 relative flex justify-center">
 						<div
 							style={{
@@ -480,7 +869,6 @@ export default function EKYCPage() {
 								gap: "24px",
 							}}
 						>
-							{/* Mini ID card preview */}
 							<div
 								style={{
 									background: "rgba(255,255,255,0.10)",
@@ -503,7 +891,6 @@ export default function EKYCPage() {
 										flexShrink: 0,
 									}}
 								>
-									{/* user icon from ekyc/Login */}
 									<img
 										src="/images/ekyc/Login/user.svg"
 										alt="User"
@@ -550,7 +937,6 @@ export default function EKYCPage() {
 								</div>
 							</div>
 
-							{/* Icon row */}
 							<div style={{ display: "flex", gap: "16px", justifyContent: "center" }}>
 								{[
 									"/images/ekyc/Icons.svg",
@@ -582,7 +968,6 @@ export default function EKYCPage() {
 								))}
 							</div>
 
-							{/* Progress bar */}
 							<div>
 								<div className="flex justify-between mb-2">
 									<span
@@ -625,7 +1010,6 @@ export default function EKYCPage() {
 						</div>
 					</div>
 
-					{/* Right — text */}
 					<div className="flex-1">
 						<p
 							className="font-semibold mb-3 tracking-widest"
@@ -742,586 +1126,973 @@ export default function EKYCPage() {
 							margin: "0 auto 48px",
 						}}
 					>
-						Fill in your basic details to start the eKYC process. You'll need a valid ID
-						and your phone number.
+						Fill in your basic details to start the eKYC process. You&apos;ll need a
+						valid ID and your phone number.
 					</p>
 
-					{/* Step pills */}
-					<div className="flex gap-3 mb-10 overflow-x-auto pb-2">
-						{["Personal Info", "Upload ID", "Financial Proof", "Confirm"].map(
-							(label, i) => (
-								<button
-									key={i}
-									onClick={() => setActiveStep(i)}
-									className="flex items-center gap-2 whitespace-nowrap transition-all"
-									style={{
-										padding: "10px 18px",
-										borderRadius: "40px",
-										border: "none",
-										cursor: "pointer",
-										background: activeStep === i ? "#7AADA1" : "#F6F6F6",
-										color: activeStep === i ? "#fff" : "#666",
-										fontFamily: "'Space Grotesk', sans-serif",
-										fontSize: "13px",
-										fontWeight: activeStep === i ? 600 : 400,
-									}}
+					{success ? (
+						<div
+							className="text-center"
+							style={{
+								background: "#F9F6F2",
+								borderRadius: "24px",
+								padding: "60px 40px",
+							}}
+						>
+							<div
+								style={{
+									width: "80px",
+									height: "80px",
+									borderRadius: "50%",
+									background: "#22c55e",
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "center",
+									margin: "0 auto 24px",
+								}}
+							>
+								<svg
+									width="40"
+									height="40"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="#fff"
+									strokeWidth="2.5"
+									strokeLinecap="round"
+									strokeLinejoin="round"
 								>
-									<span
-										style={{
-											width: "20px",
-											height: "20px",
-											borderRadius: "50%",
-											background:
-												activeStep === i
-													? "rgba(255,255,255,0.25)"
-													: "rgba(0,0,0,0.08)",
-											display: "inline-flex",
-											alignItems: "center",
-											justifyContent: "center",
-											fontSize: "11px",
-											fontWeight: 700,
-											flexShrink: 0,
-										}}
-									>
-										{i + 1}
-									</span>
-									{label}
-								</button>
-							)
-						)}
-					</div>
-
-					{/* Form card */}
-					<div style={{ background: "#F9F6F2", borderRadius: "24px", padding: "40px" }}>
-						{activeStep === 0 && (
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-								<div>
-									<label
-										className="block font-medium mb-2"
-										style={{
-											color: "#333",
-											fontFamily: "'Space Grotesk', sans-serif",
-											fontSize: "13px",
-										}}
-									>
-										Full Legal Name
-									</label>
-									<input
-										type="text"
-										placeholder="As on your ID document"
-										value={formData.fullName}
-										onChange={(e) =>
-											setFormData((f) => ({ ...f, fullName: e.target.value }))
-										}
-										className="w-full h-11 rounded-xl outline-none"
-										style={{
-											paddingLeft: "14px",
-											paddingRight: "14px",
-											border: "1px solid #E0E0E0",
-											background: "#fff",
-											fontSize: "13px",
-											color: "#333",
-										}}
-									/>
-								</div>
-								<div>
-									<label
-										className="block font-medium mb-2"
-										style={{
-											color: "#333",
-											fontFamily: "'Space Grotesk', sans-serif",
-											fontSize: "13px",
-										}}
-									>
-										Date of Birth
-									</label>
-									<input
-										type="date"
-										value={formData.dateOfBirth}
-										onChange={(e) =>
-											setFormData((f) => ({
-												...f,
-												dateOfBirth: e.target.value,
-											}))
-										}
-										className="w-full h-11 rounded-xl outline-none"
-										style={{
-											paddingLeft: "14px",
-											paddingRight: "14px",
-											border: "1px solid #E0E0E0",
-											background: "#fff",
-											fontSize: "13px",
-											color: "#333",
-										}}
-									/>
-								</div>
-								<div>
-									<label
-										className="block font-medium mb-2"
-										style={{
-											color: "#333",
-											fontFamily: "'Space Grotesk', sans-serif",
-											fontSize: "13px",
-										}}
-									>
-										National ID / Passport No.
-									</label>
-									<input
-										type="text"
-										placeholder="e.g. AB1234567"
-										value={formData.idNumber}
-										onChange={(e) =>
-											setFormData((f) => ({ ...f, idNumber: e.target.value }))
-										}
-										className="w-full h-11 rounded-xl outline-none"
-										style={{
-											paddingLeft: "14px",
-											paddingRight: "14px",
-											border: "1px solid #E0E0E0",
-											background: "#fff",
-											fontSize: "13px",
-											color: "#333",
-										}}
-									/>
-								</div>
-								<div>
-									<label
-										className="block font-medium mb-2"
-										style={{
-											color: "#333",
-											fontFamily: "'Space Grotesk', sans-serif",
-											fontSize: "13px",
-										}}
-									>
-										Phone Number
-									</label>
-									<input
-										type="tel"
-										placeholder="+1 555 000 0000"
-										value={formData.phone}
-										onChange={(e) =>
-											setFormData((f) => ({ ...f, phone: e.target.value }))
-										}
-										className="w-full h-11 rounded-xl outline-none"
-										style={{
-											paddingLeft: "14px",
-											paddingRight: "14px",
-											border: "1px solid #E0E0E0",
-											background: "#fff",
-											fontSize: "13px",
-											color: "#333",
-										}}
-									/>
-								</div>
+									<path d="M20 6L9 17l-5-5" />
+								</svg>
 							</div>
-						)}
-
-						{activeStep === 1 && (
-							<div className="flex flex-col items-center gap-6">
-								<div
-									style={{
-										display: "flex",
-										gap: "20px",
-										flexWrap: "wrap",
-										justifyContent: "center",
-									}}
-								>
-									{[
-										{
-											icon: "/images/ekyc/Icons.svg",
-											label: "National ID Card",
-											bg: "#E8F4F1",
-										},
-										{
-											icon: "/images/ekyc/Icons-3.svg",
-											label: "Passport",
-											bg: "#F9F6F2",
-										},
-										{
-											icon: "/images/ekyc/Icons-2.svg",
-											label: "Driver's License",
-											bg: "#FDF2F0",
-										},
-									].map((opt, i) => (
+							<h3
+								style={{
+									fontFamily: "'Space Grotesk', sans-serif",
+									fontSize: "24px",
+									fontWeight: 700,
+									color: "#1C1C1C",
+									marginBottom: "12px",
+								}}
+							>
+								Verification Submitted!
+							</h3>
+							<p
+								style={{
+									color: "#666",
+									fontSize: "14px",
+									maxWidth: "400px",
+									margin: "0 auto 24px",
+									lineHeight: "1.7",
+								}}
+							>
+								Your eKYC documents have been submitted for review. You will receive
+								an email notification once the verification is complete.
+							</p>
+							<Link
+								href="/pets"
+								style={{
+									display: "inline-block",
+									padding: "12px 28px",
+									borderRadius: "12px",
+									background: "#7AADA1",
+									color: "#fff",
+									fontFamily: "'Space Grotesk', sans-serif",
+									fontSize: "14px",
+									fontWeight: 600,
+									textDecoration: "none",
+								}}
+							>
+								Browse Pets
+							</Link>
+						</div>
+					) : (
+						<>
+							{/* Step pills */}
+							<div className="flex gap-3 mb-10 overflow-x-auto pb-2">
+								{["Personal Info", "Upload ID", "Financial Proof", "Confirm"].map(
+									(label, i) => (
 										<button
 											key={i}
+											onClick={() => setActiveStep(i)}
+											className="flex items-center gap-2 whitespace-nowrap transition-all"
 											style={{
-												padding: "20px 24px",
-												borderRadius: "16px",
-												border: "2px solid #E0E0E0",
-												background: opt.bg,
+												padding: "10px 18px",
+												borderRadius: "40px",
+												border: "none",
 												cursor: "pointer",
+												background:
+													activeStep === i ? "#7AADA1" : "#F6F6F6",
+												color: activeStep === i ? "#fff" : "#666",
+												fontFamily: "'Space Grotesk', sans-serif",
+												fontSize: "13px",
+												fontWeight: activeStep === i ? 600 : 400,
+											}}
+										>
+											<span
+												style={{
+													width: "20px",
+													height: "20px",
+													borderRadius: "50%",
+													background:
+														activeStep === i
+															? "rgba(255,255,255,0.25)"
+															: "rgba(0,0,0,0.08)",
+													display: "inline-flex",
+													alignItems: "center",
+													justifyContent: "center",
+													fontSize: "11px",
+													fontWeight: 700,
+													flexShrink: 0,
+												}}
+											>
+												{i + 1}
+											</span>
+											{label}
+										</button>
+									)
+								)}
+							</div>
+
+							{/* Form card */}
+							<div
+								style={{
+									background: "#F9F6F2",
+									borderRadius: "24px",
+									padding: "40px",
+								}}
+							>
+								{activeStep === 0 && (
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+										<div>
+											<label
+												className="block font-medium mb-2"
+												style={{
+													color: "#333",
+													fontFamily: "'Space Grotesk', sans-serif",
+													fontSize: "13px",
+												}}
+											>
+												Full Legal Name
+											</label>
+											<input
+												type="text"
+												placeholder="As on your ID document"
+												value={formData.fullName}
+												onChange={(e) =>
+													setFormData((f) => ({
+														...f,
+														fullName: e.target.value,
+													}))
+												}
+												className="w-full h-11 rounded-xl outline-none"
+												style={{
+													paddingLeft: "14px",
+													paddingRight: "14px",
+													border: "1px solid #E0E0E0",
+													background: "#fff",
+													fontSize: "13px",
+													color: "#333",
+												}}
+											/>
+										</div>
+										<div>
+											<label
+												className="block font-medium mb-2"
+												style={{
+													color: "#333",
+													fontFamily: "'Space Grotesk', sans-serif",
+													fontSize: "13px",
+												}}
+											>
+												Date of Birth
+											</label>
+											<input
+												type="date"
+												value={formData.dateOfBirth}
+												onChange={(e) =>
+													setFormData((f) => ({
+														...f,
+														dateOfBirth: e.target.value,
+													}))
+												}
+												className="w-full h-11 rounded-xl outline-none"
+												style={{
+													paddingLeft: "14px",
+													paddingRight: "14px",
+													border: "1px solid #E0E0E0",
+													background: "#fff",
+													fontSize: "13px",
+													color: "#333",
+												}}
+											/>
+										</div>
+										<div>
+											<label
+												className="block font-medium mb-2"
+												style={{
+													color: "#333",
+													fontFamily: "'Space Grotesk', sans-serif",
+													fontSize: "13px",
+												}}
+											>
+												National ID / Passport No.
+											</label>
+											<input
+												type="text"
+												placeholder="e.g. AB1234567"
+												value={formData.idNumber}
+												onChange={(e) =>
+													setFormData((f) => ({
+														...f,
+														idNumber: e.target.value,
+													}))
+												}
+												className="w-full h-11 rounded-xl outline-none"
+												style={{
+													paddingLeft: "14px",
+													paddingRight: "14px",
+													border: "1px solid #E0E0E0",
+													background: "#fff",
+													fontSize: "13px",
+													color: "#333",
+												}}
+											/>
+										</div>
+										<div>
+											<label
+												className="block font-medium mb-2"
+												style={{
+													color: "#333",
+													fontFamily: "'Space Grotesk', sans-serif",
+													fontSize: "13px",
+												}}
+											>
+												Phone Number
+											</label>
+											<input
+												type="tel"
+												placeholder="+1 555 000 0000"
+												value={formData.phone}
+												onChange={(e) =>
+													setFormData((f) => ({
+														...f,
+														phone: e.target.value,
+													}))
+												}
+												className="w-full h-11 rounded-xl outline-none"
+												style={{
+													paddingLeft: "14px",
+													paddingRight: "14px",
+													border: "1px solid #E0E0E0",
+													background: "#fff",
+													fontSize: "13px",
+													color: "#333",
+												}}
+											/>
+										</div>
+									</div>
+								)}
+
+								{activeStep === 1 && (
+									<div className="flex flex-col items-center gap-6">
+										<div
+											style={{
+												display: "flex",
+												gap: "20px",
+												flexWrap: "wrap",
+												justifyContent: "center",
+											}}
+										>
+											{[
+												{
+													icon: "/images/ekyc/Icons.svg",
+													label: "National ID Card",
+													bg: "#E8F4F1",
+												},
+												{
+													icon: "/images/ekyc/Icons-3.svg",
+													label: "Passport",
+													bg: "#F9F6F2",
+												},
+												{
+													icon: "/images/ekyc/Icons-2.svg",
+													label: "Driver's License",
+													bg: "#FDF2F0",
+												},
+											].map((opt, i) => (
+												<button
+													key={i}
+													type="button"
+													style={{
+														padding: "20px 24px",
+														borderRadius: "16px",
+														border: "2px solid #E0E0E0",
+														background: opt.bg,
+														cursor: "pointer",
+														display: "flex",
+														flexDirection: "column",
+														alignItems: "center",
+														gap: "10px",
+														minWidth: "130px",
+														transition: "border-color 0.2s",
+													}}
+													onMouseEnter={(e) =>
+														(e.currentTarget.style.borderColor =
+															"#7AADA1")
+													}
+													onMouseLeave={(e) =>
+														(e.currentTarget.style.borderColor =
+															"#E0E0E0")
+													}
+													onClick={() => idInputRef.current?.click()}
+												>
+													<img
+														src={opt.icon}
+														alt={opt.label}
+														style={{ width: "32px", height: "32px" }}
+													/>
+													<span
+														style={{
+															fontFamily:
+																"'Space Grotesk', sans-serif",
+															fontSize: "12px",
+															fontWeight: 600,
+															color: "#333",
+															textAlign: "center",
+														}}
+													>
+														{opt.label}
+													</span>
+												</button>
+											))}
+										</div>
+
+										<input
+											type="file"
+											ref={idInputRef}
+											accept="image/*,.pdf"
+											style={{ display: "none" }}
+											onChange={(e) => {
+												const file = e.target.files?.[0];
+												if (file) handleFileSelect("id", file);
+											}}
+										/>
+
+										<div
+											style={{
+												width: "100%",
+												maxWidth: "480px",
+												borderRadius: "16px",
+												border: "2px dashed #C8DDD9",
+												background: idFile ? "#E8F4F1" : "#fff",
+												padding: "40px 24px",
 												display: "flex",
 												flexDirection: "column",
 												alignItems: "center",
-												gap: "10px",
-												minWidth: "130px",
-												transition: "border-color 0.2s",
+												gap: "12px",
+												cursor: "pointer",
 											}}
-											onMouseEnter={(e) =>
-												(e.currentTarget.style.borderColor = "#7AADA1")
-											}
-											onMouseLeave={(e) =>
-												(e.currentTarget.style.borderColor = "#E0E0E0")
-											}
+											onClick={() => idInputRef.current?.click()}
 										>
-											<img
-												src={opt.icon}
-												alt={opt.label}
-												style={{ width: "32px", height: "32px" }}
-											/>
-											<span
+											<div
 												style={{
-													fontFamily: "'Space Grotesk', sans-serif",
-													fontSize: "12px",
-													fontWeight: 600,
-													color: "#333",
-													textAlign: "center",
+													width: "56px",
+													height: "56px",
+													borderRadius: "50%",
+													background: "#E8F4F1",
+													display: "flex",
+													alignItems: "center",
+													justifyContent: "center",
 												}}
 											>
-												{opt.label}
-											</span>
-										</button>
-									))}
-								</div>
-
-								<div
-									style={{
-										width: "100%",
-										maxWidth: "480px",
-										borderRadius: "16px",
-										border: "2px dashed #C8DDD9",
-										background: "#fff",
-										padding: "40px 24px",
-										display: "flex",
-										flexDirection: "column",
-										alignItems: "center",
-										gap: "12px",
-										cursor: "pointer",
-									}}
-								>
-									<div
-										style={{
-											width: "56px",
-											height: "56px",
-											borderRadius: "50%",
-											background: "#E8F4F1",
-											display: "flex",
-											alignItems: "center",
-											justifyContent: "center",
-										}}
-									>
-										<svg
-											width="24"
-											height="24"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="#7AADA1"
-											strokeWidth="2"
-											strokeLinecap="round"
-											strokeLinejoin="round"
-										>
-											<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-											<polyline points="17 8 12 3 7 8" />
-											<line x1="12" y1="3" x2="12" y2="15" />
-										</svg>
+												<svg
+													width="24"
+													height="24"
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="#7AADA1"
+													strokeWidth="2"
+													strokeLinecap="round"
+													strokeLinejoin="round"
+												>
+													<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+													<polyline points="17 8 12 3 7 8" />
+													<line x1="12" y1="3" x2="12" y2="15" />
+												</svg>
+											</div>
+											{idFile ? (
+												<>
+													<span
+														style={{
+															fontFamily:
+																"'Space Grotesk', sans-serif",
+															fontSize: "14px",
+															fontWeight: 600,
+															color: "#216959",
+														}}
+													>
+														{idFile.name}
+													</span>
+													<span
+														style={{
+															fontSize: "12px",
+															color: "#7AADA1",
+														}}
+													>
+														{(idFile.size / 1024 / 1024).toFixed(2)} MB
+														— Click to change
+													</span>
+												</>
+											) : (
+												<>
+													<span
+														style={{
+															fontFamily:
+																"'Space Grotesk', sans-serif",
+															fontSize: "14px",
+															fontWeight: 600,
+															color: "#333",
+														}}
+													>
+														Drop your file here
+													</span>
+													<span
+														style={{ fontSize: "12px", color: "#888" }}
+													>
+														PNG, JPG or PDF — max 10 MB
+													</span>
+													<button
+														type="button"
+														style={{
+															marginTop: "4px",
+															padding: "8px 20px",
+															borderRadius: "8px",
+															background: "#7AADA1",
+															color: "#fff",
+															border: "none",
+															cursor: "pointer",
+															fontFamily:
+																"'Space Grotesk', sans-serif",
+															fontSize: "13px",
+															fontWeight: 600,
+														}}
+													>
+														Choose File
+													</button>
+												</>
+											)}
+										</div>
 									</div>
-									<span
+								)}
+
+								{activeStep === 2 && (
+									<div className="flex flex-col items-center gap-6">
+										<div style={{ textAlign: "center" }}>
+											<div
+												style={{
+													width: "64px",
+													height: "64px",
+													borderRadius: "50%",
+													background: "#E8F4F1",
+													display: "flex",
+													alignItems: "center",
+													justifyContent: "center",
+													margin: "0 auto 16px",
+												}}
+											>
+												<img
+													src="/images/ekyc/Icons-2.svg"
+													alt="Financial"
+													style={{ width: "32px", height: "32px" }}
+												/>
+											</div>
+											<p
+												style={{
+													color: "#666",
+													fontSize: "14px",
+													maxWidth: "380px",
+													lineHeight: "1.7",
+													margin: "0 auto",
+												}}
+											>
+												Upload a recent bank statement, utility bill, or pay
+												slip (within the last 3 months) as proof of address
+												and financial stability.
+											</p>
+										</div>
+
+										<input
+											type="file"
+											ref={financialInputRef}
+											accept="image/*,.pdf"
+											style={{ display: "none" }}
+											onChange={(e) => {
+												const file = e.target.files?.[0];
+												if (file) handleFileSelect("financial", file);
+											}}
+										/>
+
+										<div
+											style={{
+												width: "100%",
+												maxWidth: "480px",
+												borderRadius: "16px",
+												border: "2px dashed #C8DDD9",
+												background: financialFile ? "#E8F4F1" : "#fff",
+												padding: "40px 24px",
+												display: "flex",
+												flexDirection: "column",
+												alignItems: "center",
+												gap: "12px",
+												cursor: "pointer",
+											}}
+											onClick={() => financialInputRef.current?.click()}
+										>
+											<div
+												style={{
+													width: "56px",
+													height: "56px",
+													borderRadius: "50%",
+													background: "#E8F4F1",
+													display: "flex",
+													alignItems: "center",
+													justifyContent: "center",
+												}}
+											>
+												<svg
+													width="24"
+													height="24"
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="#7AADA1"
+													strokeWidth="2"
+													strokeLinecap="round"
+													strokeLinejoin="round"
+												>
+													<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+													<polyline points="17 8 12 3 7 8" />
+													<line x1="12" y1="3" x2="12" y2="15" />
+												</svg>
+											</div>
+											{financialFile ? (
+												<>
+													<span
+														style={{
+															fontFamily:
+																"'Space Grotesk', sans-serif",
+															fontSize: "14px",
+															fontWeight: 600,
+															color: "#216959",
+														}}
+													>
+														{financialFile.name}
+													</span>
+													<span
+														style={{
+															fontSize: "12px",
+															color: "#7AADA1",
+														}}
+													>
+														{(financialFile.size / 1024 / 1024).toFixed(
+															2
+														)}{" "}
+														MB — Click to change
+													</span>
+												</>
+											) : (
+												<>
+													<span
+														style={{
+															fontFamily:
+																"'Space Grotesk', sans-serif",
+															fontSize: "14px",
+															fontWeight: 600,
+															color: "#333",
+														}}
+													>
+														Upload Financial Document
+													</span>
+													<span
+														style={{ fontSize: "12px", color: "#888" }}
+													>
+														PNG, JPG or PDF — max 10 MB
+													</span>
+													<button
+														type="button"
+														style={{
+															marginTop: "4px",
+															padding: "8px 20px",
+															borderRadius: "8px",
+															background: "#7AADA1",
+															color: "#fff",
+															border: "none",
+															cursor: "pointer",
+															fontFamily:
+																"'Space Grotesk', sans-serif",
+															fontSize: "13px",
+															fontWeight: 600,
+														}}
+													>
+														Choose File
+													</button>
+												</>
+											)}
+										</div>
+									</div>
+								)}
+
+								{activeStep === 3 && (
+									<div className="flex flex-col items-center gap-6 text-center">
+										<div
+											style={{
+												width: "80px",
+												height: "80px",
+												borderRadius: "50%",
+												background: "#216959",
+												display: "flex",
+												alignItems: "center",
+												justifyContent: "center",
+												margin: "0 auto",
+											}}
+										>
+											<img
+												src="/images/ekyc/Hand.svg"
+												alt="Complete"
+												style={{ width: "48px", height: "48px" }}
+											/>
+										</div>
+										<h3
+											style={{
+												fontFamily: "'Space Grotesk', sans-serif",
+												fontSize: "20px",
+												fontWeight: 700,
+												color: "#1C1C1C",
+											}}
+										>
+											Ready to Confirm
+										</h3>
+										<p
+											style={{
+												color: "#888",
+												fontSize: "14px",
+												maxWidth: "400px",
+												lineHeight: "1.7",
+											}}
+										>
+											Review your details, then click &quot;Submit for
+											Verification&quot;. You&apos;ll receive a verification
+											code via email to finalise the process.
+										</p>
+
+										{/* Summary */}
+										<div
+											style={{
+												width: "100%",
+												maxWidth: "360px",
+												background: "#fff",
+												borderRadius: "16px",
+												padding: "20px",
+												textAlign: "left",
+											}}
+										>
+											{[
+												["Full Name", formData.fullName],
+												["Date of Birth", formData.dateOfBirth],
+												["ID Number", formData.idNumber],
+												["Phone", formData.phone],
+												["ID Document", idFile?.name || "—"],
+												["Financial Doc", financialFile?.name || "—"],
+											].map(([label, value], i) => (
+												<div
+													key={i}
+													style={{
+														display: "flex",
+														justifyContent: "space-between",
+														padding: "8px 0",
+														borderBottom:
+															i < 5 ? "1px solid #f0f0f0" : "none",
+													}}
+												>
+													<span
+														style={{
+															color: "#888",
+															fontSize: "12px",
+															fontFamily:
+																"'Space Grotesk', sans-serif",
+														}}
+													>
+														{label}
+													</span>
+													<span
+														style={{
+															color: "#333",
+															fontSize: "12px",
+															fontFamily:
+																"'Space Grotesk', sans-serif",
+															fontWeight: 500,
+															textAlign: "right",
+															maxWidth: "180px",
+															overflow: "hidden",
+															textOverflow: "ellipsis",
+															whiteSpace: "nowrap",
+														}}
+													>
+														{value}
+													</span>
+												</div>
+											))}
+										</div>
+
+										{/* OTP Section */}
+										<div
+											style={{
+												width: "100%",
+												maxWidth: "360px",
+												display: "flex",
+												flexDirection: "column",
+												alignItems: "center",
+												gap: "12px",
+											}}
+										>
+											{!otpSent ? (
+												<button
+													type="button"
+													onClick={handleSendOtp}
+													disabled={otpLoading}
+													style={{
+														padding: "12px 28px",
+														borderRadius: "12px",
+														background: "#7AADA1",
+														color: "#fff",
+														border: "none",
+														cursor: otpLoading
+															? "not-allowed"
+															: "pointer",
+														fontFamily: "'Space Grotesk', sans-serif",
+														fontSize: "14px",
+														fontWeight: 600,
+														opacity: otpLoading ? 0.6 : 1,
+													}}
+												>
+													{otpLoading
+														? "Sending..."
+														: "Send Verification Code"}
+												</button>
+											) : (
+												<>
+													<p
+														style={{
+															color: "#666",
+															fontSize: "13px",
+														}}
+													>
+														Enter the 6-digit code sent to your email
+													</p>
+													<input
+														type="text"
+														placeholder="Enter 6-digit code"
+														value={otpCode}
+														onChange={(e) =>
+															setOtpCode(
+																e.target.value
+																	.replace(/\D/g, "")
+																	.slice(0, 6)
+															)
+														}
+														maxLength={6}
+														style={{
+															width: "200px",
+															height: "48px",
+															borderRadius: "12px",
+															border: "2px solid #E0E0E0",
+															background: "#fff",
+															textAlign: "center",
+															fontSize: "24px",
+															fontFamily:
+																"'Space Grotesk', sans-serif",
+															fontWeight: 700,
+															letterSpacing: "8px",
+															outline: "none",
+														}}
+													/>
+													{otpVerified && (
+														<span
+															style={{
+																color: "#22c55e",
+																fontSize: "13px",
+																fontWeight: 600,
+															}}
+														>
+															Verified!
+														</span>
+													)}
+												</>
+											)}
+										</div>
+
+										<div
+											style={{
+												display: "flex",
+												gap: "10px",
+												alignItems: "center",
+											}}
+										>
+											{[
+												formData.fullName,
+												formData.dateOfBirth,
+												formData.idNumber,
+												formData.phone,
+											].map((val, i) => (
+												<div
+													key={i}
+													style={{
+														width: "10px",
+														height: "10px",
+														borderRadius: "50%",
+														background: val ? "#7AADA1" : "#E0E0E0",
+													}}
+												/>
+											))}
+										</div>
+										<p style={{ fontSize: "12px", color: "#888" }}>
+											{
+												[
+													formData.fullName,
+													formData.dateOfBirth,
+													formData.idNumber,
+													formData.phone,
+												].filter(Boolean).length
+											}{" "}
+											/ 4 fields completed
+										</p>
+									</div>
+								)}
+
+								{/* Error message */}
+								{error && (
+									<div
+										className="mt-6 text-center"
 										style={{
-											fontFamily: "'Space Grotesk', sans-serif",
-											fontSize: "14px",
-											fontWeight: 600,
-											color: "#333",
+											background: "#fef2f2",
+											border: "1px solid #fecaca",
+											borderRadius: "12px",
+											padding: "12px 16px",
 										}}
 									>
-										Drop your file here
-									</span>
-									<span style={{ fontSize: "12px", color: "#888" }}>
-										PNG, JPG or PDF — max 10 MB
-									</span>
+										<p style={{ color: "#991b1b", fontSize: "13px" }}>
+											{error}
+										</p>
+										{otpError && (
+											<p
+												style={{
+													color: "#991b1b",
+													fontSize: "12px",
+													marginTop: "4px",
+												}}
+											>
+												{otpError}
+											</p>
+										)}
+									</div>
+								)}
+
+								{/* Navigation buttons */}
+								<div
+									className="flex justify-between items-center mt-8 pt-6"
+									style={{ borderTop: "1px solid #E8E8E8" }}
+								>
 									<button
+										type="button"
+										onClick={() => {
+											setError(null);
+											setActiveStep((s) => Math.max(0, s - 1));
+										}}
+										disabled={activeStep === 0}
+										className="flex items-center gap-2 disabled:opacity-30 hover:opacity-70 transition-opacity"
 										style={{
-											marginTop: "4px",
-											padding: "8px 20px",
-											borderRadius: "8px",
-											background: "#7AADA1",
-											color: "#fff",
+											background: "none",
 											border: "none",
 											cursor: "pointer",
 											fontFamily: "'Space Grotesk', sans-serif",
-											fontSize: "13px",
-											fontWeight: 600,
-										}}
-									>
-										Choose File
-									</button>
-								</div>
-							</div>
-						)}
-
-						{activeStep === 2 && (
-							<div className="flex flex-col items-center gap-6">
-								<div style={{ textAlign: "center" }}>
-									<div
-										style={{
-											width: "64px",
-											height: "64px",
-											borderRadius: "50%",
-											background: "#E8F4F1",
-											display: "flex",
-											alignItems: "center",
-											justifyContent: "center",
-											margin: "0 auto 16px",
+											fontSize: "14px",
+											color: "#333",
+											fontWeight: 500,
 										}}
 									>
 										<img
-											src="/images/ekyc/Icons-2.svg"
-											alt="Financial"
-											style={{ width: "32px", height: "32px" }}
+											src="/images/ekyc/arrow copy.svg"
+											alt="Back"
+											style={{ width: "8px", height: "13px" }}
 										/>
-									</div>
-									<p
-										style={{
-											color: "#666",
-											fontSize: "14px",
-											maxWidth: "380px",
-											lineHeight: "1.7",
-											margin: "0 auto",
-										}}
-									>
-										Upload a recent bank statement, utility bill, or pay slip
-										(within the last 3 months) as proof of address and financial
-										stability.
-									</p>
-								</div>
-
-								<div
-									style={{
-										width: "100%",
-										maxWidth: "480px",
-										borderRadius: "16px",
-										border: "2px dashed #C8DDD9",
-										background: "#fff",
-										padding: "40px 24px",
-										display: "flex",
-										flexDirection: "column",
-										alignItems: "center",
-										gap: "12px",
-										cursor: "pointer",
-									}}
-								>
-									<div
-										style={{
-											width: "56px",
-											height: "56px",
-											borderRadius: "50%",
-											background: "#E8F4F1",
-											display: "flex",
-											alignItems: "center",
-											justifyContent: "center",
-										}}
-									>
-										<svg
-											width="24"
-											height="24"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="#7AADA1"
-											strokeWidth="2"
-											strokeLinecap="round"
-											strokeLinejoin="round"
-										>
-											<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-											<polyline points="17 8 12 3 7 8" />
-											<line x1="12" y1="3" x2="12" y2="15" />
-										</svg>
-									</div>
-									<span
-										style={{
-											fontFamily: "'Space Grotesk', sans-serif",
-											fontSize: "14px",
-											fontWeight: 600,
-											color: "#333",
-										}}
-									>
-										Upload Financial Document
-									</span>
-									<span style={{ fontSize: "12px", color: "#888" }}>
-										PNG, JPG or PDF — max 10 MB
-									</span>
-									<button
-										style={{
-											marginTop: "4px",
-											padding: "8px 20px",
-											borderRadius: "8px",
-											background: "#7AADA1",
-											color: "#fff",
-											border: "none",
-											cursor: "pointer",
-											fontFamily: "'Space Grotesk', sans-serif",
-											fontSize: "13px",
-											fontWeight: 600,
-										}}
-									>
-										Choose File
+										Back
 									</button>
-								</div>
-							</div>
-						)}
 
-						{activeStep === 3 && (
-							<div className="flex flex-col items-center gap-6 text-center">
-								<div
-									style={{
-										width: "80px",
-										height: "80px",
-										borderRadius: "50%",
-										background: "#216959",
-										display: "flex",
-										alignItems: "center",
-										justifyContent: "center",
-										margin: "0 auto",
-									}}
-								>
-									<img
-										src="/images/ekyc/Hand.svg"
-										alt="Complete"
-										style={{ width: "48px", height: "48px" }}
-									/>
-								</div>
-								<h3
-									style={{
-										fontFamily: "'Space Grotesk', sans-serif",
-										fontSize: "20px",
-										fontWeight: 700,
-										color: "#1C1C1C",
-									}}
-								>
-									Ready to Confirm
-								</h3>
-								<p
-									style={{
-										color: "#888",
-										fontSize: "14px",
-										maxWidth: "400px",
-										lineHeight: "1.7",
-									}}
-								>
-									Review your details, then click "Submit for Verification".
-									You'll receive an SMS code within 2 minutes to finalise the
-									process.
-								</p>
-								<div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-									{[
-										formData.fullName,
-										formData.dateOfBirth,
-										formData.idNumber,
-										formData.phone,
-									].map((val, i) => (
-										<div
-											key={i}
+									{activeStep < 3 ? (
+										<button
+											type="button"
+											onClick={handleStepNext}
+											disabled={uploading}
+											className="flex items-center gap-2 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
 											style={{
-												width: "10px",
-												height: "10px",
-												borderRadius: "50%",
-												background: val ? "#7AADA1" : "#E0E0E0",
+												padding: "12px 28px",
+												borderRadius: "12px",
+												background: "#7AADA1",
+												border: "none",
+												cursor: uploading ? "not-allowed" : "pointer",
+												fontFamily: "'Space Grotesk', sans-serif",
+												fontSize: "14px",
 											}}
-										/>
-									))}
+										>
+											{uploading ? "Uploading..." : "Continue"}
+											{!uploading && (
+												<img
+													src="/images/ekyc/Keyboard arrow down.svg"
+													alt=""
+													style={{ width: "20px", height: "20px" }}
+												/>
+											)}
+										</button>
+									) : (
+										<button
+											type="button"
+											onClick={handleSubmit}
+											disabled={submitting || !otpSent}
+											className="flex items-center gap-2 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+											style={{
+												padding: "12px 28px",
+												borderRadius: "12px",
+												background: "#216959",
+												border: "none",
+												cursor:
+													submitting || !otpSent
+														? "not-allowed"
+														: "pointer",
+												fontFamily: "'Space Grotesk', sans-serif",
+												fontSize: "14px",
+											}}
+										>
+											{submitting
+												? "Submitting..."
+												: "Submit for Verification"}
+											{!submitting && (
+												<svg
+													width="16"
+													height="16"
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="currentColor"
+													strokeWidth="2.5"
+													strokeLinecap="round"
+													strokeLinejoin="round"
+												>
+													<path d="M20 6L9 17l-5-5" />
+												</svg>
+											)}
+										</button>
+									)}
 								</div>
-								<p style={{ fontSize: "12px", color: "#888" }}>
-									{
-										[
-											formData.fullName,
-											formData.dateOfBirth,
-											formData.idNumber,
-											formData.phone,
-										].filter(Boolean).length
-									}{" "}
-									/ 4 fields completed
-								</p>
 							</div>
-						)}
-
-						{/* Navigation buttons */}
-						<div
-							className="flex justify-between items-center mt-8 pt-6"
-							style={{ borderTop: "1px solid #E8E8E8" }}
-						>
-							<button
-								onClick={() => setActiveStep((s) => Math.max(0, s - 1))}
-								disabled={activeStep === 0}
-								className="flex items-center gap-2 disabled:opacity-30 hover:opacity-70 transition-opacity"
-								style={{
-									background: "none",
-									border: "none",
-									cursor: "pointer",
-									fontFamily: "'Space Grotesk', sans-serif",
-									fontSize: "14px",
-									color: "#333",
-									fontWeight: 500,
-								}}
-							>
-								<img
-									src="/images/ekyc/arrow copy.svg"
-									alt="Back"
-									style={{ width: "8px", height: "13px" }}
-								/>
-								Back
-							</button>
-
-							{activeStep < 3 ? (
-								<button
-									onClick={() => setActiveStep((s) => Math.min(3, s + 1))}
-									className="flex items-center gap-2 text-white font-semibold hover:opacity-90 transition-opacity"
-									style={{
-										padding: "12px 28px",
-										borderRadius: "12px",
-										background: "#7AADA1",
-										border: "none",
-										cursor: "pointer",
-										fontFamily: "'Space Grotesk', sans-serif",
-										fontSize: "14px",
-									}}
-								>
-									Continue
-									{/* Keyboard arrow down (right chevron) */}
-									<img
-										src="/images/ekyc/Keyboard arrow down.svg"
-										alt=""
-										style={{ width: "20px", height: "20px" }}
-									/>
-								</button>
-							) : (
-								<button
-									className="flex items-center gap-2 text-white font-semibold hover:opacity-90 transition-opacity"
-									style={{
-										padding: "12px 28px",
-										borderRadius: "12px",
-										background: "#216959",
-										border: "none",
-										cursor: "pointer",
-										fontFamily: "'Space Grotesk', sans-serif",
-										fontSize: "14px",
-									}}
-								>
-									Submit for Verification
-									<svg
-										width="16"
-										height="16"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										strokeWidth="2.5"
-										strokeLinecap="round"
-										strokeLinejoin="round"
-									>
-										<path d="M20 6L9 17l-5-5" />
-									</svg>
-								</button>
-							)}
-						</div>
-					</div>
+						</>
+					)}
 				</div>
 			</section>
 

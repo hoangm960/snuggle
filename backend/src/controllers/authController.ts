@@ -105,20 +105,32 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
 	};
 
 	if (!response.ok) {
-		if (data.error?.message === "INVALID_PASSWORD") {
-			throw new AppError(
-				'Incorrect email or password. Try again or click "Forgot Password".',
-				401
-			);
+		const firebaseError = data.error?.message;
+		console.error("Firebase login error:", firebaseError);
+
+		switch (firebaseError) {
+			case "INVALID_PASSWORD":
+				throw new AppError(
+					'Incorrect email or password. Try again or click "Forgot Password".',
+					401
+				);
+			case "EMAIL_NOT_FOUND":
+				throw new AppError("User not found", 404);
+			case "USER_DISABLED":
+				throw new AppError("This account has been disabled", 403);
+			case "TOO_MANY_ATTEMPTS":
+				throw new AppError("Too many login attempts. Please try again later.", 429);
+			case "NETWORK_REQUEST_FAILED":
+				throw new AppError("Network error. Please check your connection.", 500);
+			default:
+				console.error("Unknown Firebase login error:", data);
+				throw new AppError("Login failed", 401);
 		}
-		if (data.error?.message === "EMAIL_NOT_FOUND") {
-			throw new AppError("User not found", 404);
-		}
-		throw new AppError("Login failed", 401);
 	}
 
 	if (!data.localId) {
-		throw new AppError("Login failed", 401);
+		console.error("Firebase login response missing localId:", data);
+		throw new AppError("Login failed: Invalid response from authentication service", 401);
 	}
 
 	const uid = data.localId;

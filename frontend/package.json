@@ -6,7 +6,7 @@
 		"dev": "next dev",
 		"build": "next build",
 		"start": "next start",
-		"lint": "next lint",
+		"lint": "eslint . --max-warnings 0",
 		"format": "prettier --write .",
 		"test": "vitest run",
 		"test:watch": "vitest"
@@ -20,7 +20,8 @@
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0",
 		"react-router-dom": "^6.21.1",
-		"recharts": "^3.8.1"
+		"recharts": "^3.8.1",
+		"socket.io-client": "^4.8.3"
 	},
 	"devDependencies": {
 		"@testing-library/jest-dom": "^6.1.6",

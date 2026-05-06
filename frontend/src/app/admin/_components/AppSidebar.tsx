@@ -12,12 +12,14 @@ import {
 	Settings,
 	LogOut,
 	Sparkles,
+	MessageCircle,
 } from "lucide-react";
 
 const navMain = [
 	{ href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
 	{ href: "/admin/pets", label: "Pets", icon: PawPrint },
 	{ href: "/admin/requests", label: "Adoption Requests", icon: ClipboardList, badge: 12 },
+	{ href: "/admin/chats", label: "Support Chats", icon: MessageCircle },
 	{ href: "/admin/users", label: "Users", icon: Users },
 	{ href: "/admin/donations", label: "Donations", icon: HeartHandshake },
 ];
