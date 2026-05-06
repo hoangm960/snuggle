@@ -6,7 +6,10 @@ import {
 } from "../controllers/adopterProfileController";
 import { authenticate } from "../middleware/auth";
 import { validate } from "../middleware/validate";
-import { createAdopterProfileSchema, updateAdopterProfileSchema } from "../utils/validators/otherValidator";
+import {
+	createAdopterProfileSchema,
+	updateAdopterProfileSchema,
+} from "../utils/validators/otherValidator";
 
 const router = Router();
 

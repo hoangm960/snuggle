@@ -34,15 +34,17 @@ export const updateContractSchema = z.object({
 
 export const createSavedSearchSchema = z.object({
 	name: z.string().min(1, "Name is required").max(100),
-	searchCriteria: z.object({
-		species: z.enum(["dog", "cat", "bird", "rabbit", "other"]).optional(),
-		size: z.enum(["small", "medium", "large"]).optional(),
-		ageMonthsMin: z.number().int().min(0).optional(),
-		ageMonthsMax: z.number().int().min(0).optional(),
-		gender: z.enum(["male", "female"]).optional(),
-		isVaccinated: z.boolean().optional(),
-		isNeutered: z.boolean().optional(),
-	}).optional(),
+	searchCriteria: z
+		.object({
+			species: z.enum(["dog", "cat", "bird", "rabbit", "other"]).optional(),
+			size: z.enum(["small", "medium", "large"]).optional(),
+			ageMonthsMin: z.number().int().min(0).optional(),
+			ageMonthsMax: z.number().int().min(0).optional(),
+			gender: z.enum(["male", "female"]).optional(),
+			isVaccinated: z.boolean().optional(),
+			isNeutered: z.boolean().optional(),
+		})
+		.optional(),
 	notifyOnNewMatches: z.boolean().default(false),
 });
 

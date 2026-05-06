@@ -99,10 +99,7 @@ export const getUserWithKYC = async (
 	return { kyc, user };
 };
 
-export const approveKYC = async (
-	kycId: string,
-	adminId: string
-): Promise<KycVerification> => {
+export const approveKYC = async (kycId: string, adminId: string): Promise<KycVerification> => {
 	const kyc = await getKYCById(kycId);
 
 	if (kyc.status !== "pending") {

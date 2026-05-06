@@ -12,6 +12,11 @@ const router = Router();
 
 router.get("/:shelterId", getShelterReviews);
 router.post("/:shelterId", authenticate, validate(createReviewSchema), createReview);
-router.put("/:shelterId/:id/status", authenticate, validate(updateReviewStatusSchema), updateReviewStatus);
+router.put(
+	"/:shelterId/:id/status",
+	authenticate,
+	validate(updateReviewStatusSchema),
+	updateReviewStatus
+);
 
 export default router;

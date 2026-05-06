@@ -366,11 +366,7 @@ export interface OtpEmailParams {
 	code: string;
 }
 
-export const sendOtpEmail = async ({
-	to,
-	displayName,
-	code,
-}: OtpEmailParams): Promise<void> => {
+export const sendOtpEmail = async ({ to, displayName, code }: OtpEmailParams): Promise<void> => {
 	const htmlContent = `
 		<!DOCTYPE html>
 		<html>

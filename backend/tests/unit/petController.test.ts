@@ -1,4 +1,10 @@
-import { getAllPets, getPetById, createPet, updatePet, deletePet } from "../../src/controllers/petController";
+import {
+	getAllPets,
+	getPetById,
+	createPet,
+	updatePet,
+	deletePet,
+} from "../../src/controllers/petController";
 import { Request, Response } from "express";
 import { AppError } from "../../src/middleware/errorHandler";
 

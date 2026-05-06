@@ -26,8 +26,7 @@ export const initializeSocket = (httpServer: HttpServer): Server => {
 	});
 
 	io.use(async (socket: AuthenticatedSocket, next) => {
-		const token =
-			socket.handshake.auth.token || socket.handshake.query.token;
+		const token = socket.handshake.auth.token || socket.handshake.query.token;
 
 		if (!token || typeof token !== "string") {
 			return next(new Error("Authentication required"));
@@ -102,20 +101,10 @@ export const initializeSocket = (httpServer: HttpServer): Server => {
 	return io;
 };
 
-export const emitToRoom = (
-	io: Server,
-	room: string,
-	event: string,
-	data: unknown
-): void => {
+export const emitToRoom = (io: Server, room: string, event: string, data: unknown): void => {
 	io.to(room).emit(event, data);
 };
 
-export const emitToUser = (
-	io: Server,
-	userId: string,
-	event: string,
-	data: unknown
-): void => {
+export const emitToUser = (io: Server, userId: string, event: string, data: unknown): void => {
 	io.to(`user:${userId}`).emit(event, data);
 };

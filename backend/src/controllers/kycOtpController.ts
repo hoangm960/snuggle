@@ -25,11 +25,7 @@ export const sendOtpHandler = async (req: AuthRequest, res: Response): Promise<v
 		throw new AppError("No email associated with this account", 400);
 	}
 
-	await generateAndSendOtp(
-		userId,
-		userData.email,
-		userData.displayName || "User"
-	);
+	await generateAndSendOtp(userId, userData.email, userData.displayName || "User");
 
 	res.status(200).json({
 		success: true,
