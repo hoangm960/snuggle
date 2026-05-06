@@ -3,7 +3,7 @@
 import { AdminLayout } from "./_components/AdminLayout";
 import { StatCard } from "./_components/StatCard";
 import { Users, PawPrint, HeartHandshake, Clock } from "lucide-react";
-import  { usePets } from "@/hooks/usePets";
+import { usePets } from "@/hooks/usePets";
 import { useUsers } from "@/hooks/useUsers";
 import { useEffect } from "react";
 
@@ -43,7 +43,7 @@ const getPercent = (count: number, total: number) =>
 
 export default function AdminDashboard() {
 	const { pets = [] } = usePets();
-
+	const { total } = useUsers();
 
 	const counts = pets.reduce(
 		(acc, p) => {
