@@ -26,6 +26,10 @@ yarn install
 # Install backend dependencies
 cd ../backend
 yarn install
+
+# Setup Git hooks (optional)
+cd ..
+yarn prepare
 ```
 
 ### 2. Configure Firebase
@@ -55,12 +59,12 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 ```env
 FIREBASE_API_KEY=your-firebase-key
 FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_SERVICE_ACCOUNT_FILE=./service-account.json
+FIREBASE_SERVICE_ACCOUNT_FILE=./firebase-service-key.json
 PORT=3001
 NODE_ENV=development
 ```
 
-> **Note:** Create a service account in Firebase Console and download the JSON key. Place it in the `backend/` directory and rename it to `service-account.json` (or update the path in `FIREBASE_SERVICE_ACCOUNT_FILE`).
+> **Note:** Create a service account in Firebase Console and download the JSON key. Place it in the `backend/` directory and rename it to `firebase-service-key.json` (or update the path in `FIREBASE_SERVICE_ACCOUNT_FILE`).
 
 ### Specification
 
@@ -86,14 +90,14 @@ yarn dev
 ### Test Commands
 
 ```bash
-# Run all tests
-yarn test
+cd frontend
+yarn test           # Run tests
+yarn test:watch     # Run tests in watch mode
 
-# Run tests in watch mode
-yarn test:watch
-
-# Run tests with coverage
-yarn test:coverage
+cd ../backend
+yarn test           # Run all tests
+yarn test:watch     # Run tests in watch mode
+yarn test:coverage  # Run tests with coverage
 ```
 
 ## API Reference
