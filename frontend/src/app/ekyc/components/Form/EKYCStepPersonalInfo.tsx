@@ -1,7 +1,3 @@
-import DatePicker from "react-date-picker";
-import "react-date-picker/dist/DatePicker.css";
-import "react-calendar/dist/Calendar.css";
-
 interface FormData {
 	fullName: string;
 	dateOfBirth: string;
@@ -35,10 +31,14 @@ const parseDDMMYYYYToDate = (dateStr: string): Date | null => {
 };
 
 export function EKYCStepPersonalInfo({ formData, onChange }: EKYCStepPersonalInfoProps) {
-	const dateValue = parseDDMMYYYYToDate(formData.dateOfBirth);
+	const dateValue = formData.dateOfBirth
+		? parseDDMMYYYYToDate(formData.dateOfBirth)?.toISOString().split("T")[0] || ""
+		: "";
 
-	const handleDateOfBirthChange = (date: Date | null) => {
-		if (date) {
+	const handleDateOfBirthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		if (value) {
+			const date = new Date(value + "T00:00:00");
 			onChange({ ...formData, dateOfBirth: formatDateToDDMMYYYY(date) });
 		} else {
 			onChange({ ...formData, dateOfBirth: "" });
@@ -89,35 +89,21 @@ export function EKYCStepPersonalInfo({ formData, onChange }: EKYCStepPersonalInf
 				>
 					Date of Birth
 				</label>
-				<div
+				<input
+					type="date"
+					value={dateValue}
+					onChange={handleDateOfBirthChange}
+					max={new Date().toISOString().split("T")[0]}
+					className="w-full h-11 rounded-xl outline-none"
 					style={{
+						paddingLeft: "14px",
+						paddingRight: "14px",
 						border: "1px solid #E0E0E0",
-						borderRadius: "12px",
-						overflow: "hidden",
+						background: "#fff",
+						fontSize: "13px",
+						color: "#333",
 					}}
-				>
-					<DatePicker
-						onChange={handleDateOfBirthChange}
-						value={dateValue}
-						format="dd/MM/yyyy"
-						calendarIcon={null}
-						clearIcon={null}
-						showLeadingZeros
-						maxDate={new Date()}
-						className="w-full"
-						style={{
-							width: "100%",
-							height: "44px",
-							border: "none",
-							outline: "none",
-							fontFamily: "'Space Grotesk', sans-serif",
-							fontSize: "13px",
-							color: "#333",
-							paddingLeft: "14px",
-							paddingRight: "14px",
-						}}
-					/>
-				</div>
+				/>
 			</div>
 			<div>
 				<label
