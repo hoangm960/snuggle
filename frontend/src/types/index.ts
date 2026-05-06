@@ -90,3 +90,30 @@ export interface KycStatusResponse {
 		isKycVerified: boolean;
 	} | null;
 }
+
+export interface KycBatch {
+	kycVerifications: KycVerification[];
+	total: number;
+	pending: number;
+	approved: number;
+	rejected: number;
+}
+
+export interface KycStats {
+	total: number;
+	pending: number;
+	approved: number;
+	rejected: number;
+	approvedToday: number;
+	rejectedToday: number;
+}
+
+export interface KycWithUser {
+	kyc: KycVerification;
+	user: {
+		id: string;
+		email: string;
+		displayName: string;
+		photoURL?: string;
+	};
+}

@@ -13,6 +13,7 @@ import {
 	LogOut,
 	Sparkles,
 	MessageCircle,
+	ShieldCheck,
 } from "lucide-react";
 
 const navMain = [
@@ -21,6 +22,7 @@ const navMain = [
 	{ href: "/admin/requests", label: "Adoption Requests", icon: ClipboardList, badge: 12 },
 	{ href: "/admin/chats", label: "Support Chats", icon: MessageCircle },
 	{ href: "/admin/users", label: "Users", icon: Users },
+	{ href: "/admin/kyc", label: "eKYC Verification", icon: ShieldCheck },
 	{ href: "/admin/donations", label: "Donations", icon: HeartHandshake },
 ];
 
