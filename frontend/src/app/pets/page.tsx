@@ -6,14 +6,16 @@ import { usePets } from "@/hooks/usePets";
 import { Navbar } from "@/components/Navbar";
 import { PetCardSkeletonGrid } from "@/components/PetCardSkeleton";
 
-
 type PetType = "cat" | "dog" | "other";
 
-const typeConfig: Record<PetType, {
-	bg: string;
-	color: string;
-	label: string;
-}> = {
+const typeConfig: Record<
+	PetType,
+	{
+		bg: string;
+		color: string;
+		label: string;
+	}
+> = {
 	cat: {
 		bg: "#E8F4F1",
 		color: "#216959",
@@ -606,14 +608,11 @@ import { Pet } from "@/types";
 function PetCard({ pet }: { pet: Pet }) {
 	const [hovered, setHovered] = useState(false);
 
-	const type: PetType =
-		pet.species === "cat"
-			? "cat"
-			: pet.species === "dog"
-			? "dog"
-			: "other";
+	const type: PetType = pet.species === "cat" ? "cat" : pet.species === "dog" ? "dog" : "other";
 	const isFemale = pet.gender === "female";
-	const displayAge = pet.ageMonths ? `${pet.ageMonths} month${pet.ageMonths === 1 ? "" : "s"}` : "";
+	const displayAge = pet.ageMonths
+		? `${pet.ageMonths} month${pet.ageMonths === 1 ? "" : "s"}`
+		: "";
 
 	return (
 		<div

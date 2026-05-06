@@ -25,24 +25,30 @@ export default function AdminChatsPage() {
 	const [isOtherTyping, setIsOtherTyping] = useState(false);
 	const { user: currentUser } = useAuth();
 	const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-const messagesEndRef = useRef<HTMLDivElement>(null);
+	const messagesEndRef = useRef<HTMLDivElement>(null);
 
-	const handleNewMessage = useCallback((message: Message) => {
-		if (message.chatId === selectedChat?.id) {
-			setChatMessages((prev) => {
-				if (prev.some((m) => m.id === message.id)) return prev;
-				return [...prev, message];
-			});
-		}
-	}, [selectedChat?.id]);
+	const handleNewMessage = useCallback(
+		(message: Message) => {
+			if (message.chatId === selectedChat?.id) {
+				setChatMessages((prev) => {
+					if (prev.some((m) => m.id === message.id)) return prev;
+					return [...prev, message];
+				});
+			}
+		},
+		[selectedChat?.id]
+	);
 
-	const handleUserTyping = useCallback((data: { chatId: string; userId: string }) => {
-		if (data.chatId === selectedChat?.id && data.userId !== currentUser?.id) {
-			setIsOtherTyping(true);
-			if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-			typingTimeoutRef.current = setTimeout(() => setIsOtherTyping(false), 3000);
-		}
-	}, [selectedChat?.id, currentUser?.id]);
+	const handleUserTyping = useCallback(
+		(data: { chatId: string; userId: string }) => {
+			if (data.chatId === selectedChat?.id && data.userId !== currentUser?.id) {
+				setIsOtherTyping(true);
+				if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+				typingTimeoutRef.current = setTimeout(() => setIsOtherTyping(false), 3000);
+			}
+		},
+		[selectedChat?.id, currentUser?.id]
+	);
 
 	const { joinChat, leaveChat, sendMessage, sendTyping } = useSocket({
 		onNewMessage: handleNewMessage,
@@ -163,24 +169,30 @@ const messagesEndRef = useRef<HTMLDivElement>(null);
 	};
 
 	const formatDate = (date: Date) => {
-		return new Date(date).toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+		return new Date(date).toLocaleDateString([], {
+			month: "short",
+			day: "numeric",
+			hour: "2-digit",
+			minute: "2-digit",
+		});
 	};
 
 	const displayedChats = activeTab === "pending" ? pendingChats : allChats;
 
 	return (
-		<AdminLayout
-			title="Support Chats"
-			subtitle="Manage customer support conversations"
-		>
+		<AdminLayout title="Support Chats" subtitle="Manage customer support conversations">
 			<div className="flex h-[calc(100vh-180px)] gap-4">
-				<div className="w-80 shrink-0 overflow-hidden rounded-xl border" style={{ borderColor: "#e5e7eb" }}>
+				<div
+					className="w-80 shrink-0 overflow-hidden rounded-xl border"
+					style={{ borderColor: "#e5e7eb" }}
+				>
 					<div className="flex border-b" style={{ borderColor: "#e5e7eb" }}>
 						<button
 							onClick={() => setActiveTab("pending")}
 							className="flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
 							style={{
-								backgroundColor: activeTab === "pending" ? "#7AADA1" : "transparent",
+								backgroundColor:
+									activeTab === "pending" ? "#7AADA1" : "transparent",
 								color: activeTab === "pending" ? "white" : "#666",
 							}}
 						>
@@ -189,7 +201,11 @@ const messagesEndRef = useRef<HTMLDivElement>(null);
 							{pendingChats.length > 0 && (
 								<span
 									className="ml-1 flex h-5 w-5 items-center justify-center rounded-full text-xs"
-									style={{ backgroundColor: activeTab === "pending" ? "white" : "#EB4335", color: activeTab === "pending" ? "#7AADA1" : "white" }}
+									style={{
+										backgroundColor:
+											activeTab === "pending" ? "white" : "#EB4335",
+										color: activeTab === "pending" ? "#7AADA1" : "white",
+									}}
 								>
 									{pendingChats.length}
 								</span>
@@ -225,9 +241,7 @@ const messagesEndRef = useRef<HTMLDivElement>(null);
 									style={{ borderColor: "#e5e7eb" }}
 								>
 									<div className="mb-1 flex items-center justify-between">
-										<span className="text-sm font-medium">
-											Support Chat
-										</span>
+										<span className="text-sm font-medium">Support Chat</span>
 										{chat.createdAt && (
 											<span className="text-xs text-gray-400">
 												{formatDate(chat.createdAt)}
@@ -242,7 +256,10 @@ const messagesEndRef = useRef<HTMLDivElement>(null);
 											}}
 											disabled={isLoading}
 											className="mt-2 w-full rounded-lg py-2 text-sm font-medium text-white transition-opacity"
-											style={{ backgroundColor: "#7AADA1", opacity: isLoading ? 0.5 : 1 }}
+											style={{
+												backgroundColor: "#7AADA1",
+												opacity: isLoading ? 0.5 : 1,
+											}}
 										>
 											Accept Chat
 										</button>
@@ -257,7 +274,10 @@ const messagesEndRef = useRef<HTMLDivElement>(null);
 					</div>
 				</div>
 
-				<div className="flex flex-1 flex-col overflow-hidden rounded-xl border" style={{ borderColor: "#e5e7eb" }}>
+				<div
+					className="flex flex-1 flex-col overflow-hidden rounded-xl border"
+					style={{ borderColor: "#e5e7eb" }}
+				>
 					{selectedChat ? (
 						<>
 							<div
@@ -266,11 +286,17 @@ const messagesEndRef = useRef<HTMLDivElement>(null);
 							>
 								<h3 className="font-medium">Chat Details</h3>
 								<p className="text-sm text-gray-500">
-									Created {selectedChat.createdAt ? formatDate(selectedChat.createdAt) : "N/A"}
+									Created{" "}
+									{selectedChat.createdAt
+										? formatDate(selectedChat.createdAt)
+										: "N/A"}
 								</p>
 							</div>
 
-							<div className="flex-1 overflow-y-auto p-4" style={{ backgroundColor: "#f9fafb" }}>
+							<div
+								className="flex-1 overflow-y-auto p-4"
+								style={{ backgroundColor: "#f9fafb" }}
+							>
 								{isLoadingMessages ? (
 									<div className="flex h-full items-center justify-center text-gray-400">
 										Loading messages...
@@ -284,7 +310,8 @@ const messagesEndRef = useRef<HTMLDivElement>(null);
 									</div>
 								) : (
 									chatMessages.map((msg) => {
-										const isAdmin = currentUser?.id && msg.senderId === currentUser.id;
+										const isAdmin =
+											currentUser?.id && msg.senderId === currentUser.id;
 										const isSystem = msg.type === "system";
 
 										return (
@@ -292,13 +319,20 @@ const messagesEndRef = useRef<HTMLDivElement>(null);
 												key={msg.id}
 												className="mb-3 flex"
 												style={{
-													justifyContent: isSystem ? "center" : isAdmin ? "flex-end" : "flex-start",
+													justifyContent: isSystem
+														? "center"
+														: isAdmin
+															? "flex-end"
+															: "flex-start",
 												}}
 											>
 												{isSystem ? (
 													<span
 														className="rounded-full px-3 py-1 text-xs"
-														style={{ backgroundColor: "#e5e7eb", color: "#666" }}
+														style={{
+															backgroundColor: "#e5e7eb",
+															color: "#666",
+														}}
 													>
 														{msg.content}
 													</span>
@@ -306,24 +340,37 @@ const messagesEndRef = useRef<HTMLDivElement>(null);
 													<div
 														className="max-w-[70%] rounded-lg px-3 py-2 text-sm"
 														style={{
-															backgroundColor: isAdmin ? "#7AADA1" : "white",
-															border: isAdmin ? "none" : "1px solid #e5e7eb",
+															backgroundColor: isAdmin
+																? "#7AADA1"
+																: "white",
+															border: isAdmin
+																? "none"
+																: "1px solid #e5e7eb",
 															color: isAdmin ? "white" : "inherit",
 														}}
 													>
 														<p>{msg.content}</p>
-														<span className="text-xs" style={{ color: isAdmin ? "rgba(255,255,255,0.7)" : "#9ca3af" }}>
+														<span
+															className="text-xs"
+															style={{
+																color: isAdmin
+																	? "rgba(255,255,255,0.7)"
+																	: "#9ca3af",
+															}}
+														>
 															{formatTime(msg.sentAt)}
 														</span>
 													</div>
 												)}
 											</div>
 										);
-							})
-						)}
-						<div ref={messagesEndRef} />
-						{isOtherTyping && (
-									<div className="text-xs text-gray-400 px-4 py-1">User is typing...</div>
+									})
+								)}
+								<div ref={messagesEndRef} />
+								{isOtherTyping && (
+									<div className="text-xs text-gray-400 px-4 py-1">
+										User is typing...
+									</div>
 								)}
 							</div>
 

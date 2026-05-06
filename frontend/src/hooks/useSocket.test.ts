@@ -110,7 +110,10 @@ describe("useSocket", () => {
 			result.current.sendMessage("chat1", "Hello");
 		});
 
-		expect(mockSocket.emit).toHaveBeenCalledWith("send_message", { chatId: "chat1", content: "Hello" });
+		expect(mockSocket.emit).toHaveBeenCalledWith("send_message", {
+			chatId: "chat1",
+			content: "Hello",
+		});
 	});
 
 	it("should emit typing event", () => {

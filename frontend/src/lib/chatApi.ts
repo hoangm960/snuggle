@@ -16,12 +16,16 @@ export const chatApi = {
 		const params = new URLSearchParams();
 		params.append("limit", limit.toString());
 		if (before) params.append("before", before);
-		const response = await api.get<ApiResponse<Message[]>>(`/chats/${chatId}/messages?${params}`);
+		const response = await api.get<ApiResponse<Message[]>>(
+			`/chats/${chatId}/messages?${params}`
+		);
 		return response.data.data || [];
 	},
 
 	sendMessage: async (chatId: string, content: string): Promise<Message> => {
-		const response = await api.post<ApiResponse<Message>>(`/chats/${chatId}/messages`, { content });
+		const response = await api.post<ApiResponse<Message>>(`/chats/${chatId}/messages`, {
+			content,
+		});
 		return response.data.data!;
 	},
 
@@ -30,8 +34,15 @@ export const chatApi = {
 		return response.data.data!;
 	},
 
-	getSupportChatStatus: async (): Promise<{ hasChat: boolean; chat?: Chat; isClaimed: boolean }> => {
-		const response = await api.get<ApiResponse<{ hasChat: true; chat: Chat; isClaimed: boolean } | { hasChat: false }>>("/chats/support/status");
+	getSupportChatStatus: async (): Promise<{
+		hasChat: boolean;
+		chat?: Chat;
+		isClaimed: boolean;
+	}> => {
+		const response =
+			await api.get<
+				ApiResponse<{ hasChat: true; chat: Chat; isClaimed: boolean } | { hasChat: false }>
+			>("/chats/support/status");
 		const data = response.data.data!;
 		if (!data.hasChat) {
 			return { hasChat: false, isClaimed: false };
@@ -56,7 +67,9 @@ export const adminChatApi = {
 	},
 
 	getChatMessages: async (chatId: string, limit = 50): Promise<Message[]> => {
-		const response = await api.get<ApiResponse<Message[]>>(`/admin/chats/${chatId}/messages?limit=${limit}`);
+		const response = await api.get<ApiResponse<Message[]>>(
+			`/admin/chats/${chatId}/messages?limit=${limit}`
+		);
 		return response.data.data || [];
 	},
 
