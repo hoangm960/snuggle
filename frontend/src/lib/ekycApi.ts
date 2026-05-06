@@ -1,5 +1,12 @@
 import api from "./api";
-import { ApiResponse, KycStatusResponse, KycVerification } from "../types";
+import {
+	ApiResponse,
+	KycStatusResponse,
+	KycVerification,
+	KycBatch,
+	KycStats,
+	KycWithUser,
+} from "../types";
 
 export const ekycApi = {
 	getMyStatus: async (): Promise<KycStatusResponse> => {
@@ -34,6 +41,36 @@ export const ekycApi = {
 		financialDocumentURL: string;
 	}): Promise<KycVerification> => {
 		const response = await api.post<ApiResponse<KycVerification>>("/kyc/me", data);
+		return response.data.data!;
+	},
+
+	getPendingKyc: async (): Promise<KycBatch> => {
+		const response = await api.get<ApiResponse<KycBatch>>("/admin/kyc/pending");
+		return response.data.data!;
+	},
+
+	getKycStats: async (): Promise<KycStats> => {
+		const response = await api.get<ApiResponse<KycStats>>("/admin/kyc/stats");
+		return response.data.data!;
+	},
+
+	getKycById: async (id: string): Promise<KycWithUser> => {
+		const response = await api.get<ApiResponse<KycWithUser>>(`/admin/kyc/${id}`);
+		return response.data.data!;
+	},
+
+	approveKyc: async (id: string): Promise<KycVerification> => {
+		const response = await api.post<ApiResponse<KycVerification>>(
+			`/admin/kyc/${id}/approve`,
+			{}
+		);
+		return response.data.data!;
+	},
+
+	rejectKyc: async (id: string, reason: string): Promise<KycVerification> => {
+		const response = await api.post<ApiResponse<KycVerification>>(`/admin/kyc/${id}/reject`, {
+			reason,
+		});
 		return response.data.data!;
 	},
 };
