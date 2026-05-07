@@ -2,11 +2,13 @@ import { Response } from "express";
 import { auth, db } from "../config/firebase";
 import { AuthRequest, ApiResponse, User } from "../types";
 import { AppError } from "../middleware/errorHandler";
+import { validateInviteToken, deleteInvite } from "./adminController";
+import { sendVerificationEmail } from "../services/emailService";
 
 const usersCollection = db.collection("users");
 
 export const register = async (req: AuthRequest, res: Response): Promise<void> => {
-	const { email, password, displayName } = req.body;
+	const { email, password, displayName, inviteToken } = req.body;
 
 	const existingUsers = await usersCollection.where("email", "==", email.toLowerCase()).get();
 	if (!existingUsers.empty) {
@@ -16,6 +18,16 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
 		};
 		res.status(400).json(response);
 		return;
+	}
+
+	let role: "visitor" | "admin" = "visitor";
+
+	if (inviteToken) {
+		const invite = await validateInviteToken(inviteToken);
+		if (invite && invite.email === email.toLowerCase()) {
+			role = invite.role;
+			await deleteInvite(inviteToken);
+		}
 	}
 
 	const userRecord = await auth.createUser({
@@ -28,7 +40,7 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
 	const userData: Omit<User, "id"> = {
 		email,
 		displayName: displayName || "",
-		role: "visitor",
+		role,
 		accountStatus: "active",
 		authProvider: "email",
 		emailVerified: false,
@@ -40,11 +52,21 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
 	await usersCollection.doc(userRecord.uid).set(userData);
 
 	const verificationLink = await auth.generateEmailVerificationLink(email);
-	console.log(`Verification link for ${email}: ${verificationLink}`);
+
+	sendVerificationEmail({
+		to: email,
+		displayName: displayName || "",
+		verificationLink,
+	}).catch((err) => {
+		console.error(`Failed to send verification email to ${email}:`, err.message);
+	});
 
 	const response: ApiResponse = {
 		success: true,
-		message: "Registration successful. Please check your email to verify your account.",
+		message:
+			role === "admin"
+				? "Registration successful. Welcome to Snuggles Admin!"
+				: "Registration successful. Please check your email to verify your account.",
 	};
 
 	res.status(201).json(response);
@@ -58,6 +80,9 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
 		throw new AppError("Firebase API key not configured", 500);
 	}
 
+	const controller = new AbortController();
+	const timeoutId = setTimeout(() => controller.abort(), 10000);
+
 	const response = await fetch(
 		`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${firebaseApiKey}`,
 		{
@@ -68,8 +93,11 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
 				password,
 				returnSecureToken: true,
 			}),
+			signal: controller.signal,
 		}
 	);
+
+	clearTimeout(timeoutId);
 
 	const data = (await response.json()) as {
 		error?: { message?: string };
@@ -77,20 +105,32 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
 	};
 
 	if (!response.ok) {
-		if (data.error?.message === "INVALID_PASSWORD") {
-			throw new AppError(
-				'Incorrect email or password. Try again or click "Forgot Password".',
-				401
-			);
+		const firebaseError = data.error?.message;
+		console.error("Firebase login error:", firebaseError);
+
+		switch (firebaseError) {
+			case "INVALID_PASSWORD":
+				throw new AppError(
+					'Incorrect email or password. Try again or click "Forgot Password".',
+					401
+				);
+			case "EMAIL_NOT_FOUND":
+				throw new AppError("User not found", 404);
+			case "USER_DISABLED":
+				throw new AppError("This account has been disabled", 403);
+			case "TOO_MANY_ATTEMPTS":
+				throw new AppError("Too many login attempts. Please try again later.", 429);
+			case "NETWORK_REQUEST_FAILED":
+				throw new AppError("Network error. Please check your connection.", 500);
+			default:
+				console.error("Unknown Firebase login error:", data);
+				throw new AppError("Login failed", 401);
 		}
-		if (data.error?.message === "EMAIL_NOT_FOUND") {
-			throw new AppError("User not found", 404);
-		}
-		throw new AppError("Login failed", 401);
 	}
 
 	if (!data.localId) {
-		throw new AppError("Login failed", 401);
+		console.error("Firebase login response missing localId:", data);
+		throw new AppError("Login failed: Invalid response from authentication service", 401);
 	}
 
 	const uid = data.localId;
@@ -101,7 +141,9 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
 	}
 
 	const userData = userDoc.data() as User;
-	if (!userData.emailVerified) {
+
+	const firebaseUser = await auth.getUser(uid);
+	if (!firebaseUser.emailVerified) {
 		const response: ApiResponse = {
 			success: false,
 			emailVerificationRequired: true,
@@ -120,14 +162,22 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
 		return;
 	}
 
-	await usersCollection.doc(uid).update({
-		loginCount: (userData.loginCount || 0) + 1,
-		lastLoginAt: new Date(),
-		updatedAt: new Date(),
-	});
+	usersCollection
+		.doc(uid)
+		.update({
+			loginCount: (userData.loginCount || 0) + 1,
+			lastLoginAt: new Date(),
+			updatedAt: new Date(),
+		})
+		.catch(() => {});
 
 	const customToken = await auth.createCustomToken(uid);
-	const user: User = { id: userDoc.id, ...userData, loginCount: (userData.loginCount || 0) + 1 };
+	const user: User = {
+		id: userDoc.id,
+		...userData,
+		emailVerified: firebaseUser.emailVerified,
+		loginCount: (userData.loginCount || 0) + 1,
+	};
 
 	const apiResponse: ApiResponse<{ user: User; token: string }> = {
 		success: true,
@@ -430,6 +480,12 @@ export const resendVerification = async (req: AuthRequest, res: Response): Promi
 	const verificationLink = await auth.generateEmailVerificationLink(email);
 	console.log(`Verification link for ${email}: ${verificationLink}`);
 
+	await sendVerificationEmail({
+		to: email,
+		displayName: userData.displayName || "",
+		verificationLink,
+	});
+
 	const response: ApiResponse = {
 		success: true,
 		message: "Verification email sent. Please check your inbox.",
@@ -441,16 +497,49 @@ export const resendVerification = async (req: AuthRequest, res: Response): Promi
 export const verifyEmail = async (req: AuthRequest, res: Response): Promise<void> => {
 	const { oobCode } = req.body;
 
-	try {
-		await auth.verifyIdToken(oobCode);
-	} catch {
-		throw new AppError("Invalid or expired verification code", 400);
+	const firebaseApiKey = process.env.FIREBASE_API_KEY;
+	if (!firebaseApiKey) {
+		throw new AppError("Firebase API key not configured", 500);
 	}
 
-	const response: ApiResponse = {
+	const response = await fetch(
+		`https://identitytoolkit.googleapis.com/v1/accounts:update?key=${firebaseApiKey}`,
+		{
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ oobCode }),
+		}
+	);
+
+	const data = (await response.json()) as {
+		error?: { message?: string };
+		localId?: string;
+		email?: string;
+	};
+
+	if (!response.ok) {
+		if (
+			data.error?.message === "INVALID_OOB_CODE" ||
+			data.error?.message === "EXPIRED_OOB_CODE"
+		) {
+			throw new AppError("Invalid or expired verification code", 400);
+		}
+		throw new AppError("Email verification failed", 400);
+	}
+
+	if (!data.localId) {
+		throw new AppError("Email verification failed", 400);
+	}
+
+	await usersCollection.doc(data.localId).update({
+		emailVerified: true,
+		updatedAt: new Date(),
+	});
+
+	const apiResponse: ApiResponse = {
 		success: true,
 		message: "Email verified successfully. You can now log in.",
 	};
 
-	res.status(200).json(response);
+	res.status(200).json(apiResponse);
 };

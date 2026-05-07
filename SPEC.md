@@ -2,16 +2,284 @@
 
 Version 1.3
 
+## Revision History
+
+| Date       | Version | Description                                | Author                                             |
+|------------|----------|--------------------------------------------|----------------------------------------------------|
+| 20/03/2026 | 1.0      | Initial draft of use-case specification      | Le Thi Que My, Hoang Nhat Minh, Huynh Nhat Huyen, Mai Le Khanh Trinh |
+| 30/03/2026 | 1.1      | Add use-cases                               | Que My                                             |
+| 23/04/2026 | 1.2      | Separate Chat Bot + Chat usecase into 2 separate usecases | Que My |
+| 06/05/2026 | 1.3      | Add eKYC, Chat, Adoption Contracts/Applications, Socket.io | Dev Team |
+
 ## Table of Contents
 
 1. [Use Cases](#1-use-cases)
     - [1.1 Use-case Model](#11-use-case-model)
     - [1.2 Use-case Specifications](#12-use-case-specifications)
-      - [1.2.1 Shared Use Cases](#121-shared-use-cases)
-      - [1.2.2 Visitors (Potential Adopters)](#122-visitors-potential-adopters)
-      - [1.2.3 Admin](#123-admin)
-2. [Database Schema](#2-database-schema)
-3. [API Reference](#3-api-reference)
+        - [1.2.1 Shared Use Cases](#121-shared-use-cases)
+        - [1.2.2 Visitors (Potential Adopters)](#122-visitors-potential-adopters)
+        - [1.2.3 Admin](#123-admin)
+2. [Tech Stack](#2-tech-stack)
+3. [Folder Structure](#3-folder-structure)
+4. [Database Schema](#4-database-schema)
+5. [API Reference](#5-api-reference)
+6. [Testing](#6-testing)
+
+---
+
+## 2. Tech Stack
+
+### Frontend
+
+- **Framework**: Next.js 14
+- **Language**: TypeScript
+- **UI**: React 18, Tailwind CSS
+- **Animation**: Framer Motion
+- **Auth**: Firebase Authentication
+- **HTTP Client**: Axios
+- **Testing**: Vitest
+
+### Backend
+
+- **Framework**: Express.js
+- **Language**: TypeScript
+- **Database**: Firebase Firestore
+- **Auth**: Firebase Admin SDK
+- **Scraping**: Puppeteer
+- **Validation**: Zod
+- **Real-time**: Socket.io
+- **Email**: Nodemailer
+- **File Upload**: Multer
+
+---
+
+## 3. Folder Structure
+
+```
+snuggles/
+├── frontend/
+│   ├── src/
+│   │   ├── app/                 # Next.js App Router pages
+│   │   │   ├── login/           # Login page
+│   │   │   ├── register/        # Registration page
+│   │   │   ├── pets/            # Pet listings page
+│   │   │   ├── pets/[id]/       # Individual pet page
+│   │   │   ├── home/            # Landing page with sections
+│   │   │   ├── ekyc/            # eKYC verification flow
+│   │   │   ├── admin/           # Admin dashboard
+│   │   │   │   ├── users/       # User management
+│   │   │   │   ├── pets/        # Pet management
+│   │   │   │   ├── kyc/        # KYC verification queue
+│   │   │   │   ├── chats/      # Chat moderation
+│   │   │   │   ├── requests/   # Adoption requests
+│   │   │   │   ├── donations/ # Donation management
+│   │   │   │   └── settings/   # Admin settings
+│   │   │   ├── layout.tsx       # Root layout
+│   │   │   ├── page.tsx         # Landing page (redirects to /home)
+│   │   │   └── globals.css      # Global styles
+│   │   ├── components/          # React components
+│   │   │   ├── Chat/           # Real-time chat components
+│   │   │   │   ├── ChatWidget.tsx
+│   │   │   │   ├── ChatButton.tsx
+│   │   │   │   └── ChatLayoutWrapper.tsx
+│   │   │   └── Navbar/          # Navigation components
+│   │   ├── hooks/              # Custom React hooks
+│   │   │   ├── useAuth.ts       # Authentication hook
+│   │   │   ├── usePets.ts       # Pets data hook
+│   │   │   ├── useUsers.ts      # User management hook
+│   │   │   ├── useSocket.ts    # Socket.io hook
+│   │   │   └── useKycOtp.ts   # KYC OTP hook
+│   │   ├── lib/                # Utilities
+│   │   │   ├── firebase.ts     # Firebase client config
+│   │   │   ├── api.ts         # API client
+│   │   │   ├── proxy.ts       # API proxy
+│   │   │   ├── chatApi.ts     # Chat API client
+│   │   │   └── ekycApi.ts     # eKYC API client
+│   │   └── types/              # TypeScript type definitions
+│   │       └── index.ts
+│   ├── public/                 # Static assets
+│   ├── package.json
+│   ├── tailwind.config.ts
+│   ├── next.config.js
+│   ├── tsconfig.json
+│   ├── vitest.config.mts
+│   └── vitest.setup.ts
+│
+└── backend/
+    ├── src/
+    │   ├── config/              # Configuration
+    │   │   └── firebase.ts      # Firebase Admin SDK config
+    │   ├── controllers/         # Route handlers
+    │   │   ├── adminController.ts
+    │   │   ├── adoptionApplicationController.ts
+    │   │   ├── adoptionContractController.ts
+    │   │   ├── adopterProfileController.ts
+    │   │   ├── authController.ts
+    │   │   ├── chatController.ts
+    │   │   ├── healthRecordController.ts
+    │   │   ├── kycController.ts
+    │   │   ├── kycOtpController.ts
+    │   │   ├── kycUploadController.ts
+    │   │   ├── petController.ts
+    │   │   ├── reviewController.ts
+    │   │   ├── savedSearchController.ts
+    │   │   └── shelterController.ts
+    │   ├── middleware/         # Express middleware
+    │   │   ├── admin.ts        # Admin role check
+    │   │   ├── asyncHandler.ts  # Async wrapper
+    │   │   ├── auth.ts        # JWT authentication
+    │   │   ├── errorHandler.ts  # Error handling
+    │   │   ├── validate.ts    # Request validation
+    │   │   └── upload.ts      # File upload middleware
+    │   ├── routes/             # API routes
+    │   │   ├── admin.ts
+    │   │   ├── adoptionApplications.ts
+    │   │   ├── adoptionContracts.ts
+    │   │   ├── adopterProfile.ts
+    │   │   ├── auth.ts
+    │   │   ├── chat.ts
+    │   │   ├── kyc.ts
+    │   │   ├── pets.ts
+    │   │   ├── reviews.ts
+    │   │   ├── savedSearches.ts
+    │   │   └── shelters.ts
+    │   ├── services/            # Business logic services
+    │   │   ├── emailService.ts     # Email notifications
+    │   │   ├── kycUploadService.ts # KYC document processing
+    │   │   ├── otpService.ts      # OTP generation/verification
+    │   │   └── thumbnailService.ts # Image thumbnail generation
+    │   ├── socket/             # Socket.io handlers
+    │   │   └── index.ts
+    │   ├── scripts/            # Utility scripts
+    │   │   └── createAdmin.ts
+    │   ├── types/              # TypeScript type definitions
+    │   │   └── index.ts
+    │   ├── utils/              # Utility functions
+    │   │   ├── firebaseError.ts # Firebase error mapping
+    │   │   ├── logger.ts       # Logging utility
+    │   │   └── validators/     # Zod validation schemas
+    │   │       ├── authValidator.ts
+    │   │       ├── otherValidator.ts
+    │   │       ├── petValidator.ts
+    │   │       └── chatValidator.ts
+    │   └── index.ts            # Server entry point
+    ├── tests/                  # Test files
+    │   ├── integration/         # Integration tests
+    │   │   ├── admin.test.ts
+    │   │   ├── applications.test.ts
+    │   │   ├── auth.test.ts
+    │   │   ├── pets.test.ts
+    │   │   ├── repositories.test.ts
+    │   │   ├── reviews.test.ts
+    │   │   └── shelters.test.ts
+    │   ├── unit/               # Unit tests
+    │   │   ├── authValidator.test.ts
+    │   │   ├── petValidator.test.ts
+    │   │   ├── validation.test.ts
+    │   │   ├── errorHandler.test.ts
+    │   │   ├── otherValidator.test.ts
+    │   │   ├── auth.test.ts
+    │   │   ├── admin.test.ts
+    │   │   ├── chatController.test.ts
+    │   │   └── kycController.test.ts
+    │   ├── app.ts             # Test app setup
+    │   ├── setup.ts            # Test setup
+    │   └── utils.ts            # Test utilities
+    ├── package.json
+    ├── tsconfig.json
+    ├── jest.config.js
+    └── .env                    # Environment variables
+```
+snuggles/
+├── frontend/
+│   ├── src/
+│   │   ├── app/                 # Next.js App Router pages
+│   │   │   ├── login/           # Login page
+│   │   │   ├── register/        # Registration page
+│   │   │   ├── pets/            # Pet listings page
+│   │   │   ├── pets/[id]/       # Individual pet page
+│   │   │   ├── admin/           # Admin dashboard
+│   │   │   ├── layout.tsx       # Root layout
+│   │   │   ├── page.tsx         # Landing page
+│   │   │   └── globals.css      # Global styles
+│   │   ├── hooks/               # Custom React hooks
+│   │   │   ├── useAuth.ts       # Authentication hook
+│   │   │   └── usePets.ts       # Pets data hook
+│   │   ├── lib/                 # Utilities
+│   │   │   ├── firebase.ts      # Firebase client config
+│   │   │   └── api.ts           # API client
+│   │   └── types/               # TypeScript type definitions
+│   │       └── index.ts
+│   ├── public/                  # Static assets
+│   ├── package.json
+│   ├── tailwind.config.ts
+│   ├── next.config.js
+│   └── tsconfig.json
+│
+└── backend/
+    ├── src/
+    │   ├── config/              # Configuration
+    │   │   └── firebase.ts      # Firebase Admin SDK config
+    │   ├── controllers/         # Route handlers
+    │   │   ├── adminController.ts
+    │   │   ├── adoptionApplicationController.ts
+    │   │   ├── adoptionContractController.ts
+    │   │   ├── adopterProfileController.ts
+    │   │   ├── authController.ts
+    │   │   ├── healthRecordController.ts
+    │   │   ├── petController.ts
+    │   │   ├── reviewController.ts
+    │   │   ├── savedSearchController.ts
+    │   │   └── shelterController.ts
+    │   ├── middleware/          # Express middleware
+    │   │   ├── admin.ts         # Admin role check
+    │   │   ├── asyncHandler.ts  # Async wrapper
+    │   │   ├── auth.ts          # JWT authentication
+    │   │   ├── errorHandler.ts  # Error handling
+    │   │   └── validate.ts      # Request validation
+    │   ├── routes/              # API routes
+    │   │   ├── admin.ts
+    │   │   ├── adoptionApplications.ts
+    │   │   ├── adoptionContracts.ts
+    │   │   ├── adopterProfile.ts
+    │   │   ├── auth.ts
+    │   │   ├── pets.ts
+    │   │   ├── reviews.ts
+    │   │   ├── savedSearches.ts
+    │   │   └── shelters.ts
+    │   ├── scripts/             # Utility scripts
+    │   │   └── createAdmin.ts
+    │   ├── types/               # TypeScript type definitions
+    │   │   └── index.ts
+    │   ├── utils/               # Utility functions
+    │   │   ├── firebaseError.ts # Firebase error mapping
+    │   │   ├── logger.ts        # Logging utility
+    │   │   └── validators/      # Zod validation schemas
+    │   │       ├── authValidator.ts
+    │   │       ├── otherValidator.ts
+    │   │       └── petValidator.ts
+    │   └── index.ts             # Server entry point
+    ├── tests/                   # Test files
+    │   ├── integration/         # Integration tests
+    │   │   ├── admin.test.ts
+    │   │   ├── applications.test.ts
+    │   │   ├── auth.test.ts
+    │   │   ├── pets.test.ts
+    │   │   ├── repositories.test.ts
+    │   │   ├── reviews.test.ts
+    │   │   └── shelters.test.ts
+    │   ├── unit/                # Unit tests
+    │   │   ├── authValidator.test.ts
+    │   │   ├── petValidator.test.ts
+    │   │   └── validation.test.ts
+    │   ├── app.ts               # Test app setup
+    │   ├── setup.ts             # Test setup
+    │   └── utils.ts             # Test utilities
+    ├── package.json
+    ├── tsconfig.json
+    ├── jest.config.js
+    └── .env                     # Environment variables
+```
 
 ---
 
@@ -466,29 +734,53 @@ There are two main views for 2 different users for this website: the Admin manag
 
 #### 1.2.3.5 Real-time Chat System
 
-| Use case Name     | Audit AI & Real-time Chat                                                                                                                            |
+| Use case Name     | Real-time Chat Moderation                                                                                                                            |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Brief description | Admin monitors AI chatbot performance and audits real-time chat transcripts between shelters and adopters to ensure professional conduct and safety. |
+| Brief description | Admin monitors peer-to-peer transcripts between shelters and adopters to enforce community guidelines and ensure user safety. |
 | Actors            | Admin                                                                                                                                                |
 | Basic Flow        | See below                                                                                                                                            |
 | Alternative Flows | See below                                                                                                                                            |
-| Pre-conditions    | Chat/AI interactions are being logged in Firestore.                                                                                                  |
-| Post-conditions   | Communication quality and safety standards are maintained                                                                                            |
+| Pre-conditions    | Peer-to-peer chat logs are being stored in Firestore; Automated flagging system is active.                                                                                                  |
+| Post-conditions   | Professional conduct is maintained; Users violating safety policies are restricted.                                                                                            |
 
 **Basic Flow:**
 
-1. Admin accesses the "Communication Logs" section.
-2. Admin views transcripts of AI bot interactions to check for accuracy in "Expert Advice".
-3. Admin reviews flagged chat messages between users for potential abuse or policy violations.
-4. Admin updates the AI bot's knowledge base or intervenes in a chat if necessary.
+1. Admin accesses the "Communication Logs" or "Flagged Chats" section.
+2. Admin reviews messages flagged by the system for potential abuse, scams, or policy violations.
+3. Admin reads the context of the conversation between the shelter and the adopter.
+4. Admin takes action (e.g., issues a warning, bans a user, or dismisses the flag).
 
 **Alternative Flows:**
 
-- **Bot Error**: Admin identifies the AI is giving incorrect medical advice and manually overrides the response.
+- **Direct Intervention**: Admin joins a live chat session to mediate a conflict or clarify a policy in real-time.
 
 ---
 
-#### 1.2.3.6 Digital Adoption Contract
+#### 1.2.3.6 AI Performance Optimization
+
+| Use case Name     | Audit & Refine AI Responses                                                                                                                            |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Brief description | Admin monitors AI chatbot interactions to ensure technical accuracy and updates the knowledge base to improve future performance. |
+| Actors            | Admin                                                                                                                                                |
+| Basic Flow        | See below                                                                                                                                            |
+| Alternative Flows | See below                                                                                                                                            |
+| Pre-conditions    | AI bot interactions are being logged in Firestore; Expert Advice knowledge base is active.                                                                                                  |
+| Post-conditions   | AI response accuracy is improved; Knowledge base is up-to-date.                                                                                            |
+
+**Basic Flow:**
+
+1. Admin accesses the "AI Insights/Logs" dashboard.
+2. Admin filters logs by "Low Confidence" or "Expert Advice" categories.
+3. Admin reviews the bot's response against established animal welfare protocols.
+4. Admin updates the AI's knowledge base or prompts to correct recurring misinformation.
+
+**Alternative Flows:**
+
+- **Incorrect Advice Override**: Admin identifies a specific incorrect medical/behavioral response and manually pushes a correction to the user or flags the entry for immediate developer review.
+
+---
+
+#### 1.2.3.7 Digital Adoption Contract
 
 | Use case Name     | Review & Execute Adoption Contracts                                                                                             |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -509,7 +801,7 @@ There are two main views for 2 different users for this website: the Admin manag
 
 ---
 
-#### 1.2.3.7 Post Management
+#### 1.2.3.8 Post Management
 
 | Use case Name     | Moderate Post-Adoption Journal                                                                                                                                  |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -534,7 +826,7 @@ There are two main views for 2 different users for this website: the Admin manag
 
 ---
 
-#### 1.2.3.8 Health Record Management
+#### 1.2.3.9 Health Record Management
 
 | Use case Name     | Manage Pet Medical Histories                                                                                                          |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
@@ -558,7 +850,7 @@ There are two main views for 2 different users for this website: the Admin manag
 
 ---
 
-#### 1.2.3.9 Rate & Review Management
+#### 1.2.3.10 Rate & Review Management
 
 | Use case Name     | Moderate Shelter Ratings & Reviews                                                                                           |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -584,7 +876,7 @@ There are two main views for 2 different users for this website: the Admin manag
 
 ---
 
-## 2. Database Schema
+## 4. Database Schema
 
 This section documents the Firestore database schema for the Snuggle platform.
 
@@ -852,7 +1144,7 @@ Firestore rules summary:
 
 ---
 
-## 3. API Reference
+## 5. API Reference
 
 This section documents the REST API endpoints, request/response formats, and error codes.
 
@@ -868,24 +1160,24 @@ Token is obtained from `/api/auth/login` or `/api/auth/google` endpoints.
 
 ### Error Codes
 
-| Code | Name | Description |
-|------|------|------------|
-| 400 | Bad Request | Invalid request body or parameters |
-| 401 | Unauthorized | Missing or invalid JWT token |
-| 403 | Forbidden | Insufficient permissions |
-| 404 | Not Found | Resource not found |
-| 409 | Conflict | Resource already exists |
-| 429 | Too Many Requests | Rate limit exceeded |
-| 500 | Internal Server Error | Server error |
-| 503 | Service Unavailable | Server temporarily unavailable |
+| Code | Name                  | Description                        |
+| ---- | --------------------- | ---------------------------------- |
+| 400  | Bad Request           | Invalid request body or parameters |
+| 401  | Unauthorized          | Missing or invalid JWT token       |
+| 403  | Forbidden             | Insufficient permissions           |
+| 404  | Not Found             | Resource not found                 |
+| 409  | Conflict              | Resource already exists            |
+| 429  | Too Many Requests     | Rate limit exceeded                |
+| 500  | Internal Server Error | Server error                       |
+| 503  | Service Unavailable   | Server temporarily unavailable     |
 
 #### Error Response Format
 
 ```json
 {
-  "success": false,
-  "error": "Error message",
-  "code": "BAD_REQUEST"
+    "success": false,
+    "error": "Error message",
+    "code": "BAD_REQUEST"
 }
 ```
 
@@ -893,18 +1185,19 @@ Token is obtained from `/api/auth/login` or `/api/auth/google` endpoints.
 
 #### Health Check
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/health` | Server health status | No |
+| Method | Endpoint  | Description          | Auth |
+| ------ | --------- | -------------------- | ---- |
+| GET    | `/health` | Server health status | No   |
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "status": "ok",
-    "timestamp": "2026-04-11T00:00:00.000Z"
-  }
+    "success": true,
+    "data": {
+        "status": "ok",
+        "timestamp": "2026-04-11T00:00:00.000Z"
+    }
 }
 ```
 
@@ -912,13 +1205,13 @@ Token is obtained from `/api/auth/login` or `/api/auth/google` endpoints.
 
 #### Pets
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/pets` | List all pets | No |
-| GET | `/api/pets/:id` | Get single pet | No |
-| POST | `/api/pets` | Create pet | Required |
-| PUT | `/api/pets/:id` | Update pet | Required |
-| DELETE | `/api/pets/:id` | Delete pet | Required |
+| Method | Endpoint        | Description    | Auth     |
+| ------ | --------------- | -------------- | -------- |
+| GET    | `/api/pets`     | List all pets  | No       |
+| GET    | `/api/pets/:id` | Get single pet | No       |
+| POST   | `/api/pets`     | Create pet     | Required |
+| PUT    | `/api/pets/:id` | Update pet     | Required |
+| DELETE | `/api/pets/:id` | Delete pet     | Required |
 
 **Query Parameters (GET /api/pets):**
 | Parameter | Type | Description |
@@ -929,47 +1222,50 @@ Token is obtained from `/api/auth/login` or `/api/auth/google` endpoints.
 | search | string | Search in name/description |
 
 **Request Body (POST /api/pets):**
-```json
-{
-  "name": "Max",
-  "species": "dog",
-  "breed": "Golden Retriever",
-  "ageMonths": 24,
-  "size": "large",
-  "gender": "male",
-  "description": "Friendly and trained",
-  "photoURLs": ["https://example.com/dog.jpg"],
-  "isVaccinated": true,
-  "isNeutered": true,
-  "shelterId": "shelter_123"
-}
-```
 
-**Response (GET /api/pets/:id):**
 ```json
 {
-  "success": true,
-  "data": {
-    "id": "pet_abc123",
     "name": "Max",
     "species": "dog",
     "breed": "Golden Retriever",
     "ageMonths": 24,
     "size": "large",
     "gender": "male",
-    "status": "available",
-    "shelterId": "shelter_123",
     "description": "Friendly and trained",
     "photoURLs": ["https://example.com/dog.jpg"],
     "isVaccinated": true,
     "isNeutered": true,
-    "createdAt": "2026-04-01T00:00:00.000Z",
-    "updatedAt": "2026-04-01T00:00:00.000Z"
-  }
+    "shelterId": "shelter_123"
+}
+```
+
+**Response (GET /api/pets/:id):**
+
+```json
+{
+    "success": true,
+    "data": {
+        "id": "pet_abc123",
+        "name": "Max",
+        "species": "dog",
+        "breed": "Golden Retriever",
+        "ageMonths": 24,
+        "size": "large",
+        "gender": "male",
+        "status": "available",
+        "shelterId": "shelter_123",
+        "description": "Friendly and trained",
+        "photoURLs": ["https://example.com/dog.jpg"],
+        "isVaccinated": true,
+        "isNeutered": true,
+        "createdAt": "2026-04-01T00:00:00.000Z",
+        "updatedAt": "2026-04-01T00:00:00.000Z"
+    }
 }
 ```
 
 **Error Responses:**
+
 - 400: Invalid request body
 - 401: Authentication required
 - 403: Not shelter owner or admin
@@ -979,20 +1275,21 @@ Token is obtained from `/api/auth/login` or `/api/auth/google` endpoints.
 
 #### Health Records
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/pets/:petId/health-records` | List health records | No |
-| POST | `/api/pets/:petId/health-records` | Create health record | Required |
+| Method | Endpoint                              | Description          | Auth     |
+| ------ | ------------------------------------- | -------------------- | -------- |
+| GET    | `/api/pets/:petId/health-records`     | List health records  | No       |
+| POST   | `/api/pets/:petId/health-records`     | Create health record | Required |
 | DELETE | `/api/pets/:petId/health-records/:id` | Delete health record | Required |
 
 **Request Body (POST):**
+
 ```json
 {
-  "type": "vaccine",
-  "description": "Rabies vaccination",
-  "vetName": "Dr. Smith",
-  "batchNumber": "RV-2026-001",
-  "recordDate": "2026-04-01T00:00:00.000Z"
+    "type": "vaccine",
+    "description": "Rabies vaccination",
+    "vetName": "Dr. Smith",
+    "batchNumber": "RV-2026-001",
+    "recordDate": "2026-04-01T00:00:00.000Z"
 }
 ```
 
@@ -1000,41 +1297,43 @@ Token is obtained from `/api/auth/login` or `/api/auth/google` endpoints.
 
 #### Auth
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/auth/register` | Register new user | No |
-| POST | `/api/auth/login` | Login user | No |
-| POST | `/api/auth/google` | Google sign-in | No |
-| POST | `/api/auth/facebook` | Facebook sign-in | No |
-| POST | `/api/auth/resend-verification` | Resend verification email | No |
-| POST | `/api/auth/verify-email` | Verify email | No |
-| GET | `/api/auth/me` | Verify JWT token | Required |
-| GET | `/api/auth/profile` | Get user profile | Required |
-| PUT | `/api/auth/profile` | Update user profile | Required |
-| DELETE | `/api/auth/account` | Delete user account | Required |
+| Method | Endpoint                        | Description               | Auth     |
+| ------ | ------------------------------- | ------------------------- | -------- |
+| POST   | `/api/auth/register`            | Register new user         | No       |
+| POST   | `/api/auth/login`               | Login user                | No       |
+| POST   | `/api/auth/google`              | Google sign-in            | No       |
+| POST   | `/api/auth/facebook`            | Facebook sign-in          | No       |
+| POST   | `/api/auth/resend-verification` | Resend verification email | No       |
+| POST   | `/api/auth/verify-email`        | Verify email              | No       |
+| GET    | `/api/auth/me`                  | Verify JWT token          | Required |
+| GET    | `/api/auth/profile`             | Get user profile          | Required |
+| PUT    | `/api/auth/profile`             | Update user profile       | Required |
+| DELETE | `/api/auth/account`             | Delete user account       | Required |
 
 **Request Body (POST /api/auth/login):**
+
 ```json
 {
-  "email": "user@example.com",
-  "password": "securepassword"
+    "email": "user@example.com",
+    "password": "securepassword"
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "user": {
-      "uid": "user_abc123",
-      "email": "user@example.com",
-      "displayName": "John Doe",
-      "emailVerified": true,
-      "role": "visitor"
-    },
-    "token": "eyJhbGciOiJSUzI1NiIs..."
-  }
+    "success": true,
+    "data": {
+        "user": {
+            "uid": "user_abc123",
+            "email": "user@example.com",
+            "displayName": "John Doe",
+            "emailVerified": true,
+            "role": "visitor"
+        },
+        "token": "eyJhbGciOiJSUzI1NiIs..."
+    }
 }
 ```
 
@@ -1042,26 +1341,27 @@ Token is obtained from `/api/auth/login` or `/api/auth/google` endpoints.
 
 #### Profile
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/users/me/adopter-profile` | Get adopter profile | Required |
-| POST | `/api/users/me/adopter-profile` | Create adopter profile | Required |
-| PUT | `/api/users/me/adopter-profile` | Update adopter profile | Required |
+| Method | Endpoint                        | Description            | Auth     |
+| ------ | ------------------------------- | ---------------------- | -------- |
+| GET    | `/api/users/me/adopter-profile` | Get adopter profile    | Required |
+| POST   | `/api/users/me/adopter-profile` | Create adopter profile | Required |
+| PUT    | `/api/users/me/adopter-profile` | Update adopter profile | Required |
 
 **Request Body (POST):**
+
 ```json
 {
-  "homeType": "house",
-  "hasChildren": true,
-  "hasOtherPets": false,
-  "activityLevel": "high",
-  "preferredPetSize": ["medium", "large"],
-  "preferredSpecies": ["dog"],
-  "locationName": "Ho Chi Minh City",
-  "lifestyleAnswers": {
-    "hoursAlone": "4-6 hours",
-    "exerciseFreq": "daily"
-  }
+    "homeType": "house",
+    "hasChildren": true,
+    "hasOtherPets": false,
+    "activityLevel": "high",
+    "preferredPetSize": ["medium", "large"],
+    "preferredSpecies": ["dog"],
+    "locationName": "Ho Chi Minh City",
+    "lifestyleAnswers": {
+        "hoursAlone": "4-6 hours",
+        "exerciseFreq": "daily"
+    }
 }
 ```
 
@@ -1069,20 +1369,21 @@ Token is obtained from `/api/auth/login` or `/api/auth/google` endpoints.
 
 #### Saved Searches
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/users/me/saved-searches` | List saved searches | Required |
-| POST | `/api/users/me/saved-searches` | Create saved search | Required |
+| Method | Endpoint                           | Description         | Auth     |
+| ------ | ---------------------------------- | ------------------- | -------- |
+| GET    | `/api/users/me/saved-searches`     | List saved searches | Required |
+| POST   | `/api/users/me/saved-searches`     | Create saved search | Required |
 | DELETE | `/api/users/me/saved-searches/:id` | Delete saved search | Required |
 
 **Request Body (POST):**
+
 ```json
 {
-  "species": "dog",
-  "breed": "Golden Retriever",
-  "size": "large",
-  "maxDistanceKm": 50,
-  "notifyOnMatch": true
+    "species": "dog",
+    "breed": "Golden Retriever",
+    "size": "large",
+    "maxDistanceKm": 50,
+    "notifyOnMatch": true
 }
 ```
 
@@ -1090,22 +1391,23 @@ Token is obtained from `/api/auth/login` or `/api/auth/google` endpoints.
 
 #### Shelters
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/shelters` | List all shelters | No |
-| GET | `/api/shelters/:id` | Get single shelter | No |
-| POST | `/api/shelters` | Create shelter | Required |
-| PUT | `/api/shelters/:id` | Update shelter | Required |
-| DELETE | `/api/shelters/:id` | Delete shelter | Required |
+| Method | Endpoint            | Description        | Auth     |
+| ------ | ------------------- | ------------------ | -------- |
+| GET    | `/api/shelters`     | List all shelters  | No       |
+| GET    | `/api/shelters/:id` | Get single shelter | No       |
+| POST   | `/api/shelters`     | Create shelter     | Required |
+| PUT    | `/api/shelters/:id` | Update shelter     | Required |
+| DELETE | `/api/shelters/:id` | Delete shelter     | Required |
 
 **Request Body (POST):**
+
 ```json
 {
-  "name": "Happy Paws Shelter",
-  "address": "123 Pet Street, District 1, HCMC",
-  "contactEmail": "contact@happypaws.org",
-  "phone": "+84 123 456 789",
-  "description": "No-kill shelter for dogs"
+    "name": "Happy Paws Shelter",
+    "address": "123 Pet Street, District 1, HCMC",
+    "contactEmail": "contact@happypaws.org",
+    "phone": "+84 123 456 789",
+    "description": "No-kill shelter for dogs"
 }
 ```
 
@@ -1113,17 +1415,18 @@ Token is obtained from `/api/auth/login` or `/api/auth/google` endpoints.
 
 #### Reviews
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/reviews/:shelterId` | Get shelter reviews | No |
-| POST | `/api/reviews/:shelterId` | Create review | Required |
-| PUT | `/api/reviews/:shelterId/:id/status` | Update review status | Required |
+| Method | Endpoint                             | Description          | Auth     |
+| ------ | ------------------------------------ | -------------------- | -------- |
+| GET    | `/api/reviews/:shelterId`            | Get shelter reviews  | No       |
+| POST   | `/api/reviews/:shelterId`            | Create review        | Required |
+| PUT    | `/api/reviews/:shelterId/:id/status` | Update review status | Required |
 
 **Request Body (POST):**
+
 ```json
 {
-  "rating": 5,
-  "comment": "Great shelter, highly recommend!"
+    "rating": 5,
+    "comment": "Great shelter, highly recommend!"
 }
 ```
 
@@ -1131,27 +1434,29 @@ Token is obtained from `/api/auth/login` or `/api/auth/google` endpoints.
 
 #### Adoption Applications
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/applications` | List all applications | Required |
-| GET | `/api/applications/:id` | Get single application | Required |
-| POST | `/api/applications` | Create application | Required |
-| PUT | `/api/applications/:id/status` | Update application status | Required |
-| DELETE | `/api/applications/:id` | Delete application | Required |
+| Method | Endpoint                       | Description               | Auth     |
+| ------ | ------------------------------ | ------------------------- | -------- |
+| GET    | `/api/applications`            | List all applications     | Required |
+| GET    | `/api/applications/:id`        | Get single application    | Required |
+| POST   | `/api/applications`            | Create application        | Required |
+| PUT    | `/api/applications/:id/status` | Update application status | Required |
+| DELETE | `/api/applications/:id`        | Delete application        | Required |
 
 **Request Body (POST):**
+
 ```json
 {
-  "petId": "pet_abc123",
-  "message": "I would love to adopt Max. I have a large house with a yard."
+    "petId": "pet_abc123",
+    "message": "I would love to adopt Max. I have a large house with a yard."
 }
 ```
 
 **Status Update (PUT):**
+
 ```json
 {
-  "status": "approved",
-  "adminNote": "Approved after interview"
+    "status": "approved",
+    "adminNote": "Approved after interview"
 }
 ```
 
@@ -1159,23 +1464,23 @@ Token is obtained from `/api/auth/login` or `/api/auth/google` endpoints.
 
 #### Adoption Contracts
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/contracts` | List all contracts | Required |
-| GET | `/api/contracts/:id` | Get single contract | No |
-| POST | `/api/contracts` | Create contract | Required |
-| PUT | `/api/contracts/:id/sign` | Sign contract | Required |
-| PUT | `/api/contracts/:id/archive` | Archive contract | Required |
+| Method | Endpoint                     | Description         | Auth     |
+| ------ | ---------------------------- | ------------------- | -------- |
+| GET    | `/api/contracts`             | List all contracts  | Required |
+| GET    | `/api/contracts/:id`         | Get single contract | No       |
+| POST   | `/api/contracts`             | Create contract     | Required |
+| PUT    | `/api/contracts/:id/sign`    | Sign contract       | Required |
+| PUT    | `/api/contracts/:id/archive` | Archive contract    | Required |
 
 ---
 
 #### Admin
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/admin/users` | List all users | Admin |
-| GET | `/api/admin/users/:id` | Get user + activity | Admin |
-| PUT | `/api/admin/users/:id` | Update user role/status | Admin |
+| Method | Endpoint               | Description             | Auth  |
+| ------ | ---------------------- | ----------------------- | ----- |
+| GET    | `/api/admin/users`     | List all users          | Admin |
+| GET    | `/api/admin/users/:id` | Get user + activity     | Admin |
+| PUT    | `/api/admin/users/:id` | Update user role/status | Admin |
 
 **Query Parameters (GET /api/admin/users):**
 | Parameter | Type | Description |
@@ -1187,9 +1492,95 @@ Token is obtained from `/api/auth/login` or `/api/auth/google` endpoints.
 | limit | number | Items per page |
 
 **Request Body (PUT):**
+
 ```json
 {
-  "role": "admin",
-  "accountStatus": "suspended"
+    "role": "admin",
+    "accountStatus": "suspended"
 }
 ```
+
+---
+
+#### KYC Verification
+
+| Method | Endpoint                        | Description               | Auth     |
+| ------ | ------------------------------- | ------------------------- | -------- |
+| GET    | `/api/kyc/status`               | Get KYC status           | Required |
+| POST   | `/api/kyc/upload-start`         | Start KYC upload          | Required |
+| POST   | `/api/kyc/upload-complete`   | Complete document upload | Required |
+| POST   | `/api/kyc/otp send`         | Send OTP code           | Required |
+| POST   | `/api/kyc/otp/verify`      | Verify OTP code        | Required |
+| GET    | `/api/admin/kyc`            | List KYC applications  | Admin |
+| PUT    | `/api/admin/kyc/:id/status` | Review KYC application | Admin |
+
+**Request Body (POST /api/kyc/otp/send):**
+
+```json
+{
+    "phone": "+84123456789"
+}
+```
+
+---
+
+#### Chat
+
+| Method | Endpoint                  | Description            | Auth     |
+| ------ | ------------------------- | ---------------------- | -------- |
+| GET    | `/api/chats`              | List user chats         | Required |
+| POST   | `/api/chats`              | Create new chat         | Required |
+| GET    | `/api/chats/:id`          | Get chat details      | Required |
+| GET    | `/api/chats/:id/messages` | Get chat messages   | Required |
+| POST   | `/api/chats/:id/messages` | Send message        | Required |
+| GET    | `/api/chats/support`       | Get support chat     | Required |
+| GET    | `/api/chats/support/status` | Get support status | Required |
+
+**WebSocket Events:**
+- `chat:join` - Join a chat room
+- `chat:leave` - Leave a chat room
+- `chat:message` - New message sent
+- `chat:typing` - User typing indicator
+- `chat:read` - Mark messages as read
+
+---
+
+#### Donations
+
+| Method | Endpoint               | Description         | Auth     |
+| ------ | ---------------------- | ----------------- | -------- |
+| GET    | `/api/admin/donations`  | List donations    | Admin    |
+| POST   | `/api/donations`      | Create donation   | Required |
+
+---
+
+## 6. Testing
+
+### Test Files
+
+| File                                     | Description                                                  |
+| ---------------------------------------- | ------------------------------------------------------------ |
+| `tests/unit/authValidator.test.ts`       | Zod schema validation for register, login, updateUserProfile |
+| `tests/unit/petValidator.test.ts`        | Pet data validation schemas                                  |
+| `tests/unit/validation.test.ts`          | General validation utilities                                 |
+| `tests/unit/errorHandler.test.ts`          | Express error handling middleware                         |
+| `tests/unit/otherValidator.test.ts`      | Other validation schemas (saved search, review)            |
+| `tests/unit/auth.test.ts`               | Authentication controller                                 |
+| `tests/unit/admin.test.ts`              | Admin controller                                       |
+| `tests/unit/chatController.test.ts`     | Chat controller                                       |
+| `tests/unit/kycController.test.ts`       | KYC controller                                       |
+| `tests/integration/auth.test.ts`         | Auth routes: register, login, profile CRUD, account deletion |
+| `tests/integration/pets.test.ts`         | Pet CRUD operations                                          |
+| `tests/integration/shelters.test.ts`   | Shelter management                                           |
+| `tests/integration/reviews.test.ts`      | Review system                                                |
+| `tests/integration/admin.test.ts`       | Admin operations                                             |
+| `tests/integration/applications.test.ts` | Adoption applications                                        |
+
+### Coverage Areas
+
+- **Validators**: Zod schema validation for all input types
+- **Auth Routes**: Register, login, profile get/update, account deletion
+- **API Routes**: All major endpoints with JWT authentication
+- **Error Handling**: Proper error responses and status codes
+- **Real-time Chat**: Socket.io event handling
+- **KYC Verification**: OTP and document upload flows

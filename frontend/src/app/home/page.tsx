@@ -1,4 +1,9 @@
-import HeaderSection from "./sections/HeaderSection";
+"use client";
+
+import { useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { Navbar } from "@/components/Navbar";
 import HeroSection from "./sections/HeroSection";
 import StatsBarSection from "./sections/StatsBarSection";
 import AboutUsSection from "./sections/AboutUsSection";
@@ -9,6 +14,19 @@ import ContactSection from "./sections/ContactSection";
 import FooterSection from "./sections/FooterSection";
 
 export default function HomePage() {
+	const { user, loading } = useAuth();
+	const router = useRouter();
+
+	useEffect(() => {
+		if (!loading && user?.role === "admin") {
+			router.push("/admin");
+		}
+	}, [user, loading, router]);
+
+	if (!loading && user?.role === "admin") {
+		return null;
+	}
+
 	return (
 		<div
 			className="flex flex-col min-h-screen w-full"
@@ -30,7 +48,7 @@ export default function HomePage() {
 						zIndex: 0,
 					}}
 				/>
-				<HeaderSection />
+				<Navbar variant="overlay" />
 				<HeroSection />
 				<AboutUsSection />
 			</div>

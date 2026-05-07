@@ -11,6 +11,7 @@ interface UsePetsReturn {
 	createPet: (pet: Omit<Pet, "id">) => Promise<Pet | null>;
 	updatePet: (id: string, pet: Partial<Pet>) => Promise<Pet | null>;
 	deletePet: (id: string) => Promise<boolean>;
+	uploadThumbnail: (petId: string, file: File) => Promise<string | null>;
 }
 
 export const usePets = (): UsePetsReturn => {
@@ -70,9 +71,36 @@ export const usePets = (): UsePetsReturn => {
 		}
 	};
 
+	const uploadThumbnail = async (petId: string, file: File): Promise<string | null> => {
+		try {
+			const formData = new FormData();
+			formData.append("thumbnail", file);
+
+			const response = await api.post(`/pets/${petId}/thumbnail`, formData, {
+				headers: {
+					"Content-Type": "multipart/form-data",
+				},
+			});
+
+			return response.data.data.thumbnailUrl;
+		} catch {
+			return null;
+		}
+	};
+
 	useEffect(() => {
 		fetchPets();
 	}, []);
 
-	return { pets, loading, error, fetchPets, getPetById, createPet, updatePet, deletePet };
+	return {
+		pets,
+		loading,
+		error,
+		fetchPets,
+		getPetById,
+		createPet,
+		updatePet,
+		deletePet,
+		uploadThumbnail,
+	};
 };

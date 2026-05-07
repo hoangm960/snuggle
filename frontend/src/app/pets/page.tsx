@@ -3,21 +3,40 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePets } from "@/hooks/usePets";
+import { Navbar } from "@/components/Navbar";
+import { PetCardSkeletonGrid } from "@/components/PetCardSkeleton";
 
-const NAV_LINKS = ["Home", "About Us", "Pets", "eKYC", "Contact"];
+type PetType = "cat" | "dog" | "other";
+
+const typeConfig: Record<
+	PetType,
+	{
+		bg: string;
+		color: string;
+		label: string;
+	}
+> = {
+	cat: {
+		bg: "#E8F4F1",
+		color: "#216959",
+		label: "🐱 Cat",
+	},
+	dog: {
+		bg: "#FDF2F0",
+		color: "#C4857A",
+		label: "🐶 Dog",
+	},
+	other: {
+		bg: "#EEF3FD",
+		color: "#5A78C4",
+		label: "👀 Other",
+	},
+};
 
 export default function PetsPage() {
 	const { pets, loading, error, fetchPets } = usePets();
-	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-	const [activeFilter, setActiveFilter] = useState<"all" | "cat" | "dog">("all");
+	const [activeFilter, setActiveFilter] = useState<"all" | "cat" | "dog" | "other">("all");
 	const [search, setSearch] = useState("");
-
-	const navHref = (link: string) => {
-		if (link === "Home") return "/home";
-		if (link === "Pets") return "/pets";
-		if (link === "eKYC") return "/ekyc";
-		return "#";
-	};
 
 	const filtered = (pets || []).filter((p) => {
 		const petType = p.species === "cat" ? "cat" : p.species === "dog" ? "dog" : "other";
@@ -34,215 +53,7 @@ export default function PetsPage() {
 			className="flex flex-col min-h-screen w-full"
 			style={{ fontFamily: "'Poppins', sans-serif" }}
 		>
-			{/* ── Header ── */}
-			<header
-				style={{
-					background: "#fff",
-					borderBottom: "1px solid #E8E8E8",
-					position: "relative",
-					zIndex: 20,
-				}}
-				className="flex items-center justify-between px-6 md:px-10 py-4"
-			>
-				<Link href="/home" className="flex items-center gap-2">
-					<PawLogo />
-					<span
-						style={{
-							color: "#7AADA1",
-							fontFamily: "'Space Grotesk', sans-serif",
-							fontSize: "24px",
-							fontWeight: 500,
-						}}
-					>
-						Snuggle
-					</span>
-				</Link>
-
-				<nav className="hidden lg:flex items-center gap-7">
-					{NAV_LINKS.map((link) => (
-						<Link
-							key={link}
-							href={navHref(link)}
-							style={{
-								color: link === "Pets" ? "#7AADA1" : "#111",
-								fontFamily: "'Space Grotesk', sans-serif",
-								fontSize: "15px",
-								fontWeight: link === "Pets" ? 600 : 400,
-								borderBottom: link === "Pets" ? "2px solid #7AADA1" : "none",
-								paddingBottom: link === "Pets" ? "2px" : "0",
-							}}
-							className="hover:opacity-70 transition-opacity whitespace-nowrap"
-						>
-							{link}
-						</Link>
-					))}
-				</nav>
-
-				<div className="hidden lg:flex items-center gap-4">
-					<div
-						className="flex items-center gap-2"
-						style={{
-							padding: "8px 16px",
-							borderRadius: "16px",
-							border: "1px solid rgba(102,102,102,0.35)",
-							background: "#F6F6F6",
-						}}
-					>
-						<SearchIcon />
-						<input
-							type="search"
-							placeholder="Search..."
-							className="bg-transparent outline-none w-28"
-							style={{
-								fontFamily: "'Space Grotesk', sans-serif",
-								fontSize: "14px",
-								color: "#333",
-							}}
-						/>
-					</div>
-					<button
-						className="flex items-center gap-1 hover:opacity-70 transition-opacity"
-						style={{
-							color: "#333",
-							fontFamily: "'Space Grotesk', sans-serif",
-							fontSize: "14px",
-							background: "none",
-							border: "none",
-							cursor: "pointer",
-							whiteSpace: "nowrap",
-						}}
-					>
-						<GlobeIcon />
-						<span style={{ margin: "0 2px" }}>English (US)</span>
-						<svg width="10" height="5" viewBox="0 0 10 5" fill="none">
-							<path d="M0 0L5 5L10 0H0Z" fill="#333" />
-						</svg>
-					</button>
-					<Link
-						href="/login"
-						className="flex items-center justify-center text-white font-medium hover:opacity-90 transition-opacity"
-						style={{
-							width: "98px",
-							height: "40px",
-							borderRadius: "8px",
-							backgroundColor: "#7AADA1",
-							fontFamily: "'Space Grotesk', sans-serif",
-							fontSize: "14px",
-						}}
-					>
-						Log in
-					</Link>
-					<Link
-						href="/register"
-						className="flex items-center justify-center font-medium hover:opacity-80 transition-opacity"
-						style={{
-							width: "98px",
-							height: "40px",
-							borderRadius: "8px",
-							border: "1px solid #111",
-							color: "#111",
-							fontFamily: "'Space Grotesk', sans-serif",
-							fontSize: "14px",
-						}}
-					>
-						Sign up
-					</Link>
-				</div>
-
-				<button
-					className="lg:hidden flex flex-col gap-1.5 p-2"
-					onClick={() => setMobileMenuOpen((o) => !o)}
-					style={{ background: "none", border: "none", cursor: "pointer" }}
-				>
-					<span
-						style={{
-							display: "block",
-							width: "22px",
-							height: "2px",
-							background: "#333",
-							borderRadius: "2px",
-							transform: mobileMenuOpen ? "translateY(6px) rotate(45deg)" : "none",
-							transition: "transform 0.2s",
-						}}
-					/>
-					<span
-						style={{
-							display: "block",
-							width: "22px",
-							height: "2px",
-							background: "#333",
-							borderRadius: "2px",
-							opacity: mobileMenuOpen ? 0 : 1,
-							transition: "opacity 0.2s",
-						}}
-					/>
-					<span
-						style={{
-							display: "block",
-							width: "22px",
-							height: "2px",
-							background: "#333",
-							borderRadius: "2px",
-							transform: mobileMenuOpen ? "translateY(-6px) rotate(-45deg)" : "none",
-							transition: "transform 0.2s",
-						}}
-					/>
-				</button>
-			</header>
-
-			{mobileMenuOpen && (
-				<div
-					className="lg:hidden flex flex-col px-6 py-6 gap-5 bg-white border-b border-[#E8E8E8]"
-					style={{ zIndex: 15 }}
-				>
-					{NAV_LINKS.map((link) => (
-						<Link
-							key={link}
-							href={navHref(link)}
-							onClick={() => setMobileMenuOpen(false)}
-							style={{
-								color: link === "Pets" ? "#7AADA1" : "#111",
-								fontFamily: "'Space Grotesk', sans-serif",
-								fontSize: "16px",
-								fontWeight: link === "Pets" ? 600 : 400,
-							}}
-						>
-							{link}
-						</Link>
-					))}
-					<div className="flex gap-3 pt-2">
-						<Link
-							href="/login"
-							onClick={() => setMobileMenuOpen(false)}
-							className="flex-1 flex items-center justify-center text-white font-medium"
-							style={{
-								height: "40px",
-								borderRadius: "8px",
-								backgroundColor: "#7AADA1",
-								fontFamily: "'Space Grotesk', sans-serif",
-								fontSize: "14px",
-							}}
-						>
-							Log in
-						</Link>
-						<Link
-							href="/register"
-							onClick={() => setMobileMenuOpen(false)}
-							className="flex-1 flex items-center justify-center font-medium"
-							style={{
-								height: "40px",
-								borderRadius: "8px",
-								border: "1px solid #111",
-								color: "#111",
-								fontFamily: "'Space Grotesk', sans-serif",
-								fontSize: "14px",
-							}}
-						>
-							Sign up
-						</Link>
-					</div>
-				</div>
-			)}
+			<Navbar activeLink="Pets" />
 
 			{/* ── Hero ── */}
 			<section className="relative overflow-hidden" style={{ background: "#F9F6F2" }}>
@@ -379,6 +190,10 @@ export default function PetsPage() {
 								{
 									num: (pets || []).filter((p) => p.species === "dog").length,
 									label: "Dogs",
+								},
+								{
+									num: (pets || []).filter((p) => p.species === "other").length,
+									label: "Other",
 								},
 							].map((s) => (
 								<div key={s.label}>
@@ -537,6 +352,12 @@ export default function PetsPage() {
 										count: (pets || []).filter((p) => p.species === "dog")
 											.length,
 									},
+									{
+										key: "other",
+										label: "Other",
+										count: (pets || []).filter((p) => p.species === "other")
+											.length,
+									},
 								] as const
 							).map((f) => (
 								<button
@@ -577,7 +398,9 @@ export default function PetsPage() {
 					</div>
 
 					{/* Pet cards grid */}
-					{filtered.length > 0 ? (
+					{loading ? (
+						<PetCardSkeletonGrid count={8} />
+					) : filtered.length > 0 ? (
 						<div
 							style={{
 								display: "grid",
@@ -785,9 +608,11 @@ import { Pet } from "@/types";
 function PetCard({ pet }: { pet: Pet }) {
 	const [hovered, setHovered] = useState(false);
 
-	const isCat = pet.species === "cat";
+	const type: PetType = pet.species === "cat" ? "cat" : pet.species === "dog" ? "dog" : "other";
 	const isFemale = pet.gender === "female";
-	const displayAge = pet.age ? `${pet.age} year${pet.age === 1 ? "" : "s"}` : "";
+	const displayAge = pet.ageMonths
+		? `${pet.ageMonths} month${pet.ageMonths === 1 ? "" : "s"}`
+		: "";
 
 	return (
 		<div
@@ -807,7 +632,7 @@ function PetCard({ pet }: { pet: Pet }) {
 				style={{ paddingTop: "72%", background: "#F9F6F2" }}
 			>
 				<img
-					src={pet.imageUrl || "/images/pets/placeholder.png"}
+					src={pet.thumbnail || pet.photoUrls?.[0] || "/images/pets/placeholder.png"}
 					alt={pet.name}
 					style={{
 						position: "absolute",
@@ -856,7 +681,7 @@ function PetCard({ pet }: { pet: Pet }) {
 				<div
 					className="absolute top-4 left-4"
 					style={{
-						background: isCat ? "#E8F4F1" : "#FDF2F0",
+						background: typeConfig[type].bg,
 						borderRadius: "20px",
 						padding: "4px 12px",
 					}}
@@ -866,10 +691,10 @@ function PetCard({ pet }: { pet: Pet }) {
 							fontFamily: "'Space Grotesk', sans-serif",
 							fontSize: "11px",
 							fontWeight: 600,
-							color: isCat ? "#216959" : "#C4857A",
+							color: typeConfig[type].color,
 						}}
 					>
-						{isCat ? "🐱 Cat" : "🐶 Dog"}
+						{typeConfig[type].label}
 					</span>
 				</div>
 			</div>
@@ -916,7 +741,7 @@ function PetCard({ pet }: { pet: Pet }) {
 				</p>
 
 				<Link
-					href="/register"
+					href="/register" // TODO: redirect to pet detail page
 					className="block text-center font-semibold py-3 rounded-[40px] transition-all hover:opacity-90"
 					style={{
 						background: "#7AADA1",

@@ -76,7 +76,7 @@ export const createApplication = async (req: AuthRequest, res: Response): Promis
 
 	const applicationData: Omit<AdoptionApplication, "id"> = {
 		petId,
-		petName: petData?.name || "",
+		name: petData?.name || "",
 		adopterId: req.user.uid,
 		adopterName: userData?.displayName || req.user.email || "",
 		shelterId,

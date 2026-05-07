@@ -7,7 +7,9 @@ export interface AuthRequest extends Request {
 	user?: {
 		uid: string;
 		email?: string;
+		displayName?: string;
 	};
+	file?: Express.Multer.File;
 }
 
 export interface ApiResponse<T = unknown> {
@@ -51,8 +53,12 @@ export interface KycVerification {
 	id?: string;
 	userId?: string;
 	status: "pending" | "approved" | "rejected";
+	fullName?: string;
+	dateOfBirth?: string;
+	idNumber?: string;
+	phone?: string;
 	idDocumentURL?: string;
-	selfieURL?: string;
+	financialDocumentURL?: string;
 	kycProvider?: string;
 	rejectionReason?: string;
 	attemptCount: number;
@@ -118,6 +124,7 @@ export interface Pet {
 	postedBy?: string;
 	description?: string;
 	photoURLs?: string[];
+	thumbnail?: string;
 	isVaccinated: boolean;
 	isNeutered: boolean;
 	geoPoint?: GeoPoint;
@@ -142,7 +149,7 @@ export interface HealthRecord {
 export interface AdoptionApplication {
 	id?: string;
 	petId: string;
-	petName: string;
+	name: string;
 	adopterId: string;
 	adopterName: string;
 	shelterId: string;
@@ -170,8 +177,11 @@ export interface AdoptionContract {
 
 export interface Chat {
 	id?: string;
-	applicationId: string;
+	type: "application" | "support";
+	applicationId?: string;
 	participantIds: string[];
+	claimedBy?: string | null;
+	claimedAt?: Date;
 	lastMessage?: string;
 	lastMessageAt?: Date;
 	createdAt: Date;

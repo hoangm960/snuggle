@@ -17,6 +17,9 @@ const navMain = [
 	{ href: "/admin/health-records", label: "Health Records", icon: HeartPulse },
 	{ href: "/admin/contracts", label: "Contracts", icon: FileSignature },
 	{ href: "/admin/reviews", label: "Reviews", icon: Star },
+	{ href: "/admin/chats", label: "Support Chats", icon: MessageCircle },
+	{ href: "/admin/users", label: "Users", icon: Users },
+	{ href: "/admin/kyc", label: "eKYC Verification", icon: ShieldCheck },
 	{ href: "/admin/donations", label: "Donations", icon: HeartHandshake },
 ];
 
@@ -35,7 +38,7 @@ export function AppSidebar() {
 		router.push("/login");
 	}
 
-	function isActive(href: string, exact = false) {
+	function isActive(href: string, exact: boolean = false) {
 		if (exact) return pathname === href;
 		return pathname === href || pathname.startsWith(href + "/");
 	}

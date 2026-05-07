@@ -1,67 +1,12 @@
-# Snuggles
+# Snuggle
 
 A full-stack pet adoption platform where users can browse, list, and adopt pets.
 
 ## Description
 
-Snuggles is a pet adoption platform built with Next.js and Express.js. Users can browse available pets, create listings for pets they're rehoming, and manage their adoption profiles. The platform uses Firebase for authentication and Firestore for data storage.
+Snuggle is a pet adoption platform built with Next.js and Express.js. Users can browse available pets, create listings for pets they're rehoming, and manage their adoption profiles. The platform uses Firebase for authentication and Firestore for data storage.
 
-## Tech Stack
-
-### Frontend
-- **Framework**: Next.js 14
-- **Language**: TypeScript
-- **UI**: React 18, Tailwind CSS
-- **Animation**: Framer Motion
-- **Auth**: Firebase Authentication
-- **HTTP Client**: Axios
-
-### Backend
-- **Framework**: Express.js
-- **Language**: TypeScript
-- **Database**: Firebase Firestore
-- **Auth**: Firebase Admin SDK
-- **Scraping**: Puppeteer
-
-## Folder Structure
-
-```
-snuggles/
-├── frontend/
-│   ├── src/
-│   │   ├── app/           # Next.js App Router pages
-│   │   │   ├── login/     # Login page
-│   │   │   ├── register/  # Registration page
-│   │   │   ├── pets/      # Pet listings page
-│   │   │   ├── pets/[id]/ # Individual pet page
-│   │   │   └── admin/     # Admin dashboard
-│   │   ├── hooks/         # Custom React hooks
-│   │   │   ├── useAuth.ts # Authentication hook
-│   │   │   └── usePets.ts # Pets data hook
-│   │   ├── lib/           # Utilities
-│   │   │   ├── firebase.ts
-│   │   │   └── api.ts
-│   │   └── types/         # TypeScript type definitions
-│   └── package.json
-│
-└── backend/
-    ├── src/
-    │   ├── routes/        # API routes
-    │   │   ├── pets.ts
-    │   │   └── auth.ts
-    │   ├── controllers/   # Route handlers
-    │   │   ├── petController.ts
-    │   │   └── authController.ts
-    │   ├── middleware/    # Express middleware
-    │   │   ├── auth.ts
-    │   │   └── errorHandler.ts
-    │   ├── config/        # Configuration
-    │   │   └── firebase.ts
-    │   ├── types/         # TypeScript type definitions
-    │   ├── utils/         # Utility functions
-    │   └── index.ts       # Server entry point
-    └── package.json
-```
+For tech stack and folder structure, see [SPEC.md](./SPEC.md).
 
 ## Setup
 
@@ -81,6 +26,10 @@ yarn install
 # Install backend dependencies
 cd ../backend
 yarn install
+
+# Setup Git hooks (optional)
+cd ..
+yarn prepare
 ```
 
 ### 2. Configure Firebase
@@ -110,12 +59,12 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 ```env
 FIREBASE_API_KEY=your-firebase-key
 FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_SERVICE_ACCOUNT_FILE=./service-account.json
+FIREBASE_SERVICE_ACCOUNT_FILE=./firebase-service-key.json
 PORT=3001
 NODE_ENV=development
 ```
 
-> **Note:** Create a service account in Firebase Console and download the JSON key. Place it in the `backend/` directory and rename it to `service-account.json` (or update the path in `FIREBASE_SERVICE_ACCOUNT_FILE`).
+> **Note:** Create a service account in Firebase Console and download the JSON key. Place it in the `backend/` directory and rename it to `firebase-service-key.json` (or update the path in `FIREBASE_SERVICE_ACCOUNT_FILE`).
 
 ### Specification
 
@@ -135,6 +84,21 @@ yarn dev
 
 - Frontend: http://localhost:3000
 - Backend: http://localhost:3001
+
+## Testing
+
+### Test Commands
+
+```bash
+cd frontend
+yarn test           # Run tests
+yarn test:watch     # Run tests in watch mode
+
+cd ../backend
+yarn test           # Run all tests
+yarn test:watch     # Run tests in watch mode
+yarn test:coverage  # Run tests with coverage
+```
 
 ## API Reference
 
