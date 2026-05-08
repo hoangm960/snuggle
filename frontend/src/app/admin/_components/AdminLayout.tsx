@@ -2,7 +2,13 @@
 
 import { AppSidebar } from "./AppSidebar";
 
-export function AdminLayout({ children }: { children: React.ReactNode }) {
+interface AdminLayoutProps {
+	children: React.ReactNode;
+	title?: string;
+	subtitle?: string;
+}
+
+export function AdminLayout({ children }: AdminLayoutProps) {
 	return (
 		<div className="flex h-screen overflow-hidden" style={{ background: "#F9F6F2", fontFamily: "'Poppins', sans-serif" }}>
 			<AppSidebar />

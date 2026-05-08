@@ -144,187 +144,197 @@ export default function KycPage() {
 	return (
 		<>
 			<AdminLayout title="eKYC Verification" subtitle="Verify user identity documents">
-				{stats && (
-					<div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-						<div className="bg-card border border-border rounded-2xl p-5 shadow-card">
-							<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
-								Total
-							</p>
-							<p className="font-display text-3xl font-semibold">{stats.total}</p>
-						</div>
-						<div className="bg-card border border-border rounded-2xl p-5 shadow-card">
-							<div className="flex items-center gap-2 mb-1">
-								<div className="size-2 rounded-full bg-amber-500" />
-								<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-									Pending
+				<div className="p-8">
+					{stats && (
+						<div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+							<div className="bg-card border border-border rounded-2xl p-5 shadow-card">
+								<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+									Total
+								</p>
+								<p className="font-display text-3xl font-semibold">{stats.total}</p>
+							</div>
+							<div className="bg-card border border-border rounded-2xl p-5 shadow-card">
+								<div className="flex items-center gap-2 mb-1">
+									<div className="size-2 rounded-full bg-amber-500" />
+									<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+										Pending
+									</p>
+								</div>
+								<p className="font-display text-3xl font-semibold">
+									{stats.pending}
 								</p>
 							</div>
-							<p className="font-display text-3xl font-semibold">{stats.pending}</p>
-						</div>
-						<div className="bg-card border border-border rounded-2xl p-5 shadow-card">
-							<div className="flex items-center gap-2 mb-1">
-								<div className="size-2 rounded-full bg-success" />
-								<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-									Approved
+							<div className="bg-card border border-border rounded-2xl p-5 shadow-card">
+								<div className="flex items-center gap-2 mb-1">
+									<div className="size-2 rounded-full bg-success" />
+									<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+										Approved
+									</p>
+								</div>
+								<p className="font-display text-3xl font-semibold">
+									{stats.approved}
 								</p>
 							</div>
-							<p className="font-display text-3xl font-semibold">{stats.approved}</p>
-						</div>
-						<div className="bg-card border border-border rounded-2xl p-5 shadow-card">
-							<div className="flex items-center gap-2 mb-1">
-								<div className="size-2 rounded-full bg-destructive" />
-								<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-									Rejected
+							<div className="bg-card border border-border rounded-2xl p-5 shadow-card">
+								<div className="flex items-center gap-2 mb-1">
+									<div className="size-2 rounded-full bg-destructive" />
+									<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+										Rejected
+									</p>
+								</div>
+								<p className="font-display text-3xl font-semibold">
+									{stats.rejected}
 								</p>
 							</div>
-							<p className="font-display text-3xl font-semibold">{stats.rejected}</p>
+						</div>
+					)}
+
+					<div className="flex flex-col lg:flex-row gap-3 mb-6">
+						<div className="relative flex-1">
+							<Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+							<input
+								value={search}
+								onChange={(e) => setSearch(e.target.value)}
+								placeholder="Search by name or ID number..."
+								className="w-full pl-10 h-11 rounded-full bg-card border border-border shadow-card text-sm px-4 outline-none focus:ring-2 focus:ring-ring"
+							/>
+						</div>
+						<div className="flex gap-2 overflow-x-auto">
+							<Filter className="size-4 text-muted-foreground shrink-0" />
+							{(["all", "pending", "approved", "rejected"] as StatusFilter[]).map(
+								(status) => (
+									<button
+										key={status}
+										onClick={() => setStatusFilter(status)}
+										className={`px-4 h-11 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${statusFilter === status ? "bg-primary text-primary-foreground shadow-glow" : "bg-card border border-border text-muted-foreground hover:text-foreground"}`}
+									>
+										{status === "all"
+											? "All"
+											: status.charAt(0).toUpperCase() + status.slice(1)}
+									</button>
+								)
+							)}
 						</div>
 					</div>
-				)}
 
-				<div className="flex flex-col lg:flex-row gap-3 mb-6">
-					<div className="relative flex-1">
-						<Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-						<input
-							value={search}
-							onChange={(e) => setSearch(e.target.value)}
-							placeholder="Search by name or ID number..."
-							className="w-full pl-10 h-11 rounded-full bg-card border border-border shadow-card text-sm px-4 outline-none focus:ring-2 focus:ring-ring"
-						/>
-					</div>
-					<div className="flex gap-2 overflow-x-auto">
-						<Filter className="size-4 text-muted-foreground shrink-0" />
-						{(["all", "pending", "approved", "rejected"] as StatusFilter[]).map(
-							(status) => (
-								<button
-									key={status}
-									onClick={() => setStatusFilter(status)}
-									className={`px-4 h-11 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${statusFilter === status ? "bg-primary text-primary-foreground shadow-glow" : "bg-card border border-border text-muted-foreground hover:text-foreground"}`}
-								>
-									{status === "all"
-										? "All"
-										: status.charAt(0).toUpperCase() + status.slice(1)}
-								</button>
-							)
-						)}
-					</div>
-				</div>
+					{loading && (
+						<div className="flex items-center justify-center py-20">
+							<Loader2 className="size-8 animate-spin text-primary" />
+						</div>
+					)}
 
-				{loading && (
-					<div className="flex items-center justify-center py-20">
-						<Loader2 className="size-8 animate-spin text-primary" />
-					</div>
-				)}
+					{error && (
+						<div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg mb-4">
+							{error}
+						</div>
+					)}
 
-				{error && (
-					<div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg mb-4">
-						{error}
-					</div>
-				)}
-
-				{!loading && !error && (
-					<div className="bg-card border border-border rounded-3xl shadow-card overflow-hidden">
-						<div className="overflow-x-auto">
-							<table className="w-full text-left">
-								<thead className="bg-secondary/40">
-									<tr className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-										<th className="px-6 py-3.5">Applicant</th>
-										<th className="px-6 py-3.5">ID Number</th>
-										<th className="px-6 py-3.5">Submitted</th>
-										<th className="px-6 py-3.5">Status</th>
-										<th className="px-6 py-3.5">Documents</th>
-										<th className="px-6 py-3.5"></th>
-									</tr>
-								</thead>
-								<tbody className="divide-y divide-border">
-									{filteredKyc.length === 0 ? (
-										<tr>
-											<td
-												colSpan={6}
-												className="px-6 py-12 text-center text-muted-foreground"
-											>
-												No KYC applications found
-											</td>
+					{!loading && !error && (
+						<div className="bg-card border border-border rounded-3xl shadow-card overflow-hidden">
+							<div className="overflow-x-auto">
+								<table className="w-full text-left">
+									<thead className="bg-secondary/40">
+										<tr className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+											<th className="px-6 py-3.5">Applicant</th>
+											<th className="px-6 py-3.5">ID Number</th>
+											<th className="px-6 py-3.5">Submitted</th>
+											<th className="px-6 py-3.5">Status</th>
+											<th className="px-6 py-3.5">Documents</th>
+											<th className="px-6 py-3.5"></th>
 										</tr>
-									) : (
-										filteredKyc.map((kyc) => {
-											const StatusIcon = statusConfig[kyc.status].icon;
-											return (
-												<tr
-													key={kyc.id}
-													className="hover:bg-secondary/30 transition-colors"
+									</thead>
+									<tbody className="divide-y divide-border">
+										{filteredKyc.length === 0 ? (
+											<tr>
+												<td
+													colSpan={6}
+													className="px-6 py-12 text-center text-muted-foreground"
 												>
-													<td className="px-6 py-4">
-														<p className="font-medium text-sm">
-															{kyc.fullName || "Unknown"}
-														</p>
-														<p className="text-xs text-muted-foreground">
-															{kyc.phone || "-"}
-														</p>
-													</td>
-													<td className="px-6 py-4 text-sm font-mono">
-														{kyc.idNumber || "-"}
-													</td>
-													<td className="px-6 py-4 text-sm text-muted-foreground tabular-nums">
-														{formatDate(kyc.submittedAt)}
-													</td>
-													<td className="px-6 py-4">
-														<span
-															className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${statusConfig[kyc.status].color}`}
-														>
-															<StatusIcon className="size-3" />
-															{statusConfig[kyc.status].label}
-														</span>
-													</td>
-													<td className="px-6 py-4">
-														<div className="flex gap-2">
-															{kyc.idDocumentURL && (
-																<a
-																	href={kyc.idDocumentURL}
-																	target="_blank"
-																	rel="noopener noreferrer"
-																	className="text-xs text-primary hover:underline flex items-center gap-1"
-																>
-																	ID{" "}
-																	<ExternalLink className="size-3" />
-																</a>
-															)}
-															{kyc.financialDocumentURL && (
-																<a
-																	href={kyc.financialDocumentURL}
-																	target="_blank"
-																	rel="noopener noreferrer"
-																	className="text-xs text-primary hover:underline flex items-center gap-1"
-																>
-																	Financial{" "}
-																	<ExternalLink className="size-3" />
-																</a>
-															)}
-															{!kyc.idDocumentURL &&
-																!kyc.financialDocumentURL && (
-																	<span className="text-xs text-muted-foreground">
-																		-
-																	</span>
+													No KYC applications found
+												</td>
+											</tr>
+										) : (
+											filteredKyc.map((kyc) => {
+												const StatusIcon = statusConfig[kyc.status].icon;
+												return (
+													<tr
+														key={kyc.id}
+														className="hover:bg-secondary/30 transition-colors"
+													>
+														<td className="px-6 py-4">
+															<p className="font-medium text-sm">
+																{kyc.fullName || "Unknown"}
+															</p>
+															<p className="text-xs text-muted-foreground">
+																{kyc.phone || "-"}
+															</p>
+														</td>
+														<td className="px-6 py-4 text-sm font-mono">
+															{kyc.idNumber || "-"}
+														</td>
+														<td className="px-6 py-4 text-sm text-muted-foreground tabular-nums">
+															{formatDate(kyc.submittedAt)}
+														</td>
+														<td className="px-6 py-4">
+															<span
+																className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${statusConfig[kyc.status].color}`}
+															>
+																<StatusIcon className="size-3" />
+																{statusConfig[kyc.status].label}
+															</span>
+														</td>
+														<td className="px-6 py-4">
+															<div className="flex gap-2">
+																{kyc.idDocumentURL && (
+																	<a
+																		href={kyc.idDocumentURL}
+																		target="_blank"
+																		rel="noopener noreferrer"
+																		className="text-xs text-primary hover:underline flex items-center gap-1"
+																	>
+																		ID{" "}
+																		<ExternalLink className="size-3" />
+																	</a>
 																)}
-														</div>
-													</td>
-													<td className="px-6 py-4 text-right">
-														<button
-															onClick={() => openDetailModal(kyc)}
-															className="size-8 rounded-full hover:bg-secondary flex items-center justify-center text-muted-foreground"
-														>
-															<Eye className="size-4" />
-														</button>
-													</td>
-												</tr>
-											);
-										})
-									)}
-								</tbody>
-							</table>
+																{kyc.financialDocumentURL && (
+																	<a
+																		href={
+																			kyc.financialDocumentURL
+																		}
+																		target="_blank"
+																		rel="noopener noreferrer"
+																		className="text-xs text-primary hover:underline flex items-center gap-1"
+																	>
+																		Financial{" "}
+																		<ExternalLink className="size-3" />
+																	</a>
+																)}
+																{!kyc.idDocumentURL &&
+																	!kyc.financialDocumentURL && (
+																		<span className="text-xs text-muted-foreground">
+																			-
+																		</span>
+																	)}
+															</div>
+														</td>
+														<td className="px-6 py-4 text-right">
+															<button
+																onClick={() => openDetailModal(kyc)}
+																className="size-8 rounded-full hover:bg-secondary flex items-center justify-center text-muted-foreground"
+															>
+																<Eye className="size-4" />
+															</button>
+														</td>
+													</tr>
+												);
+											})
+										)}
+									</tbody>
+								</table>
+							</div>
 						</div>
-					</div>
-				)}
+					)}
+				</div>
 			</AdminLayout>
 
 			{showDetailModal && selectedKyc && (

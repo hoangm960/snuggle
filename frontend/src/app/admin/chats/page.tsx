@@ -30,13 +30,14 @@ export default function AdminChatsPage() {
 	const handleNewMessage = useCallback(
 		(message: Message) => {
 			if (message.chatId === selectedChat?.id) {
+				if (message.senderId === currentUser?.id) return;
 				setChatMessages((prev) => {
 					if (prev.some((m) => m.id === message.id)) return prev;
 					return [...prev, message];
 				});
 			}
 		},
-		[selectedChat?.id]
+		[selectedChat?.id, currentUser?.id]
 	);
 
 	const handleUserTyping = useCallback(
@@ -137,7 +138,6 @@ export default function AdminChatsPage() {
 		setIsLoading(true);
 		try {
 			const content = newMessage.trim();
-			sendMessage(selectedChat.id, content);
 			const { chatApi } = await import("@/lib/chatApi");
 			const message = await chatApi.sendMessage(selectedChat.id, content);
 			setChatMessages((prev) => [...prev, message]);

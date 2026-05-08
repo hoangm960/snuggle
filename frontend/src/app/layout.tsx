@@ -1,7 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { AuthProvider } from "@/hooks/useAuth";
-import ChatBoxWrapper from "@/components/ChatBoxWrapper";
+import ChatLayoutWrapper from "@/components/Chat/ChatLayoutWrapper";
 
 export const metadata: Metadata = {
 	title: "Snuggle",
@@ -17,7 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 			<body>
 				<AuthProvider>
 					{children}
-					<ChatBoxWrapper />
+					<ChatLayoutWrapper />
 				</AuthProvider>
 			</body>
 		</html>

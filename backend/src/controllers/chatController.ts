@@ -2,6 +2,7 @@ import { Response } from "express";
 import { db } from "../config/firebase";
 import { Chat, Message, AuthRequest, ApiResponse } from "../types";
 import { AppError } from "../middleware/errorHandler";
+import { getIO } from "../socket";
 
 const chatsCollection = db.collection("chats");
 const messagesCollection = db.collection("messages");
@@ -327,7 +328,15 @@ export const acceptChat = async (req: AuthRequest, _res: Response): Promise<void
 		sentAt: new Date(),
 	};
 
-	await messagesCollection.add(messageData);
+	const msgRef = await messagesCollection.add(messageData);
+
+	const systemMessage: Message = { id: msgRef.id, ...messageData };
+
+	try {
+		getIO().to(`chat:${id}`).emit("new_message", systemMessage);
+	} catch {
+		// socket not initialized
+	}
 };
 
 export const sendMessage = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -368,6 +377,12 @@ export const sendMessage = async (req: AuthRequest, res: Response): Promise<void
 		lastMessage: content.trim(),
 		lastMessageAt: messageData.sentAt,
 	});
+
+	try {
+		getIO().to(`chat:${id}`).emit("new_message", message);
+	} catch {
+		// socket not initialized
+	}
 
 	const response: ApiResponse<Message> = {
 		success: true,

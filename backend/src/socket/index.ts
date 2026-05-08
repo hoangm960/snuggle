@@ -16,6 +16,15 @@ const isCustomToken = (token: string): boolean => {
 	}
 };
 
+let ioInstance: Server | null = null;
+
+export const getIO = (): Server => {
+	if (!ioInstance) {
+		throw new Error("Socket.io not initialized");
+	}
+	return ioInstance;
+};
+
 export const initializeSocket = (httpServer: HttpServer): Server => {
 	const io = new Server(httpServer, {
 		cors: {
@@ -97,6 +106,8 @@ export const initializeSocket = (httpServer: HttpServer): Server => {
 			console.log(`User disconnected: ${socket.userId}`);
 		});
 	});
+
+	ioInstance = io;
 
 	return io;
 };

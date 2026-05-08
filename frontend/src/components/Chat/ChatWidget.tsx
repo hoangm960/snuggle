@@ -5,9 +5,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { chatApi } from "@/lib/chatApi";
 import { useSocket } from "@/hooks/useSocket";
 import { Chat, Message } from "@/types";
+import { X, Send, Bot, User } from "lucide-react";
 
 interface ChatWidgetProps {
 	onClose: () => void;
+}
+
+function now(): string {
+	return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
 export default function ChatWidget({ onClose }: ChatWidgetProps) {
@@ -20,18 +25,19 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
 	const [error, setError] = useState<string | null>(null);
 	const [isOtherTyping, setIsOtherTyping] = useState(false);
 	const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-	const messagesEndRef = useRef<HTMLDivElement>(null);
+	const bottomRef = useRef<HTMLDivElement>(null);
 
 	const handleNewMessage = useCallback(
 		(message: Message) => {
 			if (message.chatId === chat?.id) {
+				if (message.senderId === user?.id) return;
 				setMessages((prev) => {
 					if (prev.some((m) => m.id === message.id)) return prev;
 					return [...prev, message];
 				});
 			}
 		},
-		[chat?.id]
+		[chat?.id, user?.id]
 	);
 
 	const handleUserTyping = useCallback(
@@ -88,7 +94,7 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
 	}, [loadChat]);
 
 	useEffect(() => {
-		messagesEndRef.current?.scrollIntoView();
+		if (bottomRef.current) bottomRef.current.scrollIntoView({ behavior: "smooth" });
 	}, [messages]);
 
 	useEffect(() => {
@@ -103,7 +109,6 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
 		setIsLoading(true);
 		try {
 			const content = newMessage.trim();
-			sendMessage(chat.id, content);
 			const message = await chatApi.sendMessage(chat.id, content);
 			setMessages((prev) => [...prev, message]);
 			setNewMessage("");
@@ -130,155 +135,178 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
 	};
 
 	return (
-		<div
-			className="fixed bottom-20 right-6 z-50 overflow-hidden rounded-xl shadow-2xl"
-			style={{
-				height: isMinimized ? "auto" : "450px",
-				backgroundColor: "white",
-				border: "1px solid #e5e7eb",
-			}}
-		>
+		<>
 			<div
-				className="flex items-center justify-between px-4 py-3"
-				style={{ backgroundColor: "#7AADA1" }}
+				className="fixed bottom-24 right-6 z-50 flex w-80 flex-col overflow-hidden rounded-2xl shadow-2xl"
+				style={{
+					maxHeight: "480px",
+					background: "#fff",
+					border: "1px solid #E8E8E8",
+				}}
 			>
-				<span className="font-medium text-white">Support Chat</span>
-				<div className="flex gap-2">
-					<button
-						onClick={() => setIsMinimized(!isMinimized)}
-						className="p-1 text-white hover:opacity-80"
-						aria-label={isMinimized ? "Expand" : "Minimize"}
+				<div
+					className="flex items-center gap-3 px-4 py-3"
+					style={{
+						background: "linear-gradient(135deg, #7AADA1, #216959)",
+						color: "#fff",
+					}}
+				>
+					<div
+						className="size-8 rounded-full flex items-center justify-center"
+						style={{ background: "rgba(255,255,255,0.2)" }}
 					>
-						{isMinimized ? (
-							<svg
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-							>
-								<polyline points="17 11 12 6 7 11" />
-								<polyline points="17 18 12 13 7 18" />
-							</svg>
-						) : (
-							<svg
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-							>
-								<polyline points="17 6 12 11 7 6" />
-								<polyline points="17 13 12 18 7 13" />
-							</svg>
-						)}
-					</button>
+						<Bot className="size-4" />
+					</div>
+					<div>
+						<p
+							style={{
+								fontFamily: "'Space Grotesk', sans-serif",
+								fontSize: "14px",
+								fontWeight: 600,
+							}}
+						>
+							Snuggle Support
+						</p>
+						<p style={{ fontSize: "11px", opacity: 0.8 }}>Usually replies instantly</p>
+					</div>
 					<button
 						onClick={onClose}
-						className="p-1 text-white hover:opacity-80"
-						aria-label="Close"
+						className="ml-auto size-7 rounded-lg flex items-center justify-center"
+						style={{ background: "rgba(255,255,255,0.15)" }}
 					>
-						<svg
-							width="16"
-							height="16"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth="2"
-						>
-							<line x1="18" y1="6" x2="6" y2="18" />
-							<line x1="6" y1="6" x2="18" y2="18" />
-						</svg>
+						<X className="size-3.5" />
 					</button>
 				</div>
-			</div>
 
-			{!isMinimized && (
-				<>
+				<div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ background: "#F9F6F2" }}>
 					{error && (
-						<div className="px-4 py-2 text-sm" style={{ color: "#EB4335" }}>
+						<div className="rounded-lg px-3 py-2 text-sm" style={{ background: "#fff", color: "#EB4335" }}>
 							{error}
 						</div>
 					)}
 
-					<div
-						className="overflow-y-auto px-3 py-2"
-						style={{ height: "320px", backgroundColor: "#f9fafb" }}
-					>
-						{isLoading && messages.length === 0 ? (
-							<div className="flex h-full items-center justify-center text-gray-400">
-								Loading...
-							</div>
-						) : messages.length === 0 ? (
-							<div className="flex h-full items-center justify-center text-center text-gray-400">
-								<div className="text-sm">
-									No messages yet. Start the conversation!
-								</div>
-							</div>
-						) : (
-							messages.map((msg) => {
-								const isOwnMessage = msg.senderId === user?.id;
-								return (
+					{isLoading && messages.length === 0 ? (
+						<div className="flex h-full items-center justify-center text-gray-400">Loading...</div>
+					) : messages.length === 0 ? (
+						<div className="flex h-full items-center justify-center text-center text-gray-400">
+							<div className="text-sm">No messages yet. Start the conversation!</div>
+						</div>
+					) : (
+						messages.map((msg) => {
+							const isOwnMessage = msg.senderId === user?.id;
+							return (
+								<div
+									key={msg.id}
+									className={`flex items-end gap-2 ${isOwnMessage ? "flex-row-reverse" : ""}`}
+								>
 									<div
-										key={msg.id}
-										className="mb-2 flex"
+										className="size-6 rounded-full flex items-center justify-center shrink-0"
 										style={{
-											justifyContent: isOwnMessage
-												? "flex-end"
-												: "flex-start",
+											background: isOwnMessage ? "#216959" : "#E8F4F1",
 										}}
 									>
+										{isOwnMessage ? (
+											<User className="size-3.5 text-white" />
+										) : (
+											<Bot className="size-3.5" style={{ color: "#7AADA1" }} />
+										)}
+									</div>
+									<div className="max-w-[78%]">
 										<div
-											className="max-w-[75%] rounded-lg px-3 py-2 text-sm"
+											className="rounded-2xl px-3 py-2"
 											style={{
-												backgroundColor: isOwnMessage ? "#7AADA1" : "white",
-												color: isOwnMessage ? "white" : "#333",
-												border: isOwnMessage ? "none" : "1px solid #e5e7eb",
+												background: isOwnMessage
+													? "linear-gradient(135deg, #7AADA1, #216959)"
+													: "#fff",
+												color: isOwnMessage ? "#fff" : "#333",
+												borderBottomLeftRadius: isOwnMessage ? "4px" : undefined,
+												borderBottomRightRadius: isOwnMessage ? undefined : "4px",
+												border: isOwnMessage ? "none" : "1px solid #F0F0F0",
 											}}
 										>
-											{msg.content}
+											<p style={{ fontSize: "13px", lineHeight: 1.5 }}>{msg.content}</p>
 										</div>
+										<p
+											style={{
+												fontSize: "10px",
+												color: "#bbb",
+												marginTop: "3px",
+												textAlign: isOwnMessage ? "right" : "left",
+											}}
+										>
+											{now()}
+										</p>
 									</div>
-								);
-							})
-						)}
-						<div ref={messagesEndRef} />
-						{isOtherTyping && (
-							<div className="text-xs text-gray-400 px-3 py-1">
-								Someone is typing...
+								</div>
+							);
+						})
+					)}
+					{isOtherTyping && (
+						<div className="flex items-end gap-2">
+							<div
+								className="size-6 rounded-full flex items-center justify-center"
+								style={{ background: "#E8F4F1" }}
+							>
+								<Bot className="size-3.5" style={{ color: "#7AADA1" }} />
 							</div>
-						)}
-					</div>
-
-					<div className="border-t p-3" style={{ borderColor: "#e5e7eb" }}>
-						<div className="flex gap-2">
-							<input
-								type="text"
-								value={newMessage}
-								onChange={handleInputChange}
-								onKeyPress={handleKeyPress}
-								placeholder="Type a message..."
-								className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none"
-								style={{ borderColor: "#e5e7eb" }}
-								disabled={!chat?.id || isLoading}
-							/>
-							<button
-								onClick={handleSendMessage}
-								disabled={!newMessage.trim() || !chat?.id || isLoading}
-								className="rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity"
+							<div
+								className="rounded-2xl px-4 py-3 flex gap-1"
 								style={{
-									backgroundColor: "#7AADA1",
-									opacity: !newMessage.trim() || !chat?.id || isLoading ? 0.5 : 1,
+									background: "#fff",
+									border: "1px solid #F0F0F0",
+									borderBottomLeftRadius: "4px",
 								}}
 							>
-								Send
-							</button>
+								{[0, 1, 2].map((i) => (
+									<span
+										key={i}
+										className="size-1.5 rounded-full"
+										style={{
+											background: "#ccc",
+											animation: `bounce 1.2s ${i * 0.2}s infinite`,
+										}}
+									/>
+								))}
+							</div>
 						</div>
-					</div>
-				</>
-			)}
-		</div>
+					)}
+					<div ref={bottomRef} />
+				</div>
+
+				<div
+					className="p-3 flex gap-2"
+					style={{ background: "#fff", borderTop: "1px solid #F0F0F0" }}
+				>
+					<input
+						value={newMessage}
+						onChange={handleInputChange}
+						onKeyDown={handleKeyPress}
+						placeholder="Type a message..."
+						className="flex-1 px-3 py-2 rounded-xl text-sm outline-none"
+						style={{
+							background: "#F9F6F2",
+							border: "1px solid #E8E8E8",
+							color: "#333",
+						}}
+						disabled={!chat?.id || isLoading}
+					/>
+					<button
+						onClick={handleSendMessage}
+						disabled={!newMessage.trim() || !chat?.id || isLoading}
+						className="size-9 rounded-xl flex items-center justify-center transition-opacity disabled:opacity-40"
+						style={{ background: "linear-gradient(135deg, #7AADA1, #216959)", color: "#fff" }}
+					>
+						<Send className="size-4" />
+					</button>
+				</div>
+			</div>
+
+			<style>{`
+				@keyframes bounce {
+					0%, 80%, 100% { transform: translateY(0); }
+					40% { transform: translateY(-4px); }
+				}
+			`}</style>
+		</>
 	);
 }
