@@ -9,6 +9,7 @@ import {
 	inviteUser,
 	deleteUser,
 } from "../controllers/adminController";
+import { getDashboardData } from "../controllers/dashboardController";
 import {
 	getAllChats,
 	getChatMessages,
@@ -26,6 +27,18 @@ const router = Router();
 
 router.use(authenticate);
 router.use(requireAdmin);
+
+router.get(
+	"/dashboard",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		const data = await getDashboardData();
+
+		res.status(200).json({
+			success: true,
+			data,
+		});
+	})
+);
 
 router.post(
 	"/invite",
