@@ -223,3 +223,25 @@ export interface Notification {
 	isRead: boolean;
 	createdAt: Date;
 }
+
+export interface QuizOption {
+	value: string;
+	label: string;
+	subLabel?: string;
+	icon: string;
+	weights: {
+		species?: { dog?: number; cat?: number; other?: number };
+		size?: { small?: number; medium?: number; large?: number };
+	};
+}
+
+export interface QuizQuestion {
+	id?: string;
+	order: number;
+	category: string;
+	question: string;
+	options: QuizOption[];
+	isActive: boolean;
+	createdAt: Date;
+	updatedAt: Date;
+}

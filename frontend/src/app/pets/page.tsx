@@ -6,6 +6,7 @@ import { usePets } from "@/hooks/usePets";
 import { useAuth } from "@/hooks/useAuth";
 import { Navbar } from "@/components/Navbar";
 import { PetCardSkeletonGrid } from "@/components/PetCardSkeleton";
+import { QuizModal } from "@/components/QuizModal";
 
 type PetType = "cat" | "dog" | "other";
 
@@ -38,6 +39,7 @@ export default function PetsPage() {
 	const { pets, loading, error, fetchPets } = usePets();
 	const [activeFilter, setActiveFilter] = useState<"all" | "cat" | "dog" | "other">("all");
 	const [search, setSearch] = useState("");
+	const [quizOpen, setQuizOpen] = useState(false);
 
 	const filtered = (pets || []).filter((p) => {
 		const petType = p.species === "cat" ? "cat" : p.species === "dog" ? "dog" : "other";
@@ -54,6 +56,7 @@ export default function PetsPage() {
 			className="flex flex-col min-h-screen w-full"
 			style={{ fontFamily: "'Poppins', sans-serif" }}
 		>
+			<QuizModal open={quizOpen} onClose={() => setQuizOpen(false)} />
 			<Navbar activeLink="Pets" />
 
 			{/* ── Hero ── */}
@@ -163,6 +166,7 @@ export default function PetsPage() {
 								/>
 							</div>
 							<button
+								onClick={() => setQuizOpen(true)}
 								className="flex items-center justify-center font-semibold hover:opacity-90 transition-opacity"
 								style={{
 									padding: "12px 28px",
@@ -176,7 +180,7 @@ export default function PetsPage() {
 									whiteSpace: "nowrap",
 								}}
 							>
-								Find a Pet
+								Take the Quiz
 							</button>
 						</div>
 

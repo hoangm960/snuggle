@@ -1,5 +1,5 @@
 import { Router, Response } from "express";
-import { AuthRequest, Review } from "../types";
+import { AuthRequest, Review, QuizQuestion } from "../types";
 import {
 	getAllUsers,
 	getUserById,
@@ -297,6 +297,67 @@ router.put(
 		const review: Review = { id: updated.id, shelterId, ...updated.data() } as Review;
 
 		res.status(200).json({ success: true, data: review, message: `Review ${status} successfully` });
+	})
+);
+
+// Quiz question management
+router.get(
+	"/quiz",
+	asyncHandler(async (_req: AuthRequest, res: Response) => {
+		const snapshot = await db.collection("quizQuestions").orderBy("order", "asc").get();
+		const questions = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+		res.status(200).json({ success: true, data: questions });
+	})
+);
+
+router.post(
+	"/quiz",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		const { category, question, options, isActive, order } = req.body;
+		if (!category || !question || !options || !Array.isArray(options)) {
+			throw new AppError("Missing required fields", 400);
+		}
+		let resolvedOrder = order;
+		if (resolvedOrder === undefined) {
+			const snapshot = await db
+				.collection("quizQuestions")
+				.orderBy("order", "desc")
+				.limit(1)
+				.get();
+			resolvedOrder = snapshot.empty ? 0 : (snapshot.docs[0].data().order || 0) + 1;
+		}
+		const data: Omit<QuizQuestion, "id"> = {
+			order: resolvedOrder,
+			category,
+			question,
+			options,
+			isActive: isActive !== false,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
+		const ref = await db.collection("quizQuestions").add(data);
+		res.status(201).json({ success: true, data: { id: ref.id, ...data } });
+	})
+);
+
+router.put(
+	"/quiz/:id",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		const { id } = req.params;
+		const updates = { ...req.body, updatedAt: new Date() };
+		delete updates.id;
+		await db.collection("quizQuestions").doc(id).update(updates);
+		const doc = await db.collection("quizQuestions").doc(id).get();
+		res.status(200).json({ success: true, data: { id: doc.id, ...doc.data() } });
+	})
+);
+
+router.delete(
+	"/quiz/:id",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		const { id } = req.params;
+		await db.collection("quizQuestions").doc(id).delete();
+		res.status(200).json({ success: true, message: "Question deleted" });
 	})
 );
 

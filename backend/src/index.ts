@@ -20,6 +20,7 @@ import adopterProfileRoutes from "./routes/adopterProfile";
 import reviewRoutes from "./routes/reviews";
 import kycRoutes from "./routes/kyc";
 import chatRoutes from "./routes/chat";
+import quizRoutes from "./routes/quiz";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -45,6 +46,7 @@ app.use("/api/users/me/adopter-profile", adopterProfileRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/kyc", kycRoutes);
 app.use("/api/chats", chatRoutes);
+app.use("/api/quiz", quizRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

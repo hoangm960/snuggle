@@ -16,6 +16,7 @@ import {
 	FileSignature,
 	Star,
 	MessageCircle,
+	Wand2,
 } from "lucide-react";
 
 const navMain = [
@@ -28,6 +29,7 @@ const navMain = [
 	{ href: "/admin/contracts", label: "Contracts", icon: FileSignature },
 	{ href: "/admin/reviews", label: "Reviews", icon: Star },
 	{ href: "/admin/chats", label: "Support Chats", icon: MessageCircle },
+	{ href: "/admin/quiz", label: "Pet Quiz", icon: Wand2 },
 ];
 
 const navSecondary = [{ href: "/admin/settings", label: "Settings", icon: Settings }];

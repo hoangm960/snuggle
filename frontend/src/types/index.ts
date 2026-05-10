@@ -137,3 +137,41 @@ export interface KycWithUser {
 		photoURL?: string;
 	};
 }
+
+export interface QuizOption {
+	value: string;
+	label: string;
+	subLabel?: string;
+	icon: string;
+	weights: {
+		species?: { dog?: number; cat?: number; other?: number };
+		size?: { small?: number; medium?: number; large?: number };
+	};
+}
+
+export interface QuizQuestion {
+	id?: string;
+	order: number;
+	category: string;
+	question: string;
+	options: QuizOption[];
+	isActive: boolean;
+	createdAt: Date | string;
+	updatedAt: Date | string;
+}
+
+export interface QuizMatch {
+	pet: {
+		id?: string;
+		name: string;
+		species: string;
+		breed: string;
+		ageMonths: number;
+		size: string;
+		gender: string;
+		thumbnail?: string;
+		description?: string;
+		status: string;
+	};
+	pct: number;
+}

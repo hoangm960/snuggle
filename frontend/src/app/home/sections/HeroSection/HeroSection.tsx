@@ -1,6 +1,8 @@
-import Link from "next/link";
+interface HeroSectionProps {
+	onFindPet: () => void;
+}
 
-export default function HeroSection() {
+export default function HeroSection({ onFindPet }: HeroSectionProps) {
 	return (
 		<section id="home" className="relative" style={{ minHeight: "100vh", zIndex: 1 }}>
 			{/* Text overlay — background comes from the shared wrapper */}
@@ -51,8 +53,8 @@ export default function HeroSection() {
 						build a bond that lasts a lifetime.
 					</p>
 					<div className="flex flex-wrap gap-4">
-						<Link
-							href="/register"
+						<button
+							onClick={onFindPet}
 							className="flex items-center justify-center text-white font-semibold hover:opacity-90 transition-opacity"
 							style={{
 								padding: "13px 30px",
@@ -60,10 +62,12 @@ export default function HeroSection() {
 								backgroundColor: "#7AADA1",
 								fontFamily: "'Space Grotesk', sans-serif",
 								fontSize: "14px",
+								border: "none",
+								cursor: "pointer",
 							}}
 						>
 							Find a Pet
-						</Link>
+						</button>
 						<a
 							href="#about-us"
 							className="flex items-center justify-center font-semibold hover:opacity-80 transition-opacity"
