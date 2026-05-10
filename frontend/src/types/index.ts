@@ -67,6 +67,22 @@ export interface Message {
 	sentAt: Date;
 }
 
+export interface AdoptionApplication {
+	id?: string;
+	petId: string;
+	name: string;
+	adopterId: string;
+	adopterName: string;
+	shelterId: string;
+	status: "pending" | "approved" | "rejected" | "completed";
+	message?: string;
+	adminNote?: string;
+	chatId?: string;
+	reviewedBy?: string;
+	appliedAt: Date | string;
+	reviewedAt?: Date | string;
+}
+
 export interface KycVerification {
 	id?: string;
 	userId?: string;

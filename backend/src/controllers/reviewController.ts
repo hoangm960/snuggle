@@ -87,7 +87,7 @@ export const updateReviewStatus = async (req: AuthRequest, res: Response): Promi
 		const { shelterId, id } = req.params;
 		const { status } = req.body;
 
-		if (!["approved", "removed"].includes(status)) {
+		if (!["approved", "flagged", "removed"].includes(status)) {
 			throw new AppError("Invalid status", 400);
 		}
 

@@ -2,234 +2,310 @@
 
 import { useState } from "react";
 import { AdminLayout } from "../_components/AdminLayout";
-import { Star, Search, CheckCircle2, Flag, Trash2, X } from "lucide-react";
+import { Star, Search, CheckCircle2, Flag, Trash2, X, Loader2, RefreshCw } from "lucide-react";
+import { useReviews, type Review } from "@/hooks/useReviews";
 
-interface Review {
-	id: string;
-	reviewer: string;
-	reviewerEmail: string;
-	petName: string;
-	shelter: string;
-	rating: number;
-	comment: string;
-	date: string;
-	status: "published" | "flagged" | "removed";
-}
+type StatusFilter = "all" | "pending" | "approved" | "flagged" | "removed";
 
-const mockReviews: Review[] = [
-	{ id: "RV-001", reviewer: "Sarah Johnson", reviewerEmail: "sarah@email.com", petName: "Mochi", shelter: "Happy Paws Shelter", rating: 5, comment: "The adoption process was smooth and the staff was incredibly helpful. Mochi has settled in perfectly!", date: "Apr 26, 2026", status: "published" },
-	{ id: "RV-002", reviewer: "David Kim", reviewerEmail: "david@email.com", petName: "Luna", shelter: "City Animal Rescue", rating: 4, comment: "Great experience overall. The shelter staff gave us all the information we needed. Luna is adjusting well.", date: "Apr 25, 2026", status: "published" },
-	{ id: "RV-003", reviewer: "Anonymous", reviewerEmail: "anon@email.com", petName: "Charlie", shelter: "Happy Paws Shelter", rating: 1, comment: "This shelter scammed me!!! Do not trust them.", date: "Apr 24, 2026", status: "flagged" },
-	{ id: "RV-004", reviewer: "James Wilson", reviewerEmail: "james@email.com", petName: "Bella", shelter: "Furry Friends Hub", rating: 5, comment: "Wonderful experience. The team was professional and caring. Bella is the best thing that happened to our family.", date: "Apr 23, 2026", status: "published" },
-	{ id: "RV-005", reviewer: "Spam Account", reviewerEmail: "spam@fake.com", petName: "Max", shelter: "City Animal Rescue", rating: 1, comment: "Buy followers cheap at www.spam.com", date: "Apr 22, 2026", status: "removed" },
-];
-
-const statusConfig = {
-	published: { label: "Published", color: "#216959", bg: "#E8F4F1" },
-	flagged: { label: "Flagged", color: "#C4857A", bg: "#FAF0EE" },
-	removed: { label: "Removed", color: "#999", bg: "#F4F4F4" },
+const statusConfig: Record<string, { label: string; badge: string }> = {
+	pending: { label: "Pending", badge: "bg-warning/15 text-warning" },
+	approved: { label: "Published", badge: "bg-success/15 text-success" },
+	flagged: { label: "Flagged", badge: "bg-destructive/15 text-destructive" },
+	removed: { label: "Removed", badge: "bg-muted text-muted-foreground" },
 };
+
+const TABS: { key: StatusFilter; label: string }[] = [
+	{ key: "all", label: "All" },
+	{ key: "pending", label: "Pending" },
+	{ key: "approved", label: "Published" },
+	{ key: "flagged", label: "Flagged" },
+	{ key: "removed", label: "Removed" },
+];
 
 function StarRating({ rating }: { rating: number }) {
 	return (
 		<div className="flex items-center gap-0.5">
 			{[1, 2, 3, 4, 5].map((i) => (
-				<Star key={i} className="size-3.5" fill={i <= rating ? "#F5A623" : "none"} style={{ color: i <= rating ? "#F5A623" : "#E0E0E0" }} />
+				<Star
+					key={i}
+					className="size-3.5"
+					fill={i <= rating ? "#F5A623" : "none"}
+					style={{ color: i <= rating ? "#F5A623" : "#E0E0E0" }}
+				/>
 			))}
 		</div>
 	);
 }
 
+function Initials({ name }: { name: string }) {
+	const letters = name
+		.split(" ")
+		.map((w) => w[0])
+		.join("")
+		.slice(0, 2)
+		.toUpperCase();
+	return (
+		<div className="size-8 rounded-full bg-primary-soft flex items-center justify-center text-xs font-bold text-primary-deep shrink-0">
+			{letters}
+		</div>
+	);
+}
+
+function formatDate(date: Date | string | undefined) {
+	if (!date) return "—";
+	return new Date(date).toLocaleDateString("en-US", {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+	});
+}
+
 export default function ReviewsPage() {
-	const [reviews, setReviews] = useState(mockReviews);
+	const { reviews, loading, error, fetchReviews, updateStatus } = useReviews();
 	const [search, setSearch] = useState("");
-	const [statusFilter, setStatusFilter] = useState("all");
+	const [tab, setTab] = useState<StatusFilter>("all");
 	const [selected, setSelected] = useState<Review | null>(null);
+	const [updating, setUpdating] = useState<string | null>(null);
 
 	const filtered = reviews.filter((r) => {
-		const matchSearch = r.reviewer.toLowerCase().includes(search.toLowerCase()) || r.petName.toLowerCase().includes(search.toLowerCase()) || r.comment.toLowerCase().includes(search.toLowerCase());
-		const matchStatus = statusFilter === "all" || r.status === statusFilter;
+		const matchSearch =
+			(r.reviewerName || "").toLowerCase().includes(search.toLowerCase()) ||
+			(r.comment || "").toLowerCase().includes(search.toLowerCase());
+		const matchStatus = tab === "all" || r.status === tab;
 		return matchSearch && matchStatus;
 	});
 
-	function setStatus(id: string, status: Review["status"]) {
-		setReviews((prev) => prev.map((r) => r.id === id ? { ...r, status } : r));
-		setSelected(null);
-	}
+	const counts: Record<StatusFilter, number> = {
+		all: reviews.length,
+		pending: reviews.filter((r) => r.status === "pending").length,
+		approved: reviews.filter((r) => r.status === "approved").length,
+		flagged: reviews.filter((r) => r.status === "flagged").length,
+		removed: reviews.filter((r) => r.status === "removed").length,
+	};
 
-	function remove(id: string) {
-		setReviews((prev) => prev.map((r) => r.id === id ? { ...r, status: "removed" } : r));
+	const handleAction = async (review: Review, status: Review["status"]) => {
+		if (!review.id || !review.shelterId) return;
+		setUpdating(review.id);
+		await updateStatus(review.shelterId, review.id, status);
+		setUpdating(null);
 		setSelected(null);
-	}
-
-	const counts = { all: reviews.length, published: reviews.filter((r) => r.status === "published").length, flagged: reviews.filter((r) => r.status === "flagged").length, removed: reviews.filter((r) => r.status === "removed").length };
+	};
 
 	return (
-		<AdminLayout>
-			<div className="p-8">
-				<div className="flex items-center gap-3 mb-8">
-					<div className="size-10 rounded-xl flex items-center justify-center" style={{ background: "#E8F4F1" }}>
-						<Star className="size-5" style={{ color: "#7AADA1" }} />
-					</div>
-					<div>
-						<h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "24px", fontWeight: 700, color: "#1C1C1C" }}>Reviews & Ratings</h1>
-						<p style={{ color: "#888", fontSize: "13px" }}>Moderate adoption experience reviews</p>
-					</div>
-				</div>
+		<AdminLayout title="Reviews & Ratings" subtitle="Moderate adoption experience reviews from adopters.">
+			{/* Tabs */}
+			<div className="flex gap-2 mb-6 overflow-x-auto pb-1">
+				{TABS.map(({ key, label }) => (
+					<button
+						key={key}
+						onClick={() => setTab(key)}
+						className={`px-5 h-11 rounded-full text-sm font-semibold whitespace-nowrap flex items-center gap-2 transition-colors ${
+							tab === key
+								? "bg-primary text-primary-foreground shadow-glow"
+								: "bg-card border border-border text-muted-foreground hover:text-foreground"
+						}`}
+					>
+						{label}
+						<span
+							className={`text-[11px] px-2 py-0.5 rounded-full ${
+								tab === key ? "bg-primary-foreground/20" : "bg-secondary"
+							}`}
+						>
+							{counts[key]}
+						</span>
+					</button>
+				))}
+				<button
+					onClick={fetchReviews}
+					className="ml-auto size-11 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors shrink-0"
+					title="Refresh"
+				>
+					<RefreshCw className="size-4" />
+				</button>
+			</div>
 
-				{/* Stats row */}
-				<div className="grid grid-cols-4 gap-4 mb-6">
-					{[
-						{ label: "Total Reviews", value: counts.all, color: "#7AADA1", bg: "#E8F4F1" },
-						{ label: "Published", value: counts.published, color: "#216959", bg: "#E8F4F1" },
-						{ label: "Flagged", value: counts.flagged, color: "#C4857A", bg: "#FAF0EE" },
-						{ label: "Removed", value: counts.removed, color: "#999", bg: "#F4F4F4" },
-					].map((s) => (
-						<div key={s.label} className="rounded-xl p-4" style={{ background: "#fff", border: "1px solid #F0F0F0" }}>
-							<p style={{ fontSize: "24px", fontWeight: 700, fontFamily: "'Space Grotesk', sans-serif", color: s.color }}>{s.value}</p>
-							<p style={{ fontSize: "12px", color: "#888", marginTop: "2px" }}>{s.label}</p>
-						</div>
-					))}
-				</div>
+			{/* Search */}
+			<div className="relative mb-5">
+				<Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+				<input
+					value={search}
+					onChange={(e) => setSearch(e.target.value)}
+					placeholder="Search by reviewer or comment..."
+					className="w-full pl-10 pr-4 h-11 rounded-2xl border border-input bg-card text-sm outline-none focus:ring-2 focus:ring-ring"
+				/>
+			</div>
 
-				<div className="flex gap-3 mb-5">
-					<div className="relative flex-1">
-						<Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4" style={{ color: "#ccc" }} />
-						<input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search reviews..."
-							className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm outline-none"
-							style={{ background: "#fff", border: "1px solid #E8E8E8", color: "#333" }} />
-					</div>
-					<div className="flex gap-2">
-						{(["all", "published", "flagged", "removed"] as const).map((tab) => (
-							<button key={tab} onClick={() => setStatusFilter(tab)}
-								className="px-4 py-2 rounded-full text-sm font-medium transition-colors capitalize"
-								style={{ background: statusFilter === tab ? "#216959" : "#fff", color: statusFilter === tab ? "#fff" : "#666", border: "1px solid", borderColor: statusFilter === tab ? "#216959" : "#E8E8E8" }}>
-								{tab}
-							</button>
-						))}
-					</div>
+			{/* States */}
+			{loading ? (
+				<div className="flex items-center justify-center py-20">
+					<Loader2 className="size-6 animate-spin text-muted-foreground" />
 				</div>
-
+			) : error ? (
+				<div className="text-center py-20">
+					<p className="text-destructive text-sm mb-3">{error}</p>
+					<button onClick={fetchReviews} className="text-sm font-semibold text-primary-deep hover:underline">
+						Try again
+					</button>
+				</div>
+			) : filtered.length === 0 ? (
+				<div className="text-center py-20">
+					<Star className="size-10 mx-auto mb-3 text-muted" />
+					<p className="text-muted-foreground text-sm">No reviews found.</p>
+				</div>
+			) : (
 				<div className="space-y-3">
 					{filtered.map((review) => {
-						const sc = statusConfig[review.status];
+						const cfg = statusConfig[review.status] || statusConfig.pending;
+						const isUpdating = updating === review.id;
+						const name = review.reviewerName || "Unknown";
+
 						return (
-							<div key={review.id} className="rounded-2xl p-5" style={{ background: "#fff", border: "1px solid #F0F0F0" }}>
-								<div className="flex items-start justify-between gap-4">
-									<div className="flex-1">
-										<div className="flex items-center gap-3 mb-2">
-											<div className="size-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: "linear-gradient(135deg, #7AADA1, #216959)" }}>
-												{review.reviewer.charAt(0)}
-											</div>
-											<div>
-												<p style={{ fontSize: "13px", fontWeight: 600, color: "#1C1C1C" }}>{review.reviewer}</p>
-												<p style={{ fontSize: "11px", color: "#aaa" }}>{review.reviewerEmail}</p>
-											</div>
-											<div className="ml-2">
-												<StarRating rating={review.rating} />
-											</div>
-											<span className="ml-auto px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
+							<article
+								key={review.id}
+								className="bg-card border border-border rounded-3xl p-5 shadow-card hover:shadow-soft transition-shadow"
+							>
+								<div className="flex items-start gap-4">
+									<Initials name={name} />
+									<div className="flex-1 min-w-0">
+										<div className="flex items-center gap-2 mb-1 flex-wrap">
+											<p className="text-sm font-semibold">{name}</p>
+											{review.reviewerEmail && (
+												<p className="text-xs text-muted-foreground">{review.reviewerEmail}</p>
+											)}
+											<span className={`ml-auto px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${cfg.badge}`}>
+												{cfg.label}
+											</span>
 										</div>
-										<p style={{ fontSize: "13px", color: "#555", lineHeight: 1.6 }}>{review.comment}</p>
-										<div className="flex items-center gap-3 mt-3" style={{ fontSize: "11px", color: "#aaa" }}>
-											<span>Pet: <strong style={{ color: "#666" }}>{review.petName}</strong></span>
-											<span>·</span>
-											<span>Shelter: <strong style={{ color: "#666" }}>{review.shelter}</strong></span>
-											<span>·</span>
-											<span>{review.date}</span>
+										<div className="flex items-center gap-2 mb-2">
+											<StarRating rating={review.rating} />
+											<span className="text-xs text-muted-foreground">{review.rating}/5</span>
+											<span className="text-xs text-muted-foreground">·</span>
+											<span className="text-xs text-muted-foreground">{formatDate(review.createdAt)}</span>
 										</div>
-									</div>
-									<div className="flex items-center gap-1.5 shrink-0">
-										<button onClick={() => setSelected(review)} className="size-8 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
-											style={{ border: "1px solid #E8E8E8" }}>
-											<Star className="size-3.5" style={{ color: "#888" }} />
-										</button>
-										{review.status === "published" && (
-											<button onClick={() => setStatus(review.id, "flagged")} className="size-8 rounded-lg flex items-center justify-center hover:bg-orange-50 transition-colors"
-												style={{ border: "1px solid #E8E8E8" }}>
-												<Flag className="size-3.5" style={{ color: "#C4857A" }} />
-											</button>
+										{review.comment && (
+											<p className="text-sm text-foreground/70 leading-relaxed mb-3">{review.comment}</p>
 										)}
-										{review.status === "flagged" && (
-											<button onClick={() => setStatus(review.id, "published")} className="size-8 rounded-lg flex items-center justify-center hover:bg-green-50 transition-colors"
-												style={{ border: "1px solid #E8E8E8" }}>
-												<CheckCircle2 className="size-3.5" style={{ color: "#216959" }} />
-											</button>
-										)}
+										{/* Actions */}
 										{review.status !== "removed" && (
-											<button onClick={() => remove(review.id)} className="size-8 rounded-lg flex items-center justify-center hover:bg-red-50 transition-colors"
-												style={{ border: "1px solid #E8E8E8" }}>
-												<Trash2 className="size-3.5" style={{ color: "#C4857A" }} />
-											</button>
+											<div className="flex items-center gap-2">
+												{review.status === "approved" && (
+													<button
+														onClick={() => handleAction(review, "flagged")}
+														disabled={isUpdating}
+														className="flex items-center gap-1.5 px-3 h-8 rounded-full bg-destructive/10 text-destructive text-xs font-semibold hover:bg-destructive hover:text-destructive-foreground transition-colors disabled:opacity-50"
+													>
+														{isUpdating ? <Loader2 className="size-3 animate-spin" /> : <Flag className="size-3" />}
+														Flag
+													</button>
+												)}
+												{(review.status === "flagged" || review.status === "pending") && (
+													<button
+														onClick={() => handleAction(review, "approved")}
+														disabled={isUpdating}
+														className="flex items-center gap-1.5 px-3 h-8 rounded-full bg-success/10 text-success text-xs font-semibold hover:bg-success hover:text-primary-foreground transition-colors disabled:opacity-50"
+													>
+														{isUpdating ? <Loader2 className="size-3 animate-spin" /> : <CheckCircle2 className="size-3" />}
+														Approve
+													</button>
+												)}
+												<button
+													onClick={() => handleAction(review, "removed")}
+													disabled={isUpdating}
+													className="flex items-center gap-1.5 px-3 h-8 rounded-full bg-muted text-muted-foreground text-xs font-semibold hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
+												>
+													{isUpdating ? <Loader2 className="size-3 animate-spin" /> : <Trash2 className="size-3" />}
+													Remove
+												</button>
+												<button
+													onClick={() => setSelected(review)}
+													className="ml-auto text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+												>
+													View details
+												</button>
+											</div>
 										)}
 									</div>
 								</div>
-							</div>
+							</article>
 						);
 					})}
-					{filtered.length === 0 && (
-						<div className="text-center py-16 rounded-2xl" style={{ background: "#fff", border: "1px solid #F0F0F0" }}>
-							<Star className="size-10 mx-auto mb-3" style={{ color: "#E0E0E0" }} />
-							<p style={{ color: "#aaa", fontSize: "14px" }}>No reviews found.</p>
-						</div>
-					)}
 				</div>
-			</div>
+			)}
 
 			{/* Detail Modal */}
 			{selected && (
-				<div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: "rgba(0,0,0,0.4)" }} onClick={() => setSelected(null)}>
-					<div className="w-[500px] rounded-2xl p-6" style={{ background: "#fff" }} onClick={(e) => e.stopPropagation()}>
+				<div
+					className="fixed inset-0 flex items-center justify-center z-50 bg-black/40 backdrop-blur-sm"
+					onClick={() => setSelected(null)}
+				>
+					<div
+						className="w-[500px] bg-card rounded-3xl p-6 shadow-xl border border-border"
+						onClick={(e) => e.stopPropagation()}
+					>
 						<div className="flex items-center justify-between mb-5">
-							<h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "18px", fontWeight: 700, color: "#1C1C1C" }}>Review Details</h3>
-							<button onClick={() => setSelected(null)} className="size-8 rounded-lg flex items-center justify-center hover:bg-gray-100">
-								<X className="size-4" style={{ color: "#888" }} />
+							<h3 className="font-display text-lg font-semibold">Review Details</h3>
+							<button
+								onClick={() => setSelected(null)}
+								className="size-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+							>
+								<X className="size-4" />
 							</button>
 						</div>
 
-						<div className="p-4 rounded-xl mb-4" style={{ background: "#F9F6F2" }}>
-							<div className="flex items-center gap-2 mb-3">
-								<div className="size-10 rounded-full flex items-center justify-center text-white font-bold" style={{ background: "linear-gradient(135deg, #7AADA1, #216959)" }}>
-									{selected.reviewer.charAt(0)}
+						<div className="p-4 rounded-2xl bg-secondary/50 mb-4">
+							<div className="flex items-center gap-3 mb-3">
+								<Initials name={selected.reviewerName || "?"} />
+								<div className="flex-1 min-w-0">
+									<p className="text-sm font-semibold">{selected.reviewerName || "Unknown"}</p>
+									{selected.reviewerEmail && (
+										<p className="text-xs text-muted-foreground">{selected.reviewerEmail}</p>
+									)}
 								</div>
-								<div>
-									<p style={{ fontWeight: 600, color: "#1C1C1C" }}>{selected.reviewer}</p>
-									<p style={{ fontSize: "12px", color: "#888" }}>{selected.reviewerEmail}</p>
-								</div>
-								<div className="ml-auto">
+								<div className="text-right">
 									<StarRating rating={selected.rating} />
-									<p style={{ fontSize: "10px", color: "#aaa", textAlign: "right", marginTop: "2px" }}>{selected.rating}/5</p>
+									<p className="text-[10px] text-muted-foreground mt-0.5">{selected.rating}/5</p>
 								</div>
 							</div>
-							<p style={{ fontSize: "13px", color: "#555", lineHeight: 1.7 }}>{selected.comment}</p>
+							{selected.comment && (
+								<p className="text-sm text-foreground/70 leading-relaxed">{selected.comment}</p>
+							)}
 						</div>
 
-						<div className="grid grid-cols-2 gap-3 mb-5">
-							<div className="p-3 rounded-xl" style={{ background: "#F9F6F2" }}>
-								<p style={{ fontSize: "10px", fontWeight: 600, color: "#aaa", textTransform: "uppercase" }}>Pet</p>
-								<p style={{ fontSize: "13px", color: "#1C1C1C", fontWeight: 500, marginTop: "2px" }}>{selected.petName}</p>
+						<div className="grid grid-cols-2 gap-3 mb-5 text-xs">
+							<div className="p-3 rounded-xl bg-secondary/50">
+								<p className="text-muted-foreground uppercase tracking-widest text-[10px] mb-1">Shelter ID</p>
+								<p className="font-mono font-medium">{selected.shelterId?.slice(0, 12) || "—"}</p>
 							</div>
-							<div className="p-3 rounded-xl" style={{ background: "#F9F6F2" }}>
-								<p style={{ fontSize: "10px", fontWeight: 600, color: "#aaa", textTransform: "uppercase" }}>Shelter</p>
-								<p style={{ fontSize: "13px", color: "#1C1C1C", fontWeight: 500, marginTop: "2px" }}>{selected.shelter}</p>
+							<div className="p-3 rounded-xl bg-secondary/50">
+								<p className="text-muted-foreground uppercase tracking-widest text-[10px] mb-1">Submitted</p>
+								<p className="font-medium">{formatDate(selected.createdAt)}</p>
 							</div>
 						</div>
 
 						{selected.status !== "removed" && (
 							<div className="flex gap-3">
-								{selected.status === "published" ? (
-									<button onClick={() => setStatus(selected.id, "flagged")} className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium"
-										style={{ background: "#FAF0EE", color: "#C4857A" }}>
-										<Flag className="size-4" /> Flag Review
+								{selected.status === "approved" ? (
+									<button
+										onClick={() => handleAction(selected, "flagged")}
+										disabled={updating === selected.id}
+										className="flex-1 h-10 rounded-full bg-destructive/10 text-destructive font-semibold text-sm flex items-center justify-center gap-2 hover:bg-destructive hover:text-destructive-foreground transition-colors disabled:opacity-50"
+									>
+										<Flag className="size-4" /> Flag
 									</button>
 								) : (
-									<button onClick={() => setStatus(selected.id, "published")} className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium"
-										style={{ background: "#E8F4F1", color: "#216959" }}>
+									<button
+										onClick={() => handleAction(selected, "approved")}
+										disabled={updating === selected.id}
+										className="flex-1 h-10 rounded-full bg-success/10 text-success font-semibold text-sm flex items-center justify-center gap-2 hover:bg-success hover:text-primary-foreground transition-colors disabled:opacity-50"
+									>
 										<CheckCircle2 className="size-4" /> Approve
 									</button>
 								)}
-								<button onClick={() => remove(selected.id)} className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium"
-									style={{ background: "#F4F4F4", color: "#888" }}>
+								<button
+									onClick={() => handleAction(selected, "removed")}
+									disabled={updating === selected.id}
+									className="flex-1 h-10 rounded-full bg-muted text-muted-foreground font-semibold text-sm flex items-center justify-center gap-2 hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
+								>
 									<Trash2 className="size-4" /> Remove
 								</button>
 							</div>

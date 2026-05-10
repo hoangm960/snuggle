@@ -106,9 +106,11 @@ export interface Review {
 	id?: string;
 	shelterId?: string;
 	reviewerId: string;
+	reviewerName?: string;
+	reviewerEmail?: string;
 	rating: number;
 	comment?: string;
-	status: "pending" | "approved" | "removed";
+	status: "pending" | "approved" | "flagged" | "removed";
 	createdAt: Date;
 }
 

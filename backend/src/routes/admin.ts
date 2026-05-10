@@ -1,5 +1,5 @@
 import { Router, Response } from "express";
-import { AuthRequest } from "../types";
+import { AuthRequest, Review } from "../types";
 import {
 	getAllUsers,
 	getUserById,
@@ -20,7 +20,8 @@ import { requireAdmin } from "../middleware/admin";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { AppError } from "../middleware/errorHandler";
 import { validate } from "../middleware/validate";
-import { inviteUserSchema, updateUserSchema } from "../utils/validators/otherValidator";
+import { inviteUserSchema, updateUserSchema, updateReviewStatusSchema } from "../utils/validators/otherValidator";
+import { db } from "../config/firebase";
 
 const router = Router();
 
@@ -199,6 +200,103 @@ router.post(
 			success: true,
 			message: "Chat claimed successfully",
 		});
+	})
+);
+
+router.get(
+	"/reviews",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		const { status } = req.query;
+
+		let query: FirebaseFirestore.Query = db.collectionGroup("reviews");
+
+		if (status) {
+			query = query.where("status", "==", status);
+		}
+
+		const snapshot = await query.orderBy("createdAt", "desc").get();
+
+		const userIds = new Set<string>();
+		snapshot.forEach((doc) => {
+			const data = doc.data();
+			if (data.reviewerId) userIds.add(data.reviewerId);
+		});
+
+		const userMap: Record<string, { displayName: string; email: string }> = {};
+		await Promise.all(
+			Array.from(userIds).map(async (uid) => {
+				try {
+					const userDoc = await db.collection("users").doc(uid).get();
+					if (userDoc.exists) {
+						const u = userDoc.data()!;
+						userMap[uid] = { displayName: u.displayName || "", email: u.email || "" };
+					}
+				} catch {
+					// skip
+				}
+			})
+		);
+
+		const reviews: Review[] = [];
+		snapshot.forEach((doc) => {
+			const data = doc.data();
+			const shelterId = doc.ref.parent.parent?.id;
+			const reviewer = userMap[data.reviewerId] || {};
+			reviews.push({
+				id: doc.id,
+				shelterId,
+				reviewerName: reviewer.displayName,
+				reviewerEmail: reviewer.email,
+				...data,
+			} as Review);
+		});
+
+		res.status(200).json({ success: true, data: reviews });
+	})
+);
+
+router.put(
+	"/reviews/:shelterId/:id/status",
+	validate(updateReviewStatusSchema),
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		const { shelterId, id } = req.params;
+		const { status } = req.body;
+
+		const reviewRef = db.collection("shelters").doc(shelterId).collection("reviews").doc(id);
+		const doc = await reviewRef.get();
+
+		if (!doc.exists) {
+			throw new AppError("Review not found", 404);
+		}
+
+		await reviewRef.update({ status });
+
+		if (status === "approved") {
+			const snapshot = await db
+				.collection("shelters")
+				.doc(shelterId)
+				.collection("reviews")
+				.where("status", "==", "approved")
+				.get();
+
+			let totalRating = 0;
+			let count = 0;
+			snapshot.forEach((d) => {
+				totalRating += d.data().rating;
+				count++;
+			});
+
+			const trustScore = count > 0 ? totalRating / count : 0;
+			await db.collection("shelters").doc(shelterId).update({
+				trustScore: Math.round(trustScore * 10) / 10,
+				totalReviews: count,
+			});
+		}
+
+		const updated = await reviewRef.get();
+		const review: Review = { id: updated.id, shelterId, ...updated.data() } as Review;
+
+		res.status(200).json({ success: true, data: review, message: `Review ${status} successfully` });
 	})
 );
 

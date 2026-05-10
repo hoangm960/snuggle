@@ -54,7 +54,7 @@ export const createReviewSchema = z.object({
 });
 
 export const updateReviewStatusSchema = z.object({
-	status: z.enum(["pending", "approved", "rejected"]).optional(),
+	status: z.enum(["approved", "flagged", "removed"]),
 });
 
 export const createAdopterProfileSchema = z.object({
