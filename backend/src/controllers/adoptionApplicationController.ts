@@ -61,7 +61,17 @@ export const createApplication = async (req: AuthRequest, res: Response): Promis
 		throw new AppError("Unauthorized", 401);
 	}
 
-	const { petId, message } = req.body;
+	const {
+		petId, message,
+		applicantFullName, applicantAddress, applicantApartment,
+		applicantCity, applicantState, applicantZipCode,
+		applicantPhone, applicantEmail, applicantDateOfBirth, applicantAge,
+		applicantIdLicense, spousePartnerName, employmentStatus,
+		housingType, landlordAllowsPets, landlordAllowsHowMany, landlordContact,
+		homeType, otherHomeType, lengthAtAddress, planningToMove,
+		householdAgreement, householdAllergies,
+		reasonForAdopting, petWillStay,
+	} = req.body;
 
 	const petDoc = await petsCollection.doc(petId).get();
 	if (!petDoc.exists) {
@@ -83,6 +93,14 @@ export const createApplication = async (req: AuthRequest, res: Response): Promis
 		status: "pending",
 		message,
 		appliedAt: new Date(),
+		applicantFullName, applicantAddress, applicantApartment,
+		applicantCity, applicantState, applicantZipCode,
+		applicantPhone, applicantEmail, applicantDateOfBirth, applicantAge,
+		applicantIdLicense, spousePartnerName, employmentStatus,
+		housingType, landlordAllowsPets, landlordAllowsHowMany, landlordContact,
+		homeType, otherHomeType, lengthAtAddress, planningToMove,
+		householdAgreement, householdAllergies,
+		reasonForAdopting, petWillStay,
 	};
 
 	const docRef = await applicationsCollection.add(applicationData);

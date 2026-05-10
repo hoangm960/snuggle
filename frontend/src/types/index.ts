@@ -81,6 +81,34 @@ export interface AdoptionApplication {
 	reviewedBy?: string;
 	appliedAt: Date | string;
 	reviewedAt?: Date | string;
+	// Applicant information
+	applicantFullName?: string;
+	applicantAddress?: string;
+	applicantApartment?: string;
+	applicantCity?: string;
+	applicantState?: string;
+	applicantZipCode?: string;
+	applicantPhone?: string;
+	applicantEmail?: string;
+	applicantDateOfBirth?: string;
+	applicantAge?: string;
+	applicantIdLicense?: string;
+	spousePartnerName?: string;
+	employmentStatus?: "full-time" | "part-time" | "unemployed" | "student" | "retired";
+	// Living arrangement
+	housingType?: "rent" | "own" | "parents";
+	landlordAllowsPets?: "yes" | "no" | "not-sure";
+	landlordAllowsHowMany?: string;
+	landlordContact?: string;
+	homeType?: "house" | "condo" | "mobile-home" | "apartment" | "other";
+	otherHomeType?: string;
+	lengthAtAddress?: string;
+	planningToMove?: string;
+	householdAgreement?: string;
+	householdAllergies?: boolean;
+	// About the adoption
+	reasonForAdopting?: string;
+	petWillStay?: string;
 }
 
 export interface KycVerification {
