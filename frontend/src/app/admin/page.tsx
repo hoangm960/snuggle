@@ -27,7 +27,10 @@ interface RecentRequest {
 	status: "pending" | "approved" | "rejected" | "completed";
 }
 
-const statusConfig: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
+const statusConfig: Record<
+	string,
+	{ label: string; color: string; bg: string; icon: React.ElementType }
+> = {
 	pending: { label: "Pending", color: "#C4857A", bg: "#FAF0EE", icon: Clock },
 	approved: { label: "Approved", color: "#216959", bg: "#E8F4F1", icon: CheckCircle2 },
 	rejected: { label: "Rejected", color: "#999", bg: "#F4F4F4", icon: XCircle },
@@ -134,31 +137,82 @@ export default function AdminDashboard() {
 		<AdminLayout>
 			<div className="p-8">
 				<div className="mb-8">
-					<h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "28px", fontWeight: 700, color: "#1C1C1C" }}>Dashboard</h1>
-					<p style={{ color: "#888", fontSize: "14px", marginTop: "4px" }}>Welcome back! Here's what's happening at Snuggle.</p>
+					<h1
+						style={{
+							fontFamily: "'Space Grotesk', sans-serif",
+							fontSize: "28px",
+							fontWeight: 700,
+							color: "#1C1C1C",
+						}}
+					>
+						Dashboard
+					</h1>
+					<p style={{ color: "#888", fontSize: "14px", marginTop: "4px" }}>
+						Welcome back! Here's what's happening at Snuggle.
+					</p>
 				</div>
 
 				<div className="grid grid-cols-4 gap-5 mb-8">
 					{statCards.map((s) => (
 						<div key={s.label} className="rounded-2xl p-5" style={{ background: "#fff", border: "1px solid #F0F0F0" }}>
 							<div className="flex items-start justify-between mb-4">
-								<div className="size-10 rounded-xl flex items-center justify-center" style={{ background: s.bg }}>
+								<div
+									className="size-10 rounded-xl flex items-center justify-center"
+									style={{ background: s.bg }}
+								>
 									<s.icon className="size-5" style={{ color: s.color }} />
 								</div>
 								<ArrowUpRight className="size-4" style={{ color: "#ccc" }} />
 							</div>
-							<p style={{ fontSize: "26px", fontWeight: 700, fontFamily: "'Space Grotesk', sans-serif", color: "#1C1C1C" }}>{s.value}</p>
-							<p style={{ fontSize: "13px", color: "#888", marginTop: "2px" }}>{s.label}</p>
-							<p style={{ fontSize: "11px", color: s.color, marginTop: "6px", fontWeight: 500 }}>{s.change}</p>
+							<p
+								style={{
+									fontSize: "26px",
+									fontWeight: 700,
+									fontFamily: "'Space Grotesk', sans-serif",
+									color: "#1C1C1C",
+								}}
+							>
+								{s.value}
+							</p>
+							<p style={{ fontSize: "13px", color: "#888", marginTop: "2px" }}>
+								{s.label}
+							</p>
+							<p
+								style={{
+									fontSize: "11px",
+									color: s.color,
+									marginTop: "6px",
+									fontWeight: 500,
+								}}
+							>
+								{s.change}
+							</p>
 						</div>
 					))}
 				</div>
 
 				<div className="grid grid-cols-3 gap-5">
-					<div className="col-span-2 rounded-2xl p-6" style={{ background: "#fff", border: "1px solid #F0F0F0" }}>
+					<div
+						className="col-span-2 rounded-2xl p-6"
+						style={{ background: "#fff", border: "1px solid #F0F0F0" }}
+					>
 						<div className="flex items-center justify-between mb-5">
-							<h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "16px", fontWeight: 600, color: "#1C1C1C" }}>Recent Adoption Requests</h2>
-							<a href="/admin/requests" style={{ fontSize: "12px", color: "#7AADA1", fontWeight: 500 }}>View all</a>
+							<h2
+								style={{
+									fontFamily: "'Space Grotesk', sans-serif",
+									fontSize: "16px",
+									fontWeight: 600,
+									color: "#1C1C1C",
+								}}
+							>
+								Recent Adoption Requests
+							</h2>
+							<a
+								href="/admin/requests"
+								style={{ fontSize: "12px", color: "#7AADA1", fontWeight: 500 }}
+							>
+								View all
+							</a>
 						</div>
 						{recentRequests.length === 0 ? (
 							<p style={{ color: "#aaa", fontSize: "13px", textAlign: "center", padding: "20px 0" }}>No recent requests</p>
@@ -201,30 +255,69 @@ export default function AdminDashboard() {
 						)}
 					</div>
 
-					<div className="rounded-2xl p-6" style={{ background: "#fff", border: "1px solid #F0F0F0" }}>
-						<h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "16px", fontWeight: 600, color: "#1C1C1C", marginBottom: "20px" }}>Quick Actions</h2>
+					<div
+						className="rounded-2xl p-6"
+						style={{ background: "#fff", border: "1px solid #F0F0F0" }}
+					>
+						<h2
+							style={{
+								fontFamily: "'Space Grotesk', sans-serif",
+								fontSize: "16px",
+								fontWeight: 600,
+								color: "#1C1C1C",
+								marginBottom: "20px",
+							}}
+						>
+							Quick Actions
+						</h2>
 						<div className="space-y-3">
 							{[
 								{ label: "Review eKYC Submissions", href: "/admin/kyc", icon: ShieldCheck, count: stats.pendingRequests },
 								{ label: "Pending Requests", href: "/admin/requests", icon: ClipboardList, count: stats.pendingRequests },
 								{ label: "Total Pets", href: "/admin/pets", icon: PawPrint, count: stats.totalPets },
 							].map((item) => (
-								<a key={item.href} href={item.href}
+								<a
+									key={item.href}
+									href={item.href}
 									className="flex items-center gap-3 p-3 rounded-xl transition-colors hover:bg-gray-50"
-									style={{ border: "1px solid #F0F0F0" }}>
-									<div className="size-9 rounded-lg flex items-center justify-center" style={{ background: "#E8F4F1" }}>
-										<item.icon className="size-4" style={{ color: "#7AADA1" }} />
+									style={{ border: "1px solid #F0F0F0" }}
+								>
+									<div
+										className="size-9 rounded-lg flex items-center justify-center"
+										style={{ background: "#E8F4F1" }}
+									>
+										<item.icon
+											className="size-4"
+											style={{ color: "#7AADA1" }}
+										/>
 									</div>
-									<span className="flex-1" style={{ fontSize: "13px", color: "#444" }}>{item.label}</span>
-									<span className="text-xs font-semibold px-2 py-0.5 rounded-full text-white" style={{ background: "#C4857A" }}>{item.count}</span>
+									<span
+										className="flex-1"
+										style={{ fontSize: "13px", color: "#444" }}
+									>
+										{item.label}
+									</span>
+									<span
+										className="text-xs font-semibold px-2 py-0.5 rounded-full text-white"
+										style={{ background: "#C4857A" }}
+									>
+										{item.count}
+									</span>
 								</a>
 							))}
 						</div>
 
-						<div className="mt-6 rounded-xl p-4" style={{ background: "linear-gradient(135deg, #E8F4F1, #D0EBE5)" }}>
+						<div
+							className="mt-6 rounded-xl p-4"
+							style={{ background: "linear-gradient(135deg, #E8F4F1, #D0EBE5)" }}
+						>
 							<div className="flex items-center gap-2 mb-1">
 								<TrendingUp className="size-4" style={{ color: "#216959" }} />
-								<span style={{ fontSize: "12px", fontWeight: 600, color: "#216959" }}>Adoption Rate</span>
+								<span
+									style={{ fontSize: "12px", fontWeight: 600, color: "#216959" }}
+								>
+									Adoption Rate
+								</span>
 							</div>
 							<p style={{ fontSize: "28px", fontWeight: 700, fontFamily: "'Space Grotesk', sans-serif", color: "#216959" }}>{stats.adoptionRate}%</p>
 							<p style={{ fontSize: "11px", color: "#7AADA1", marginTop: "2px" }}>Based on total applications</p>
