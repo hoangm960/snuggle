@@ -360,12 +360,14 @@ export const updateUserProfile = async (req: AuthRequest, res: Response): Promis
 		throw new AppError("Unauthorized", 401);
 	}
 
-	const { displayName } = req.body;
+	const { displayName, phone, bio } = req.body;
 	const updateData: Partial<User> = {
 		updatedAt: new Date(),
 	};
 
-	if (displayName) updateData.displayName = displayName;
+	if (displayName !== undefined) updateData.displayName = displayName;
+	if (phone !== undefined) updateData.phone = phone;
+	if (bio !== undefined) updateData.bio = bio;
 
 	await usersCollection.doc(req.user.uid).update(updateData);
 

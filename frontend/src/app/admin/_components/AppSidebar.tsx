@@ -8,7 +8,6 @@ import {
 	PawPrint,
 	ClipboardList,
 	Users,
-	HeartHandshake,
 	Settings,
 	LogOut,
 	Sparkles,
@@ -29,7 +28,6 @@ const navMain = [
 	{ href: "/admin/contracts", label: "Contracts", icon: FileSignature },
 	{ href: "/admin/reviews", label: "Reviews", icon: Star },
 	{ href: "/admin/chats", label: "Support Chats", icon: MessageCircle },
-	{ href: "/admin/donations", label: "Donations", icon: HeartHandshake },
 ];
 
 const navSecondary = [{ href: "/admin/settings", label: "Settings", icon: Settings }];

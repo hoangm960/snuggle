@@ -30,6 +30,8 @@ export interface User {
 	authProvider: "email" | "google" | "apple" | "facebook";
 	emailVerified: boolean;
 	isKycVerified: boolean;
+	phone?: string;
+	bio?: string;
 	shelterId?: string;
 	fcmTokens?: string[];
 	loginCount?: number;

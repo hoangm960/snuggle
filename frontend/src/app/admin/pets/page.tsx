@@ -1,15 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { AdminLayout } from "../_components/AdminLayout";
-import { Plus, Upload, Search, MoreVertical, X } from "lucide-react";
+import { Plus, Upload, Search, MoreVertical, X, FileEdit, MapPin } from "lucide-react";
 import { usePets } from "@/hooks/usePets";
 import type { Pet } from "@/types";
 
 const statusColor: Record<Pet["status"], string> = {
-	available: "bg-success/15 text-success",
-	pending: "bg-warning/15 text-warning",
-	adopted: "bg-muted text-muted-foreground",
+	available: "bg-white text-success",
+	pending: "bg-white text-warning",
+	adopted: "bg-white text-muted-foreground",
 };
 
 function TogglePill({
@@ -48,10 +49,12 @@ const defaultForm = {
 	species: "",
 	isVaccinated: false,
 	isNeutered: false,
+	location: "",
 };
 
 export default function PetsPage() {
 	const { pets, loading, createPet, updatePet, deletePet, uploadThumbnail } = usePets();
+	const router = useRouter();
 	const [showUpload, setShowUpload] = useState(false);
 	const [search, setSearch] = useState("");
 	const [status, setStatus] = useState<string>("All");
@@ -88,7 +91,6 @@ export default function PetsPage() {
 				name: form.name,
 				species: form.species,
 				breed: form.breed,
-				//age: ageInYears,
 				ageMonths: form.ageMonths,
 				gender: form.gender,
 				description: form.description,
@@ -96,6 +98,7 @@ export default function PetsPage() {
 				status: form.status,
 				isVaccinated: form.isVaccinated,
 				isNeutered: form.isNeutered,
+				location: form.location,
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			} as Omit<Pet, "id">;
@@ -138,6 +141,7 @@ export default function PetsPage() {
 			status: pet.status,
 			isVaccinated: pet.isVaccinated || false,
 			isNeutered: pet.isNeutered || false,
+			location: pet.location || "",
 		});
 
 		setEditId(pet.id!);
@@ -241,8 +245,9 @@ export default function PetsPage() {
 									{pet.description}
 								</p>
 								<div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
-									<span className="text-[11px] text-muted-foreground">
-										Arrived {pet.arrivalDate}
+									<span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+										<MapPin className="size-3 shrink-0" />
+										{pet.location || "No location"}
 									</span>
 									<button
 										onClick={() => handleEdit(pet)}
@@ -392,6 +397,15 @@ export default function PetsPage() {
 									<option value="adopted">Adopted</option>
 								</select>
 							</div>
+							<div className="relative">
+								<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+								<input
+									value={form.location}
+									onChange={(e) => setForm({ ...form, location: e.target.value })}
+									placeholder="Location (e.g. Shelter A, Hanoi)"
+									className="w-full h-11 rounded-2xl border border-input bg-card pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+								/>
+							</div>
 							<textarea
 								value={form.description}
 								onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -415,6 +429,18 @@ export default function PetsPage() {
 									}
 								/>
 							</div>
+							{editId && (
+								<button
+									onClick={() => {
+										handleClose();
+										router.push(`/admin/pets/${editId}`);
+									}}
+									className="w-full h-11 rounded-full border-2 border-primary text-primary-deep font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary-soft transition-colors"
+								>
+									<FileEdit className="size-4" />
+									Edit Detail Page
+								</button>
+							)}
 							<div className="flex gap-3 pt-2">
 								<button
 									onClick={handleClose}

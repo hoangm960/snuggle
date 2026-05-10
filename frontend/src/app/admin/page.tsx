@@ -5,7 +5,6 @@ import {
 	PawPrint,
 	ClipboardList,
 	Users,
-	HeartHandshake,
 	TrendingUp,
 	ArrowUpRight,
 	Clock,
@@ -38,14 +37,6 @@ const stats = [
 		icon: Users,
 		color: "#216959",
 		bg: "#E8F4F1",
-	},
-	{
-		label: "Total Donations",
-		value: "$8,450",
-		change: "+$320 this week",
-		icon: HeartHandshake,
-		color: "#9A7768",
-		bg: "#F5EFEB",
 	},
 ];
 
@@ -110,7 +101,7 @@ export default function AdminDashboard() {
 					</p>
 				</div>
 
-				<div className="grid grid-cols-4 gap-5 mb-8">
+				<div className="grid grid-cols-3 gap-5 mb-8">
 					{stats.map((s) => (
 						<div
 							key={s.label}

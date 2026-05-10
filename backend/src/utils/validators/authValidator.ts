@@ -30,4 +30,6 @@ export const verifyEmailSchema = z.object({
 export const updateUserProfileSchema = z.object({
 	displayName: z.string().max(100).optional(),
 	photoURL: z.string().url().optional(),
+	phone: z.string().max(30).optional(),
+	bio: z.string().max(500).optional(),
 });

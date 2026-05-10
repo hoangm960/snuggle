@@ -19,7 +19,7 @@ import {
 } from "../controllers/healthRecordController";
 import { AuthRequest, ApiResponse } from "../types";
 import { AppError } from "../middleware/errorHandler";
-import { uploadThumbnail } from "../services/thumbnailService";
+import { uploadThumbnail, uploadPetPhoto } from "../services/thumbnailService";
 
 const router = Router();
 
@@ -45,6 +45,28 @@ router.post(
 		const response: ApiResponse<{ thumbnailUrl: string }> = {
 			success: true,
 			data: { thumbnailUrl },
+		};
+
+		res.status(200).json(response);
+	})
+);
+
+router.post(
+	"/:id/photos",
+	authenticate,
+	upload.single("photo"),
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		const { id } = req.params;
+
+		if (!req.file) {
+			throw new AppError("No file uploaded", 400);
+		}
+
+		const photoUrl = await uploadPetPhoto(id, req.file);
+
+		const response: ApiResponse<{ photoUrl: string }> = {
+			success: true,
+			data: { photoUrl },
 		};
 
 		res.status(200).json(response);

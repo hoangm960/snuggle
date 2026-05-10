@@ -21,6 +21,7 @@ export interface Pet {
 	isVaccinated?: boolean;
 	isNeutered?: boolean;
 	arrivalDate?: string;
+	location?: string;
 	createdAt: Date;
 	updatedAt: Date;
 }
@@ -29,7 +30,10 @@ export interface User {
 	id?: string;
 	email: string;
 	displayName: string;
-	role: "adopter" | "shelter" | "admin";
+	role: "adopter" | "shelter" | "admin" | "visitor";
+	photoURL?: string;
+	phone?: string;
+	bio?: string;
 	createdAt: Date;
 	updatedAt: Date;
 }
