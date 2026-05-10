@@ -11,10 +11,15 @@ import {
 	deleteUserAccount,
 	resendVerification,
 	verifyEmail,
+	changePassword,
+	updateNotificationPrefs,
+	updateAppearance,
+	uploadAvatar,
 } from "../controllers/authController";
 import { authenticate } from "../middleware/auth";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { validate } from "../middleware/validate";
+import { upload } from "../middleware/upload";
 import {
 	registerSchema,
 	loginSchema,
@@ -23,6 +28,9 @@ import {
 	resendVerificationSchema,
 	verifyEmailSchema,
 	updateUserProfileSchema,
+	changePasswordSchema,
+	updateNotificationPrefsSchema,
+	updateAppearanceSchema,
 } from "../utils/validators/authValidator";
 
 const router = Router();
@@ -45,6 +53,30 @@ router.put(
 	authenticate,
 	validate(updateUserProfileSchema),
 	asyncHandler(updateUserProfile)
+);
+router.put(
+	"/password",
+	authenticate,
+	validate(changePasswordSchema),
+	asyncHandler(changePassword)
+);
+router.put(
+	"/notifications",
+	authenticate,
+	validate(updateNotificationPrefsSchema),
+	asyncHandler(updateNotificationPrefs)
+);
+router.put(
+	"/appearance",
+	authenticate,
+	validate(updateAppearanceSchema),
+	asyncHandler(updateAppearance)
+);
+router.post(
+	"/avatar",
+	authenticate,
+	upload.single("avatar"),
+	asyncHandler(uploadAvatar)
 );
 router.delete("/account", authenticate, asyncHandler(deleteUserAccount));
 
