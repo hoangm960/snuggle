@@ -16,6 +16,11 @@ import {
 	getPendingChats,
 	acceptChat,
 } from "../controllers/chatController";
+import {
+	getAllHealthRecords,
+	createHealthRecord,
+	deleteHealthRecord,
+} from "../controllers/adminHealthRecordController";
 import { authenticate } from "../middleware/auth";
 import { requireAdmin } from "../middleware/admin";
 import { asyncHandler } from "../middleware/asyncHandler";
@@ -214,5 +219,11 @@ router.post(
 		});
 	})
 );
+
+router.get("/health-records", asyncHandler(getAllHealthRecords));
+
+router.post("/health-records", asyncHandler(createHealthRecord));
+
+router.delete("/health-records/:petId/:id", asyncHandler(deleteHealthRecord));
 
 export default router;

@@ -39,13 +39,12 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
 	const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 	const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-	const [petsSnapshot, pendingSnapshot, usersSnapshot, allApplications] =
-		await Promise.all([
-			petsCollection.get(),
-			applicationsCollection.where("status", "==", "pending").get(),
-			usersCollection.where("accountStatus", "==", "active").get(),
-			applicationsCollection.get(),
-		]);
+	const [petsSnapshot, pendingSnapshot, usersSnapshot, allApplications] = await Promise.all([
+		petsCollection.get(),
+		applicationsCollection.where("status", "==", "pending").get(),
+		usersCollection.where("accountStatus", "==", "active").get(),
+		applicationsCollection.get(),
+	]);
 
 	const petsThisWeek = petsSnapshot.docs.filter((doc) => {
 		const created = doc.data().createdAt;
@@ -67,8 +66,7 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
 	const completedApps = allApplications.docs.filter(
 		(doc) => doc.data().status === "completed"
 	).length;
-	const adoptionRate =
-		totalApps > 0 ? Math.round((completedApps / totalApps) * 100) : 0;
+	const adoptionRate = totalApps > 0 ? Math.round((completedApps / totalApps) * 100) : 0;
 
 	return {
 		totalPets: petsSnapshot.size,
@@ -83,13 +81,8 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
 	};
 };
 
-export const getRecentApplications = async (
-	limit: number = 5
-): Promise<RecentRequest[]> => {
-	const snapshot = await applicationsCollection
-		.orderBy("appliedAt", "desc")
-		.limit(limit)
-		.get();
+export const getRecentApplications = async (limit: number = 5): Promise<RecentRequest[]> => {
+	const snapshot = await applicationsCollection.orderBy("appliedAt", "desc").limit(limit).get();
 
 	const results: RecentRequest[] = [];
 
@@ -104,10 +97,7 @@ export const getRecentApplications = async (
 			id: doc.id,
 			petName: data.name || petDoc?.data()?.name || "Unknown",
 			petThumbnail: petDoc?.data()?.thumbnail || petDoc?.data()?.photoURLs?.[0],
-			adopterName:
-				data.adopterName ||
-				adopterDoc?.data()?.displayName ||
-				"Unknown",
+			adopterName: data.adopterName || adopterDoc?.data()?.displayName || "Unknown",
 			adopterPhoto:
 				adopterDoc?.data()?.photoURL ||
 				`https://ui-avatars.com/api/?name=${encodeURIComponent(data.adopterName || "U")}&background=random`,

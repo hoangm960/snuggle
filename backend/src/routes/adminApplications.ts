@@ -48,12 +48,7 @@ router.put(
 			throw new AppError("Invalid status", 400);
 		}
 
-		const updated = await updateAdminApplicationStatus(
-			id,
-			status,
-			adminId,
-			adminNote
-		);
+		const updated = await updateAdminApplicationStatus(id, status, adminId, adminNote);
 
 		res.status(200).json({
 			success: true,

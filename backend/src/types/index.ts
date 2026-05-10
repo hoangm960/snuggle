@@ -156,7 +156,8 @@ export interface HealthRecord {
 	id?: string;
 	petId?: string;
 	type: "vaccine" | "checkup" | "treatment";
-	description: string;
+	title?: string;
+	description?: string;
 	vetName?: string;
 	batchNumber?: string;
 	documentURL?: string;

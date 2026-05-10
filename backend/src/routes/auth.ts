@@ -54,12 +54,7 @@ router.put(
 	validate(updateUserProfileSchema),
 	asyncHandler(updateUserProfile)
 );
-router.put(
-	"/password",
-	authenticate,
-	validate(changePasswordSchema),
-	asyncHandler(changePassword)
-);
+router.put("/password", authenticate, validate(changePasswordSchema), asyncHandler(changePassword));
 router.put(
 	"/notifications",
 	authenticate,
@@ -72,12 +67,7 @@ router.put(
 	validate(updateAppearanceSchema),
 	asyncHandler(updateAppearance)
 );
-router.post(
-	"/avatar",
-	authenticate,
-	upload.single("avatar"),
-	asyncHandler(uploadAvatar)
-);
+router.post("/avatar", authenticate, upload.single("avatar"), asyncHandler(uploadAvatar));
 router.delete("/account", authenticate, asyncHandler(deleteUserAccount));
 
 export default router;

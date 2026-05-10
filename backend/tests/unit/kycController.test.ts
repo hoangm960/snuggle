@@ -143,9 +143,7 @@ describe("KYCController", () => {
 			const mockDocRef = mockCollection.doc("nonexistent");
 			(mockDocRef.get as jest.Mock).mockResolvedValue(mockDoc);
 
-			await expect(getKYCById("nonexistent")).rejects.toThrow(
-				"KYC verification not found"
-			);
+			await expect(getKYCById("nonexistent")).rejects.toThrow("KYC verification not found");
 		});
 	});
 

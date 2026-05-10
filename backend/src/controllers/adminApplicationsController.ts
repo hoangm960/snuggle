@@ -75,8 +75,7 @@ export const getAdminApplications = async (
 			id: doc.id,
 			petId: data.petId || "",
 			petName: data.name || petData?.name || "Unknown",
-			petThumbnail:
-				petData?.thumbnail || petData?.photoURLs?.[0] || undefined,
+			petThumbnail: petData?.thumbnail || petData?.photoURLs?.[0] || undefined,
 			petSpecies: petData?.species || "",
 			adopterId: data.adopterId || "",
 			adopterName: data.adopterName || userData?.displayName || "Unknown",
