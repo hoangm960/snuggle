@@ -43,4 +43,46 @@ api.interceptors.response.use(
 	}
 );
 
+export interface HealthRecordWithPet {
+	id: string;
+	petId: string;
+	petName: string;
+	petSpecies: string;
+	type: "vaccine" | "checkup" | "treatment";
+	title?: string;
+	description?: string;
+	vetName?: string;
+	recordDate: Date;
+	createdAt: Date;
+}
+
+export interface CreateHealthRecordDto {
+	petId: string;
+	type: "vaccine" | "checkup" | "treatment";
+	title?: string;
+	description?: string;
+	vetName?: string;
+	recordDate?: string;
+}
+
+export const healthRecordsApi = {
+	getAll: (type?: string) =>
+		api.get<{ success: boolean; data: HealthRecordWithPet[] }>("/admin/health-records", {
+			params: type && type !== "all" ? { type } : {},
+		}),
+
+	create: (data: CreateHealthRecordDto) =>
+		api.post<{ success: boolean; data: HealthRecordWithPet }>("/admin/health-records", data),
+
+	delete: (petId: string, recordId: string) =>
+		api.delete<{ success: boolean }>(`/admin/health-records/${petId}/${recordId}`),
+};
+
+export const petsApi = {
+	getAll: (limit = 100) =>
+		api.get<{ success: boolean; data: any[] }>("/pets", {
+			params: { limit },
+		}),
+};
+
 export default api;
