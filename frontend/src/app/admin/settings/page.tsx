@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { AdminLayout } from "../_components/AdminLayout";
-import { User, Bell, Shield, Palette, Building2, Camera, ChevronRight, Check } from "lucide-react";
+import { User, Bell, Shield, Palette, Camera, ChevronRight, Check, Loader2, AlertCircle, X } from "lucide-react";
+import api from "@/lib/api";
+import { User as UserType, NotificationPrefs, AppearancePrefs } from "@/types";
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
 	return (
@@ -60,46 +62,227 @@ function FieldRow({
 }
 
 function TextInput({
-	defaultValue,
+	value,
+	onChange,
 	placeholder,
 	type = "text",
+	disabled,
 }: {
-	defaultValue?: string;
+	value: string;
+	onChange: (v: string) => void;
 	placeholder?: string;
 	type?: string;
+	disabled?: boolean;
 }) {
 	return (
 		<input
 			type={type}
-			defaultValue={defaultValue}
+			value={value}
+			onChange={(e) => onChange(e.target.value)}
 			placeholder={placeholder}
-			className="w-full h-10 rounded-2xl border border-input bg-secondary/40 px-3 text-sm outline-none focus:ring-2 focus:ring-ring focus:bg-card transition-colors"
+			disabled={disabled}
+			className="w-full h-10 rounded-2xl border border-input bg-secondary/40 px-3 text-sm outline-none focus:ring-2 focus:ring-ring focus:bg-card transition-colors disabled:cursor-not-allowed disabled:opacity-60"
 		/>
 	);
 }
 
-export default function SettingsPage() {
-	const [notifications, setNotifications] = useState({
-		newRequest: true,
-		requestApproved: true,
-		newDonation: true,
-		newMessage: false,
-		weeklyReport: true,
-		systemAlerts: true,
-	});
+const DEFAULT_NOTIFICATIONS: NotificationPrefs = {
+	newRequest: true,
+	requestApproved: true,
+	newDonation: true,
+	newMessage: false,
+	weeklyReport: true,
+	systemAlerts: true,
+};
 
-	const [twoFA, setTwoFA] = useState(false);
+const ACCENT_COLORS = [
+	{ color: "hsl(170 22% 58%)", active: true },
+	{ color: "hsl(24 50% 58%)", active: false },
+	{ color: "hsl(230 50% 60%)", active: false },
+	{ color: "hsl(280 40% 60%)", active: false },
+	{ color: "hsl(340 55% 60%)", active: false },
+];
+
+export default function SettingsPage() {
+	const [profile, setProfile] = useState({
+		displayName: "",
+		email: "",
+		phone: "",
+		bio: "",
+		role: "visitor",
+		photoURL: "",
+	});
+	const [notifications, setNotifications] = useState<NotificationPrefs>(DEFAULT_NOTIFICATIONS);
 	const [darkMode, setDarkMode] = useState(false);
 	const [compactView, setCompactView] = useState(false);
-	const [saved, setSaved] = useState(false);
+	const [accentColor, setAccentColor] = useState(ACCENT_COLORS[0].color);
+	const [avatarFile, setAvatarFile] = useState<File | null>(null);
+	const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
-	function toggle(key: keyof typeof notifications) {
-		setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
+	const [passwords, setPasswords] = useState({
+		current: "",
+		new: "",
+		confirm: "",
+	});
+
+	const [loading, setLoading] = useState(true);
+	const [saving, setSaving] = useState(false);
+	const [saved, setSaved] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const [passwordError, setPasswordError] = useState<string | null>(null);
+	const [avatarUploading, setAvatarUploading] = useState(false);
+	const [isDirty, setIsDirty] = useState(false);
+
+	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	const fetchProfile = useCallback(async () => {
+		try {
+			const res = await api.get("/auth/profile");
+			const user: UserType = res.data.data;
+			setProfile({
+				displayName: user.displayName || "",
+				email: user.email || "",
+				phone: user.phone || "",
+				bio: user.bio || "",
+				role: user.role || "visitor",
+				photoURL: user.photoURL || "",
+			});
+			if (user.notificationPrefs) {
+				setNotifications(user.notificationPrefs);
+			}
+			const savedDark = localStorage.getItem("snuggles-dark-mode");
+			const savedCompact = localStorage.getItem("snuggles-compact-view");
+			const savedAccent = localStorage.getItem("snuggles-accent-color");
+			if (savedDark) setDarkMode(savedDark === "true");
+			if (savedCompact) setCompactView(savedCompact === "true");
+			if (savedAccent) setAccentColor(savedAccent);
+		} catch {
+			setError("Failed to load profile");
+		} finally {
+			setLoading(false);
+		}
+	}, []);
+
+	useEffect(() => {
+		fetchProfile();
+	}, [fetchProfile]);
+
+	useEffect(() => {
+		localStorage.setItem("snuggles-dark-mode", String(darkMode));
+		setIsDirty(true);
+	}, [darkMode]);
+
+	useEffect(() => {
+		localStorage.setItem("snuggles-compact-view", String(compactView));
+		setIsDirty(true);
+	}, [compactView]);
+
+	useEffect(() => {
+		localStorage.setItem("snuggles-accent-color", accentColor);
+		setIsDirty(true);
+	}, [accentColor]);
+
+	function markDirty() {
+		setIsDirty(true);
 	}
 
-	function handleSave() {
-		setSaved(true);
-		setTimeout(() => setSaved(false), 2000);
+	function toggleNotification(key: keyof NotificationPrefs) {
+		setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
+		markDirty();
+	}
+
+	function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+		const file = e.target.files?.[0];
+		if (!file) return;
+		setAvatarFile(file);
+		setAvatarPreview(URL.createObjectURL(file));
+		markDirty();
+	}
+
+	async function handleAvatarUpload(): Promise<string | null> {
+		if (!avatarFile) return null;
+		setAvatarUploading(true);
+		try {
+			const formData = new FormData();
+			formData.append("avatar", avatarFile);
+			const res = await api.post("/auth/avatar", formData, {
+				headers: { "Content-Type": "multipart/form-data" },
+			});
+			return res.data.data.photoURL as string;
+		} catch {
+			setError("Failed to upload avatar");
+			return null;
+		} finally {
+			setAvatarUploading(false);
+		}
+	}
+
+	async function handleSave() {
+		setSaving(true);
+		setError(null);
+		setPasswordError(null);
+
+		try {
+			if (avatarFile) {
+				const photoURL = await handleAvatarUpload();
+				if (photoURL) {
+					setProfile((p) => ({ ...p, photoURL }));
+					setAvatarFile(null);
+				}
+			}
+
+			await api.put("/auth/profile", {
+				displayName: profile.displayName,
+				phone: profile.phone,
+				bio: profile.bio,
+			});
+
+			await api.put("/auth/notifications", notifications);
+
+			if (passwords.current && passwords.new && passwords.confirm) {
+				if (passwords.new !== passwords.confirm) {
+					setPasswordError("New passwords do not match");
+					setSaving(false);
+					return;
+				}
+				try {
+					await api.put("/auth/password", {
+						currentPassword: passwords.current,
+						newPassword: passwords.new,
+					});
+				} catch (err: unknown) {
+					const msg =
+						err instanceof Error
+							? err.message
+							: (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+							  "Failed to change password";
+					setPasswordError(msg);
+					setSaving(false);
+					return;
+				}
+				setPasswords({ current: "", new: "", confirm: "" });
+			}
+
+			setIsDirty(false);
+			setSaved(true);
+			setTimeout(() => setSaved(false), 2000);
+		} catch {
+			setError("Failed to save settings");
+		} finally {
+			setSaving(false);
+		}
+	}
+
+	const roleLabel = profile.role === "admin" ? "Administrator" : profile.role === "shelter" ? "Shelter" : "Visitor";
+
+	if (loading) {
+		return (
+			<AdminLayout title="Settings" subtitle="Manage your account, preferences and shelter information.">
+				<div className="flex items-center justify-center py-32">
+					<Loader2 className="size-6 animate-spin text-muted-foreground" />
+				</div>
+			</AdminLayout>
+		);
 	}
 
 	return (
@@ -107,6 +290,16 @@ export default function SettingsPage() {
 			title="Settings"
 			subtitle="Manage your account, preferences and shelter information."
 		>
+			{error && (
+				<div className="flex items-center gap-2 bg-destructive/10 border border-destructive/20 rounded-2xl px-4 py-3 mb-4">
+					<AlertCircle className="size-4 text-destructive shrink-0" />
+					<p className="text-sm text-destructive flex-1">{error}</p>
+					<button onClick={() => setError(null)} className="shrink-0">
+						<X className="size-4 text-destructive" />
+					</button>
+				</div>
+			)}
+
 			<div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 				{/* Left column */}
 				<div className="xl:col-span-2 space-y-6">
@@ -114,43 +307,80 @@ export default function SettingsPage() {
 					<SectionCard title="Profile" icon={User}>
 						{/* Avatar */}
 						<div className="flex items-center gap-5 mb-6 pb-6 border-b border-border">
-							<div className="relative">
-								<img
-									src="https://i.pravatar.cc/80?img=44"
-									alt="Samantha Hill"
-									className="size-20 rounded-3xl object-cover"
+							<div className="relative shrink-0">
+								{avatarUploading ? (
+									<div className="size-20 rounded-3xl bg-muted flex items-center justify-center">
+										<Loader2 className="size-5 animate-spin text-muted-foreground" />
+									</div>
+								) : avatarPreview || profile.photoURL ? (
+									<img
+										src={avatarPreview || profile.photoURL}
+										alt={profile.displayName}
+										className="size-20 rounded-3xl object-cover"
+									/>
+								) : (
+									<div
+										className="size-20 rounded-3xl bg-primary flex items-center justify-center text-primary-foreground font-display font-semibold text-xl"
+										style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+									>
+										{profile.displayName
+											? profile.displayName
+													.split(" ")
+													.slice(0, 2)
+													.map((n) => n[0])
+													.join("")
+													.toUpperCase()
+											: "?"}
+									</div>
+								)}
+								<input
+									ref={fileInputRef}
+									type="file"
+									accept="image/jpeg,image/png,image/webp"
+									className="hidden"
+									onChange={handleAvatarChange}
 								/>
-								<button className="absolute -bottom-1 -right-1 size-7 rounded-full bg-primary flex items-center justify-center shadow-glow">
+								<button
+									onClick={() => fileInputRef.current?.click()}
+									disabled={avatarUploading}
+									className="absolute -bottom-1 -right-1 size-7 rounded-full bg-primary flex items-center justify-center shadow-glow disabled:opacity-50"
+								>
 									<Camera className="size-3.5 text-primary-foreground" />
 								</button>
 							</div>
 							<div>
-								<p className="font-display font-semibold text-lg">Samantha Hill</p>
-								<p className="text-sm text-muted-foreground">
-									Admin · samantha@snuggle.org
-								</p>
+								<p className="font-display font-semibold text-lg">{profile.displayName || "—"}</p>
+								<p className="text-sm text-muted-foreground">{profile.email}</p>
 								<span className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-success bg-success/15 px-2.5 py-0.5 rounded-full">
 									<div className="size-1.5 rounded-full bg-success" /> Active
 								</span>
 							</div>
 						</div>
 						<FieldRow label="Full name">
-							<TextInput defaultValue="Samantha Hill" />
+							<TextInput
+								value={profile.displayName}
+								onChange={(v) => setProfile((p) => ({ ...p, displayName: v }))}
+							/>
 						</FieldRow>
 						<FieldRow label="Email address">
-							<TextInput defaultValue="samantha@snuggle.org" type="email" />
+							<TextInput value={profile.email} onChange={() => {}} disabled />
 						</FieldRow>
 						<FieldRow label="Phone" hint="Used for urgent alerts">
-							<TextInput defaultValue="+1 (555) 012-3456" type="tel" />
+							<TextInput
+								value={profile.phone}
+								onChange={(v) => setProfile((p) => ({ ...p, phone: v }))}
+								type="tel"
+							/>
 						</FieldRow>
 						<FieldRow label="Role" hint="Contact support to change">
 							<div className="h-10 rounded-2xl border border-input bg-secondary/40 px-3 flex items-center text-sm text-muted-foreground">
-								Administrator
+								{roleLabel}
 							</div>
 						</FieldRow>
 						<FieldRow label="Bio" hint="Shown on your public profile">
 							<textarea
-								defaultValue="Passionate about animal welfare and connecting pets with forever homes."
+								value={profile.bio}
+								onChange={(e) => setProfile((p) => ({ ...p, bio: e.target.value }))}
 								rows={3}
 								className="w-full rounded-2xl border border-input bg-secondary/40 px-3 py-2.5 text-sm resize-none outline-none focus:ring-2 focus:ring-ring focus:bg-card transition-colors"
 							/>
@@ -197,7 +427,7 @@ export default function SettingsPage() {
 								<div className="flex justify-end">
 									<Toggle
 										checked={notifications[key]}
-										onChange={() => toggle(key)}
+										onChange={() => toggleNotification(key)}
 									/>
 								</div>
 							</FieldRow>
@@ -206,24 +436,35 @@ export default function SettingsPage() {
 
 					{/* Security */}
 					<SectionCard title="Security" icon={Shield}>
+						{passwordError && (
+							<div className="flex items-center gap-2 bg-destructive/10 border border-destructive/20 rounded-xl px-3 py-2 mb-4">
+								<AlertCircle className="size-4 text-destructive shrink-0" />
+								<p className="text-sm text-destructive">{passwordError}</p>
+							</div>
+						)}
 						<FieldRow label="Current password">
-							<TextInput placeholder="••••••••" type="password" />
+							<TextInput
+								value={passwords.current}
+								onChange={(v) => setPasswords((p) => ({ ...p, current: v }))}
+								type="password"
+								placeholder="••••••••"
+							/>
 						</FieldRow>
-						<FieldRow label="New password" hint="Min 8 characters">
-							<TextInput placeholder="••••••••" type="password" />
+						<FieldRow label="New password" hint="Min 6 characters">
+							<TextInput
+								value={passwords.new}
+								onChange={(v) => setPasswords((p) => ({ ...p, new: v }))}
+								type="password"
+								placeholder="••••••••"
+							/>
 						</FieldRow>
 						<FieldRow label="Confirm password">
-							<TextInput placeholder="••••••••" type="password" />
-						</FieldRow>
-						<FieldRow label="Two-factor auth" hint="Adds an extra layer of security">
-							<div className="flex items-center justify-between">
-								<span
-									className={`text-xs font-medium ${twoFA ? "text-success" : "text-muted-foreground"}`}
-								>
-									{twoFA ? "Enabled" : "Disabled"}
-								</span>
-								<Toggle checked={twoFA} onChange={() => setTwoFA(!twoFA)} />
-							</div>
+							<TextInput
+								value={passwords.confirm}
+								onChange={(v) => setPasswords((p) => ({ ...p, confirm: v }))}
+								type="password"
+								placeholder="••••••••"
+							/>
 						</FieldRow>
 						<div className="pt-4">
 							<button className="text-xs font-semibold text-destructive hover:underline">
@@ -239,18 +480,12 @@ export default function SettingsPage() {
 					<SectionCard title="Appearance" icon={Palette}>
 						<FieldRow label="Dark mode" hint="Switch to dark theme">
 							<div className="flex justify-end">
-								<Toggle
-									checked={darkMode}
-									onChange={() => setDarkMode(!darkMode)}
-								/>
+								<Toggle checked={darkMode} onChange={() => setDarkMode(!darkMode)} />
 							</div>
 						</FieldRow>
 						<FieldRow label="Compact view" hint="Reduce table row spacing">
 							<div className="flex justify-end">
-								<Toggle
-									checked={compactView}
-									onChange={() => setCompactView(!compactView)}
-								/>
+								<Toggle checked={compactView} onChange={() => setCompactView(!compactView)} />
 							</div>
 						</FieldRow>
 						<div className="pt-2">
@@ -258,49 +493,25 @@ export default function SettingsPage() {
 								Accent colour
 							</p>
 							<div className="flex gap-2.5">
-								{[
-									{ color: "hsl(170 22% 58%)", active: true },
-									{ color: "hsl(24 50% 58%)", active: false },
-									{ color: "hsl(230 50% 60%)", active: false },
-									{ color: "hsl(280 40% 60%)", active: false },
-									{ color: "hsl(340 55% 60%)", active: false },
-								].map(({ color, active }) => (
+								{ACCENT_COLORS.map(({ color, active }) => (
 									<button
 										key={color}
+										onClick={() => setAccentColor(color)}
 										className="size-8 rounded-full flex items-center justify-center border-2 transition-all"
 										style={{
 											background: color,
-											borderColor: active ? color : "transparent",
-											outline: active ? `2px solid ${color}` : "none",
+											borderColor: accentColor === color ? color : "transparent",
+											outline: accentColor === color ? `2px solid ${color}` : "none",
 											outlineOffset: "2px",
 										}}
 									>
-										{active && (
-											<Check
-												className="size-3.5 text-white"
-												strokeWidth={3}
-											/>
+										{accentColor === color && (
+											<Check className="size-3.5 text-white" strokeWidth={3} />
 										)}
 									</button>
 								))}
 							</div>
 						</div>
-					</SectionCard>
-
-					{/* Shelter info */}
-					<SectionCard title="Shelter Info" icon={Building2}>
-						<FieldRow label="Shelter name">
-							<TextInput defaultValue="Snuggle Animal Shelter" />
-						</FieldRow>
-						<FieldRow label="Address">
-							<TextInput defaultValue="123 Paw Lane, Brooklyn, NY" />
-						</FieldRow>
-						<FieldRow label="Phone">
-							<TextInput defaultValue="+1 (555) 987-6543" type="tel" />
-						</FieldRow>
-						<FieldRow label="Capacity" hint="Max animals at once">
-							<TextInput defaultValue="120" type="number" />
-						</FieldRow>
 					</SectionCard>
 
 					{/* Quick links */}
@@ -327,21 +538,28 @@ export default function SettingsPage() {
 			</div>
 
 			{/* Save bar */}
-			<div className="fixed bottom-6 right-6 z-40 flex items-center gap-3 bg-card border border-border rounded-full px-5 py-3 shadow-soft">
-				<p className="text-sm text-muted-foreground">Unsaved changes</p>
-				<button
-					onClick={handleSave}
-					className={`h-9 px-5 rounded-full font-semibold text-sm transition-all flex items-center gap-2 ${saved ? "bg-success text-primary-foreground" : "bg-gradient-primary text-primary-foreground shadow-glow"}`}
-				>
-					{saved ? (
-						<>
-							<Check className="size-3.5" /> Saved!
-						</>
-					) : (
-						"Save changes"
-					)}
-				</button>
-			</div>
+			{isDirty && (
+				<div className="fixed bottom-6 right-6 z-40 flex items-center gap-3 bg-card border border-border rounded-full px-5 py-3 shadow-soft">
+					<p className="text-sm text-muted-foreground">Unsaved changes</p>
+					<button
+						onClick={handleSave}
+						disabled={saving}
+						className={`h-9 px-5 rounded-full font-semibold text-sm transition-all flex items-center gap-2 disabled:opacity-50 ${saved ? "bg-success text-primary-foreground" : "bg-gradient-primary text-primary-foreground shadow-glow"}`}
+					>
+						{saving ? (
+							<>
+								<Loader2 className="size-3.5 animate-spin" /> Saving...
+							</>
+						) : saved ? (
+							<>
+								<Check className="size-3.5" /> Saved!
+							</>
+						) : (
+							"Save changes"
+						)}
+					</button>
+				</div>
+			)}
 		</AdminLayout>
 	);
 }

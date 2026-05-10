@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { usePets } from "@/hooks/usePets";
+import { useAuth } from "@/hooks/useAuth";
 import { Navbar } from "@/components/Navbar";
 import { PetCardSkeletonGrid } from "@/components/PetCardSkeleton";
 
@@ -34,9 +36,19 @@ const typeConfig: Record<
 };
 
 export default function PetsPage() {
+	const { user } = useAuth();
+	const router = useRouter();
 	const { pets, loading, error, fetchPets } = usePets();
 	const [activeFilter, setActiveFilter] = useState<"all" | "cat" | "dog" | "other">("all");
 	const [search, setSearch] = useState("");
+
+	const handleAdoptClick = (petId: string) => {
+		if (user) {
+			router.push(`/pets/${petId}`);
+		} else {
+			router.push("/register");
+		}
+	};
 
 	const filtered = (pets || []).filter((p) => {
 		const petType = p.species === "cat" ? "cat" : p.species === "dog" ? "dog" : "other";
@@ -409,7 +421,7 @@ export default function PetsPage() {
 							}}
 						>
 							{filtered.map((pet) => (
-								<PetCard key={pet.id} pet={pet} />
+								<PetCard key={pet.id} pet={pet} onAdopt={handleAdoptClick} />
 							))}
 						</div>
 					) : (
@@ -605,7 +617,7 @@ export default function PetsPage() {
 import { Pet } from "@/types";
 
 /* ── Pet Card ── */
-function PetCard({ pet }: { pet: Pet }) {
+function PetCard({ pet, onAdopt }: { pet: Pet; onAdopt: (id: string) => void }) {
 	const [hovered, setHovered] = useState(false);
 
 	const type: PetType = pet.species === "cat" ? "cat" : pet.species === "dog" ? "dog" : "other";
@@ -740,8 +752,9 @@ function PetCard({ pet }: { pet: Pet }) {
 					{pet.description}
 				</p>
 
-				<Link
-					href="/register" // TODO: redirect to pet detail page
+				<button
+					type="button"
+					onClick={() => pet.id && onAdopt(pet.id)}
 					className="block text-center font-semibold py-3 rounded-[40px] transition-all hover:opacity-90"
 					style={{
 						background: "#7AADA1",
@@ -751,7 +764,7 @@ function PetCard({ pet }: { pet: Pet }) {
 					}}
 				>
 					Adopt Me
-				</Link>
+				</button>
 			</div>
 		</div>
 	);
