@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Heart } from "lucide-react";
 import { usePets } from "@/hooks/usePets";
 import { useAuth } from "@/hooks/useAuth";
+import { useFavorites } from "@/hooks/useFavorites";
 import { Navbar } from "@/components/Navbar";
 import { PetCardSkeletonGrid } from "@/components/PetCardSkeleton";
 import { QuizModal } from "@/components/QuizModal";
@@ -613,6 +615,7 @@ import { Pet } from "@/types";
 function PetCard({ pet }: { pet: Pet }) {
 	const [hovered, setHovered] = useState(false);
 	const { user } = useAuth();
+	const { isFavorited, toggleFavorite } = useFavorites();
 
 	const type: PetType = pet.species === "cat" ? "cat" : pet.species === "dog" ? "dog" : "other";
 	const isFemale = pet.gender === "female";
@@ -650,38 +653,67 @@ function PetCard({ pet }: { pet: Pet }) {
 						transform: hovered ? "scale(1.05)" : "scale(1)",
 					}}
 				/>
-				{/* Available badge */}
-				<div
-					className="absolute top-4 right-4"
-					style={{
-						background: "rgba(255,255,255,0.95)",
-						borderRadius: "20px",
-						padding: "4px 12px",
-						display: "flex",
-						alignItems: "center",
-						gap: "5px",
-					}}
-				>
-					<span
+				{/* Top-right: status badge + heart */}
+				<div className="absolute top-4 right-4 flex items-center gap-2">
+					<div
 						style={{
-							width: "6px",
-							height: "6px",
-							borderRadius: "50%",
-							background: pet.status === "available" ? "#22c55e" : "#888",
-							display: "inline-block",
-							flexShrink: 0,
-						}}
-					/>
-					<span
-						style={{
-							fontFamily: "'Space Grotesk', sans-serif",
-							fontSize: "11px",
-							fontWeight: 600,
-							color: pet.status === "available" ? "#166534" : "#666",
+							background: "rgba(255,255,255,0.95)",
+							borderRadius: "20px",
+							padding: "4px 12px",
+							display: "flex",
+							alignItems: "center",
+							gap: "5px",
 						}}
 					>
-						{pet.status || "Available"}
-					</span>
+						<span
+							style={{
+								width: "6px",
+								height: "6px",
+								borderRadius: "50%",
+								background: pet.status === "available" ? "#22c55e" : "#888",
+								display: "inline-block",
+								flexShrink: 0,
+							}}
+						/>
+						<span
+							style={{
+								fontFamily: "'Space Grotesk', sans-serif",
+								fontSize: "11px",
+								fontWeight: 600,
+								color: pet.status === "available" ? "#166534" : "#666",
+							}}
+						>
+							{pet.status || "Available"}
+						</span>
+					</div>
+					<button
+						onClick={(e) => {
+							e.preventDefault();
+							if (!user) { window.location.href = "/login"; return; }
+							toggleFavorite(pet.id!);
+						}}
+						className="flex items-center justify-center transition-all hover:scale-110"
+						style={{
+							width: "32px",
+							height: "32px",
+							borderRadius: "50%",
+							background: "rgba(255,255,255,0.95)",
+							border: "none",
+							cursor: "pointer",
+							flexShrink: 0,
+						}}
+						title={isFavorited(pet.id!) ? "Remove from favorites" : "Save to favorites"}
+					>
+						<Heart
+							style={{
+								width: "15px",
+								height: "15px",
+								color: isFavorited(pet.id!) ? "#C4857A" : "#aaa",
+								fill: isFavorited(pet.id!) ? "#C4857A" : "none",
+								transition: "all 0.15s",
+							}}
+						/>
+					</button>
 				</div>
 				{/* Type badge */}
 				<div

@@ -7,6 +7,7 @@ import { Heart, ChevronRight, X, ChevronLeft, Send, Loader2, MessageCircle, Chec
 import { Navbar } from "@/components/Navbar";
 import { usePets } from "@/hooks/usePets";
 import { useAuth } from "@/hooks/useAuth";
+import { useFavorites } from "@/hooks/useFavorites";
 import { Pet } from "@/types";
 import api from "@/lib/api";
 
@@ -74,11 +75,11 @@ export default function PetDetailPage() {
 	const router = useRouter();
 	const { user } = useAuth();
 	const { getPetById } = usePets();
+	const { isFavorited, toggleFavorite } = useFavorites();
 
 	const [pet, setPet] = useState<Pet | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [selectedPhoto, setSelectedPhoto] = useState(0);
-	const [wishlisted, setWishlisted] = useState(false);
 
 	// Adoption form state
 	const [adoptOpen, setAdoptOpen] = useState(false);
@@ -258,8 +259,13 @@ export default function PetDetailPage() {
 							<button onClick={openAdopt} className="flex-1 font-semibold rounded-[40px] transition-all hover:opacity-90" style={{ background: "#7AADA1", color: "#fff", fontFamily: "'Space Grotesk', sans-serif", fontSize: "15px", padding: "12px 24px" }}>
 								Adopt
 							</button>
-							<button onClick={() => setWishlisted((w) => !w)} className="flex items-center justify-center rounded-[40px] transition-all hover:opacity-80" style={{ width: "48px", height: "48px", border: "1.5px solid #7AADA1", background: "transparent", flexShrink: 0 }}>
-								<Heart className="w-5 h-5" style={{ color: wishlisted ? "#C4857A" : "#7AADA1", fill: wishlisted ? "#C4857A" : "none" }} />
+							<button
+								onClick={() => { if (!user) { router.push("/login"); return; } toggleFavorite(pet.id!); }}
+								className="flex items-center justify-center rounded-[40px] transition-all hover:opacity-80"
+								style={{ width: "48px", height: "48px", border: "1.5px solid #7AADA1", background: "transparent", flexShrink: 0 }}
+								title={isFavorited(pet.id!) ? "Remove from favorites" : "Add to favorites"}
+							>
+								<Heart className="w-5 h-5" style={{ color: isFavorited(pet.id!) ? "#C4857A" : "#7AADA1", fill: isFavorited(pet.id!) ? "#C4857A" : "none", transition: "all 0.2s" }} />
 							</button>
 						</div>
 

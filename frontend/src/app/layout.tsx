@@ -1,6 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { AuthProvider } from "@/hooks/useAuth";
+import { FavoritesProvider } from "@/hooks/useFavorites";
 import ChatLayoutWrapper from "@/components/Chat/ChatLayoutWrapper";
 
 export const metadata: Metadata = {
@@ -16,8 +17,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 		<html lang="en">
 			<body>
 				<AuthProvider>
-					{children}
-					<ChatLayoutWrapper />
+					<FavoritesProvider>
+						{children}
+						<ChatLayoutWrapper />
+					</FavoritesProvider>
 				</AuthProvider>
 			</body>
 		</html>

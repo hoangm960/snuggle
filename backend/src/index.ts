@@ -21,6 +21,7 @@ import reviewRoutes from "./routes/reviews";
 import kycRoutes from "./routes/kyc";
 import chatRoutes from "./routes/chat";
 import quizRoutes from "./routes/quiz";
+import favoritesRoutes from "./routes/favorites";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -47,6 +48,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/kyc", kycRoutes);
 app.use("/api/chats", chatRoutes);
 app.use("/api/quiz", quizRoutes);
+app.use("/api/favorites", favoritesRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -176,6 +176,13 @@ export default function Navbar({
 										>
 											My Applications
 										</Link>
+										<Link
+											href="/favorites"
+											className="block px-4 py-2 hover:bg-gray-50"
+											style={{ color: "#333", fontSize: "14px" }}
+										>
+											My Favorites
+										</Link>
 										<button
 											onClick={handleLogout}
 											className="block w-full text-left px-4 py-2 hover:bg-gray-50"
