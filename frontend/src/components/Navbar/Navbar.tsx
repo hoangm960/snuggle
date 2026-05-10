@@ -133,7 +133,7 @@ export default function Navbar({
 					</button>
 
 					{showAuthButtons ? (
-						isOverlay && user ? (
+						user ? (
 							<div className="relative">
 								<button
 									onClick={() => setUserMenuOpen(!userMenuOpen)}

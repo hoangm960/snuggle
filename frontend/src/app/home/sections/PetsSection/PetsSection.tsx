@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePets } from "@/hooks/usePets";
+import { useAuth } from "@/hooks/useAuth";
 import { PetCardSkeletonCarousel } from "@/components/PetCardSkeleton";
 
 function useWindowWidth() {
@@ -17,6 +18,7 @@ function useWindowWidth() {
 
 export default function PetsSection() {
 	const { pets, loading } = usePets();
+	const { user } = useAuth();
 	const [petIndex, setPetIndex] = useState(0);
 	const windowWidth = useWindowWidth();
 
@@ -111,7 +113,7 @@ export default function PetsSection() {
 										{pet.ageMonths === 1 ? "" : "s"}
 									</p>
 									<Link
-										href="/register" // TODO: redirect to pet detail page if already login
+										href={user ? `/pets/${pet.id}` : "/login"}
 										className="block text-center py-3 rounded-full bg-[#F0F7F5] text-[#7AADA1] text-[13px] font-semibold hover:opacity-80"
 									>
 										Adopt Me

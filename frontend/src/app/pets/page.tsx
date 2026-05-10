@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePets } from "@/hooks/usePets";
+import { useAuth } from "@/hooks/useAuth";
 import { Navbar } from "@/components/Navbar";
 import { PetCardSkeletonGrid } from "@/components/PetCardSkeleton";
 
@@ -607,6 +608,7 @@ import { Pet } from "@/types";
 /* ── Pet Card ── */
 function PetCard({ pet }: { pet: Pet }) {
 	const [hovered, setHovered] = useState(false);
+	const { user } = useAuth();
 
 	const type: PetType = pet.species === "cat" ? "cat" : pet.species === "dog" ? "dog" : "other";
 	const isFemale = pet.gender === "female";
@@ -741,7 +743,7 @@ function PetCard({ pet }: { pet: Pet }) {
 				</p>
 
 				<Link
-					href="/register" // TODO: redirect to pet detail page
+					href={user ? `/pets/${pet.id}` : "/login"}
 					className="block text-center font-semibold py-3 rounded-[40px] transition-all hover:opacity-90"
 					style={{
 						background: "#7AADA1",
