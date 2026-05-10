@@ -4,7 +4,7 @@ import { getIdToken } from "firebase/auth";
 import { getToken, clearAuthSession } from "./cookies";
 
 const api = axios.create({
-	baseURL: "/api",
+	baseURL: process.env.NEXT_PUBLIC_API_URL || "/api",
 	headers: {
 		"Content-Type": "application/json",
 	},
@@ -83,6 +83,22 @@ export const petsApi = {
 		api.get<{ success: boolean; data: any[] }>("/pets", {
 			params: { limit },
 		}),
+};
+
+export interface Contract {
+	id: string;
+	petName: string;
+	adopter: string;
+	adopterEmail: string;
+	shelter: string;
+	signedAt?: string;
+	expiresAt: string;
+	status: "active" | "pending_signature" | "expired" | "terminated";
+	adoptionDate: string;
+}
+
+export const contractsApi = {
+	getAll: () => api.get<{ success: boolean; data: Contract[] }>("/contracts"),
 };
 
 export default api;

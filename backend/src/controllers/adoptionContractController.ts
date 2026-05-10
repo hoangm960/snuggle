@@ -6,6 +6,51 @@ import { AppError } from "../middleware/errorHandler";
 const contractsCollection = db.collection("adoptionContracts");
 const applicationsCollection = db.collection("adoptionApplications");
 const petsCollection = db.collection("pets");
+const usersCollection = db.collection("users");
+const sheltersCollection = db.collection("shelters");
+
+interface EnrichedContract {
+	id: string;
+	petName: string;
+	adopter: string;
+	adopterEmail: string;
+	shelter: string;
+	signedAt?: string;
+	expiresAt: string;
+	status: "active" | "pending_signature" | "expired" | "terminated";
+	adoptionDate: string;
+	adoptionDateRaw: Date;
+}
+
+function mapBackendStatusToFrontend(
+	status: string
+): "active" | "pending_signature" | "expired" | "terminated" {
+	switch (status) {
+		case "signed":
+			return "active";
+		case "draft":
+			return "pending_signature";
+		case "archived":
+			return "terminated";
+		default:
+			return "pending_signature";
+	}
+}
+
+function computeExpiryDate(createdAt: Date): string {
+	const expiry = new Date(createdAt);
+	expiry.setFullYear(expiry.getFullYear() + 1);
+	return expiry.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function formatDate(date: Date | undefined): string | undefined {
+	if (!date) return undefined;
+	return new Date(date).toLocaleDateString("en-US", {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+	});
+}
 
 export const getAllContracts = async (req: AuthRequest, res: Response): Promise<void> => {
 	if (!req.user) {
@@ -26,9 +71,66 @@ export const getAllContracts = async (req: AuthRequest, res: Response): Promise<
 		contracts.push({ id: doc.id, ...doc.data() } as AdoptionContract);
 	});
 
-	const response: ApiResponse<AdoptionContract[]> = {
+	const contractsWithId = contracts.filter((c): c is AdoptionContract & { id: string } => !!c.id);
+
+	const enrichedContracts: EnrichedContract[] = await Promise.all(
+		contractsWithId.map(async (contract) => {
+			let petName = "Unknown Pet";
+			let shelter = "Unknown Shelter";
+			let adopter = "Unknown Adopter";
+			let adopterEmail = "N/A";
+
+			if (contract.petId) {
+				const petDoc = await petsCollection.doc(contract.petId).get();
+				if (petDoc.exists) {
+					const petData = petDoc.data();
+					petName = petData?.name || petName;
+
+					if (petData?.shelterId) {
+						const shelterDoc = await sheltersCollection.doc(petData.shelterId).get();
+						if (shelterDoc.exists) {
+							shelter = shelterDoc.data()?.name || shelter;
+						}
+					}
+				}
+			}
+
+			if (contract.adopterId) {
+				const userDoc = await usersCollection.doc(contract.adopterId).get();
+				if (userDoc.exists) {
+					const userData = userDoc.data();
+					adopter =
+						`${userData?.firstName || ""} ${userData?.lastName || ""}`.trim() ||
+						adopter;
+					adopterEmail = userData?.email || adopterEmail;
+				}
+			}
+
+			const createdAt = contract.createdAt ? new Date(contract.createdAt) : new Date();
+			const adoptionDateStr = createdAt.toLocaleDateString("en-US", {
+				month: "short",
+				day: "numeric",
+				year: "numeric",
+			});
+
+			return {
+				id: contract.id,
+				petName,
+				adopter,
+				adopterEmail,
+				shelter,
+				signedAt: formatDate(contract.adopterSignedAt),
+				expiresAt: computeExpiryDate(createdAt),
+				status: mapBackendStatusToFrontend(contract.status),
+				adoptionDate: adoptionDateStr,
+				adoptionDateRaw: createdAt,
+			};
+		})
+	);
+
+	const response: ApiResponse<EnrichedContract[]> = {
 		success: true,
-		data: contracts,
+		data: enrichedContracts,
 	};
 
 	res.status(200).json(response);

@@ -67,7 +67,9 @@ export default function RequestsPage() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [actionLoading, setActionLoading] = useState<string | null>(null);
-	const [actionMsg, setActionMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+	const [actionMsg, setActionMsg] = useState<{ type: "success" | "error"; text: string } | null>(
+		null
+	);
 
 	const fetchApplications = useCallback(async (statusFilter?: string) => {
 		setLoading(true);
@@ -93,10 +95,7 @@ export default function RequestsPage() {
 		fetchApplications(statusFilter);
 	}, [tab, fetchApplications]);
 
-	const handleStatusUpdate = async (
-		id: string,
-		newStatus: "approved" | "rejected"
-	) => {
+	const handleStatusUpdate = async (id: string, newStatus: "approved" | "rejected") => {
 		setActionLoading(id);
 		setActionMsg(null);
 		try {
@@ -142,28 +141,26 @@ export default function RequestsPage() {
 		>
 			{/* Tabs */}
 			<div className="flex gap-2 mb-6 overflow-x-auto pb-1">
-				{(["All", "Pending", "Approved", "Rejected", "Delivered"] as const).map(
-					(t) => (
-						<button
-							key={t}
-							onClick={() => setTab(t)}
-							className={`px-5 h-11 rounded-full text-sm font-semibold whitespace-nowrap flex items-center gap-2 transition-colors ${
-								tab === t
-									? "bg-primary text-primary-foreground shadow-glow"
-									: "bg-card border border-border text-muted-foreground hover:text-foreground"
+				{(["All", "Pending", "Approved", "Rejected", "Delivered"] as const).map((t) => (
+					<button
+						key={t}
+						onClick={() => setTab(t)}
+						className={`px-5 h-11 rounded-full text-sm font-semibold whitespace-nowrap flex items-center gap-2 transition-colors ${
+							tab === t
+								? "bg-primary text-primary-foreground shadow-glow"
+								: "bg-card border border-border text-muted-foreground hover:text-foreground"
+						}`}
+					>
+						{t}
+						<span
+							className={`text-[11px] px-2 py-0.5 rounded-full ${
+								tab === t ? "bg-primary-foreground/20" : "bg-secondary"
 							}`}
 						>
-							{t}
-							<span
-								className={`text-[11px] px-2 py-0.5 rounded-full ${
-									tab === t ? "bg-primary-foreground/20" : "bg-secondary"
-								}`}
-							>
-								{counts[t as keyof typeof counts]}
-							</span>
-						</button>
-					)
-				)}
+							{counts[t as keyof typeof counts]}
+						</span>
+					</button>
+				))}
 			</div>
 
 			{loading ? (
@@ -175,9 +172,7 @@ export default function RequestsPage() {
 					{error}
 				</div>
 			) : applications.length === 0 ? (
-				<div className="text-center py-20 text-muted-foreground">
-					No requests found
-				</div>
+				<div className="text-center py-20 text-muted-foreground">No requests found</div>
 			) : (
 				/* Cards */
 				<div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -231,7 +226,9 @@ export default function RequestsPage() {
 									className="size-10 rounded-full object-cover"
 								/>
 								<div className="flex-1 min-w-0">
-									<p className="text-sm font-semibold truncate">{r.adopterName}</p>
+									<p className="text-sm font-semibold truncate">
+										{r.adopterName}
+									</p>
 									<p className="text-[11px] text-muted-foreground">
 										{r.adopterEmail || "Applicant"}
 									</p>

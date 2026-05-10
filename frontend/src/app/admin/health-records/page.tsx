@@ -227,14 +227,7 @@ export default function HealthRecordsPage() {
 					<table className="w-full">
 						<thead style={{ background: "#FAFAFA" }}>
 							<tr>
-								{[
-									"Pet",
-									"Record",
-									"Type",
-									"Veterinarian",
-									"Date",
-									"",
-								].map((h) => (
+								{["Pet", "Record", "Type", "Veterinarian", "Date", ""].map((h) => (
 									<th
 										key={h}
 										className="text-left px-5 py-3.5"
@@ -445,7 +438,9 @@ export default function HealthRecordsPage() {
 									<input
 										type="date"
 										value={form.recordDate}
-										onChange={(e) => setForm({ ...form, recordDate: e.target.value })}
+										onChange={(e) =>
+											setForm({ ...form, recordDate: e.target.value })
+										}
 										className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
 										style={{ border: "1px solid #E8E8E8" }}
 									/>
@@ -493,9 +488,7 @@ export default function HealthRecordsPage() {
 								</label>
 								<input
 									value={form.vetName}
-									onChange={(e) =>
-										setForm({ ...form, vetName: e.target.value })
-									}
+									onChange={(e) => setForm({ ...form, vetName: e.target.value })}
 									placeholder="e.g. Dr. Sarah Lee"
 									className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
 									style={{ border: "1px solid #E8E8E8" }}
@@ -517,7 +510,11 @@ export default function HealthRecordsPage() {
 								className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
 								style={{ background: "linear-gradient(135deg, #7AADA1, #216959)" }}
 							>
-								{saving ? <Loader2 className="size-4 animate-spin mx-auto" /> : "Add Record"}
+								{saving ? (
+									<Loader2 className="size-4 animate-spin mx-auto" />
+								) : (
+									"Add Record"
+								)}
 							</button>
 						</div>
 					</div>

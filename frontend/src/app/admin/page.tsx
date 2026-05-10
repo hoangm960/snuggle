@@ -3,7 +3,19 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "./_components/AdminLayout";
 import api from "@/lib/api";
-import { PawPrint, ClipboardList, Users, HeartHandshake, TrendingUp, ArrowUpRight, Clock, CheckCircle2, XCircle, ShieldCheck, Loader2 } from "lucide-react";
+import {
+	PawPrint,
+	ClipboardList,
+	Users,
+	HeartHandshake,
+	TrendingUp,
+	ArrowUpRight,
+	Clock,
+	CheckCircle2,
+	XCircle,
+	ShieldCheck,
+	Loader2,
+} from "lucide-react";
 
 interface DashboardStats {
 	totalPets: number;
@@ -40,7 +52,11 @@ const statusConfig: Record<
 function formatDate(dateStr: string): string {
 	try {
 		const date = new Date(dateStr);
-		return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+		return date.toLocaleDateString("en-US", {
+			month: "short",
+			day: "numeric",
+			year: "numeric",
+		});
 	} catch {
 		return dateStr;
 	}
@@ -102,7 +118,10 @@ export default function AdminDashboard() {
 		{
 			label: "Total Pets",
 			value: formatCount(stats.totalPets),
-			change: stats.petsAddedThisWeek > 0 ? `+${stats.petsAddedThisWeek} this week` : "No new pets this week",
+			change:
+				stats.petsAddedThisWeek > 0
+					? `+${stats.petsAddedThisWeek} this week`
+					: "No new pets this week",
 			icon: PawPrint,
 			color: "#7AADA1",
 			bg: "#E8F4F1",
@@ -110,7 +129,10 @@ export default function AdminDashboard() {
 		{
 			label: "Pending Requests",
 			value: formatCount(stats.pendingRequests),
-			change: stats.requestsAddedToday > 0 ? `+${stats.requestsAddedToday} today` : "No new requests today",
+			change:
+				stats.requestsAddedToday > 0
+					? `+${stats.requestsAddedToday} today`
+					: "No new requests today",
 			icon: ClipboardList,
 			color: "#C4857A",
 			bg: "#FAF0EE",
@@ -118,7 +140,10 @@ export default function AdminDashboard() {
 		{
 			label: "Active Users",
 			value: formatCount(stats.activeUsers),
-			change: stats.usersAddedThisMonth > 0 ? `+${stats.usersAddedThisMonth} this month` : "No new users this month",
+			change:
+				stats.usersAddedThisMonth > 0
+					? `+${stats.usersAddedThisMonth} this month`
+					: "No new users this month",
 			icon: Users,
 			color: "#216959",
 			bg: "#E8F4F1",
@@ -126,7 +151,10 @@ export default function AdminDashboard() {
 		{
 			label: "Total Donations",
 			value: stats.totalDonations > 0 ? `$${formatCount(stats.totalDonations)}` : "$0",
-			change: stats.donationsThisWeek > 0 ? `+$${stats.donationsThisWeek} this week` : "No donations this week",
+			change:
+				stats.donationsThisWeek > 0
+					? `+$${stats.donationsThisWeek} this week`
+					: "No donations this week",
 			icon: HeartHandshake,
 			color: "#9A7768",
 			bg: "#F5EFEB",
@@ -154,7 +182,11 @@ export default function AdminDashboard() {
 
 				<div className="grid grid-cols-4 gap-5 mb-8">
 					{statCards.map((s) => (
-						<div key={s.label} className="rounded-2xl p-5" style={{ background: "#fff", border: "1px solid #F0F0F0" }}>
+						<div
+							key={s.label}
+							className="rounded-2xl p-5"
+							style={{ background: "#fff", border: "1px solid #F0F0F0" }}
+						>
 							<div className="flex items-start justify-between mb-4">
 								<div
 									className="size-10 rounded-xl flex items-center justify-center"
@@ -215,13 +247,34 @@ export default function AdminDashboard() {
 							</a>
 						</div>
 						{recentRequests.length === 0 ? (
-							<p style={{ color: "#aaa", fontSize: "13px", textAlign: "center", padding: "20px 0" }}>No recent requests</p>
+							<p
+								style={{
+									color: "#aaa",
+									fontSize: "13px",
+									textAlign: "center",
+									padding: "20px 0",
+								}}
+							>
+								No recent requests
+							</p>
 						) : (
 							<table className="w-full">
 								<thead>
 									<tr>
 										{["ID", "Pet", "Adopter", "Date", "Status"].map((h) => (
-											<th key={h} className="text-left pb-3" style={{ fontSize: "11px", fontWeight: 600, color: "#aaa", textTransform: "uppercase", letterSpacing: "0.08em" }}>{h}</th>
+											<th
+												key={h}
+												className="text-left pb-3"
+												style={{
+													fontSize: "11px",
+													fontWeight: 600,
+													color: "#aaa",
+													textTransform: "uppercase",
+													letterSpacing: "0.08em",
+												}}
+											>
+												{h}
+											</th>
 										))}
 									</tr>
 								</thead>
@@ -229,20 +282,58 @@ export default function AdminDashboard() {
 									{recentRequests.map((r) => {
 										const s = statusConfig[r.status] || statusConfig.pending;
 										return (
-											<tr key={r.id} style={{ borderTop: "1px solid #F8F8F8" }}>
-												<td className="py-3" style={{ fontSize: "12px", color: "#aaa" }}>{r.id.slice(0, 8)}</td>
+											<tr
+												key={r.id}
+												style={{ borderTop: "1px solid #F8F8F8" }}
+											>
+												<td
+													className="py-3"
+													style={{ fontSize: "12px", color: "#aaa" }}
+												>
+													{r.id.slice(0, 8)}
+												</td>
 												<td className="py-3">
 													<div className="flex items-center gap-2">
 														{r.petThumbnail ? (
-															<img src={r.petThumbnail} alt={r.petName} className="size-8 rounded-lg object-cover" />
+															<img
+																src={r.petThumbnail}
+																alt={r.petName}
+																className="size-8 rounded-lg object-cover"
+															/>
 														) : null}
-														<span style={{ fontSize: "13px", fontWeight: 500, color: "#1C1C1C" }}>{r.petName}</span>
+														<span
+															style={{
+																fontSize: "13px",
+																fontWeight: 500,
+																color: "#1C1C1C",
+															}}
+														>
+															{r.petName}
+														</span>
 													</div>
 												</td>
-												<td className="py-3" style={{ fontSize: "13px", color: "#666" }}>{r.adopterName}</td>
-												<td className="py-3" style={{ fontSize: "12px", color: "#aaa" }}>{formatDate(r.appliedAt)}</td>
+												<td
+													className="py-3"
+													style={{ fontSize: "13px", color: "#666" }}
+												>
+													{r.adopterName}
+												</td>
+												<td
+													className="py-3"
+													style={{ fontSize: "12px", color: "#aaa" }}
+												>
+													{formatDate(r.appliedAt)}
+												</td>
 												<td className="py-3">
-													<span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full" style={{ background: s.bg, color: s.color, fontSize: "11px", fontWeight: 600 }}>
+													<span
+														className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full"
+														style={{
+															background: s.bg,
+															color: s.color,
+															fontSize: "11px",
+															fontWeight: 600,
+														}}
+													>
 														<s.icon className="size-3" />
 														{s.label}
 													</span>
@@ -272,9 +363,24 @@ export default function AdminDashboard() {
 						</h2>
 						<div className="space-y-3">
 							{[
-								{ label: "Review eKYC Submissions", href: "/admin/kyc", icon: ShieldCheck, count: stats.pendingRequests },
-								{ label: "Pending Requests", href: "/admin/requests", icon: ClipboardList, count: stats.pendingRequests },
-								{ label: "Total Pets", href: "/admin/pets", icon: PawPrint, count: stats.totalPets },
+								{
+									label: "Review eKYC Submissions",
+									href: "/admin/kyc",
+									icon: ShieldCheck,
+									count: stats.pendingRequests,
+								},
+								{
+									label: "Pending Requests",
+									href: "/admin/requests",
+									icon: ClipboardList,
+									count: stats.pendingRequests,
+								},
+								{
+									label: "Total Pets",
+									href: "/admin/pets",
+									icon: PawPrint,
+									count: stats.totalPets,
+								},
 							].map((item) => (
 								<a
 									key={item.href}
@@ -319,8 +425,19 @@ export default function AdminDashboard() {
 									Adoption Rate
 								</span>
 							</div>
-							<p style={{ fontSize: "28px", fontWeight: 700, fontFamily: "'Space Grotesk', sans-serif", color: "#216959" }}>{stats.adoptionRate}%</p>
-							<p style={{ fontSize: "11px", color: "#7AADA1", marginTop: "2px" }}>Based on total applications</p>
+							<p
+								style={{
+									fontSize: "28px",
+									fontWeight: 700,
+									fontFamily: "'Space Grotesk', sans-serif",
+									color: "#216959",
+								}}
+							>
+								{stats.adoptionRate}%
+							</p>
+							<p style={{ fontSize: "11px", color: "#7AADA1", marginTop: "2px" }}>
+								Based on total applications
+							</p>
 						</div>
 					</div>
 				</div>

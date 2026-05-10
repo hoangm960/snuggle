@@ -2,7 +2,18 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { AdminLayout } from "../_components/AdminLayout";
-import { User, Bell, Shield, Palette, Camera, ChevronRight, Check, Loader2, AlertCircle, X } from "lucide-react";
+import {
+	User,
+	Bell,
+	Shield,
+	Palette,
+	Camera,
+	ChevronRight,
+	Check,
+	Loader2,
+	AlertCircle,
+	X,
+} from "lucide-react";
 import api from "@/lib/api";
 import { User as UserType, NotificationPrefs, AppearancePrefs } from "@/types";
 
@@ -254,8 +265,8 @@ export default function SettingsPage() {
 					const msg =
 						err instanceof Error
 							? err.message
-							: (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-							  "Failed to change password";
+							: (err as { response?: { data?: { message?: string } } })?.response
+									?.data?.message || "Failed to change password";
 					setPasswordError(msg);
 					setSaving(false);
 					return;
@@ -273,11 +284,19 @@ export default function SettingsPage() {
 		}
 	}
 
-	const roleLabel = profile.role === "admin" ? "Administrator" : profile.role === "shelter" ? "Shelter" : "Visitor";
+	const roleLabel =
+		profile.role === "admin"
+			? "Administrator"
+			: profile.role === "shelter"
+				? "Shelter"
+				: "Visitor";
 
 	if (loading) {
 		return (
-			<AdminLayout title="Settings" subtitle="Manage your account, preferences and shelter information.">
+			<AdminLayout
+				title="Settings"
+				subtitle="Manage your account, preferences and shelter information."
+			>
 				<div className="flex items-center justify-center py-32">
 					<Loader2 className="size-6 animate-spin text-muted-foreground" />
 				</div>
@@ -349,7 +368,9 @@ export default function SettingsPage() {
 								</button>
 							</div>
 							<div>
-								<p className="font-display font-semibold text-lg">{profile.displayName || "—"}</p>
+								<p className="font-display font-semibold text-lg">
+									{profile.displayName || "—"}
+								</p>
 								<p className="text-sm text-muted-foreground">{profile.email}</p>
 								<span className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-success bg-success/15 px-2.5 py-0.5 rounded-full">
 									<div className="size-1.5 rounded-full bg-success" /> Active
@@ -480,12 +501,18 @@ export default function SettingsPage() {
 					<SectionCard title="Appearance" icon={Palette}>
 						<FieldRow label="Dark mode" hint="Switch to dark theme">
 							<div className="flex justify-end">
-								<Toggle checked={darkMode} onChange={() => setDarkMode(!darkMode)} />
+								<Toggle
+									checked={darkMode}
+									onChange={() => setDarkMode(!darkMode)}
+								/>
 							</div>
 						</FieldRow>
 						<FieldRow label="Compact view" hint="Reduce table row spacing">
 							<div className="flex justify-end">
-								<Toggle checked={compactView} onChange={() => setCompactView(!compactView)} />
+								<Toggle
+									checked={compactView}
+									onChange={() => setCompactView(!compactView)}
+								/>
 							</div>
 						</FieldRow>
 						<div className="pt-2">
@@ -500,13 +527,20 @@ export default function SettingsPage() {
 										className="size-8 rounded-full flex items-center justify-center border-2 transition-all"
 										style={{
 											background: color,
-											borderColor: accentColor === color ? color : "transparent",
-											outline: accentColor === color ? `2px solid ${color}` : "none",
+											borderColor:
+												accentColor === color ? color : "transparent",
+											outline:
+												accentColor === color
+													? `2px solid ${color}`
+													: "none",
 											outlineOffset: "2px",
 										}}
 									>
 										{accentColor === color && (
-											<Check className="size-3.5 text-white" strokeWidth={3} />
+											<Check
+												className="size-3.5 text-white"
+												strokeWidth={3}
+											/>
 										)}
 									</button>
 								))}

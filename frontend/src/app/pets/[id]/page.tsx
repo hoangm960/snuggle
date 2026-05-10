@@ -35,21 +35,21 @@ export default function PetDetailPage() {
 	}, [id]);
 
 	const photos = pet
-		? [pet.thumbnail, ...(pet.photoUrls || [])].filter(Boolean) as string[]
+		? ([pet.thumbnail, ...(pet.photoUrls || [])].filter(Boolean) as string[])
 		: [];
 
 	const displayAge = pet?.ageMonths
 		? `${pet.ageMonths} month${pet.ageMonths === 1 ? "" : "s"}`
 		: pet?.age
-		? `${pet.age} year${pet.age === 1 ? "" : "s"}`
-		: "";
+			? `${pet.age} year${pet.age === 1 ? "" : "s"}`
+			: "";
 
 	const bornDate = pet?.arrivalDate
 		? new Date(pet.arrivalDate).toLocaleDateString("en-US", {
 				month: "long",
 				day: "numeric",
 				year: "numeric",
-		  })
+			})
 		: null;
 
 	async function handleAdoptSubmit(e: React.FormEvent) {
@@ -88,8 +88,17 @@ export default function PetDetailPage() {
 		return (
 			<div className="min-h-screen" style={{ background: "#F9F6F2" }}>
 				<Navbar />
-				<div className="flex flex-col items-center justify-center gap-4" style={{ height: "60vh" }}>
-					<p style={{ fontFamily: "'Space Grotesk', sans-serif", color: "#666", fontSize: "18px" }}>
+				<div
+					className="flex flex-col items-center justify-center gap-4"
+					style={{ height: "60vh" }}
+				>
+					<p
+						style={{
+							fontFamily: "'Space Grotesk', sans-serif",
+							color: "#666",
+							fontSize: "18px",
+						}}
+					>
 						Pet not found.
 					</p>
 					<Link
@@ -109,12 +118,18 @@ export default function PetDetailPage() {
 	}
 
 	return (
-		<div className="min-h-screen" style={{ background: "#F9F6F2", fontFamily: "'Poppins', sans-serif" }}>
+		<div
+			className="min-h-screen"
+			style={{ background: "#F9F6F2", fontFamily: "'Poppins', sans-serif" }}
+		>
 			<Navbar />
 
 			<div className="max-w-5xl mx-auto px-6 py-8">
 				{/* Breadcrumb */}
-				<nav className="flex items-center gap-1 mb-8" style={{ fontSize: "13px", color: "#999" }}>
+				<nav
+					className="flex items-center gap-1 mb-8"
+					style={{ fontSize: "13px", color: "#999" }}
+				>
 					<Link href="/home" className="hover:text-[#7AADA1] transition-colors">
 						Home
 					</Link>
@@ -205,8 +220,13 @@ export default function PetDetailPage() {
 							<DetailRow
 								label="Gender"
 								value={
-									<span style={{ color: pet.gender === "female" ? "#C4857A" : "#7AADA1" }}>
-										{pet.gender === "female" ? "♀" : "♂"} {capitalize(pet.gender)}
+									<span
+										style={{
+											color: pet.gender === "female" ? "#C4857A" : "#7AADA1",
+										}}
+									>
+										{pet.gender === "female" ? "♀" : "♂"}{" "}
+										{capitalize(pet.gender)}
 									</span>
 								}
 							/>
@@ -215,13 +235,21 @@ export default function PetDetailPage() {
 							<DetailRow
 								label="Vaccinated"
 								value={
-									pet.isVaccinated === undefined ? "Unknown" : pet.isVaccinated ? "Yes" : "No"
+									pet.isVaccinated === undefined
+										? "Unknown"
+										: pet.isVaccinated
+											? "Yes"
+											: "No"
 								}
 							/>
 							<DetailRow
 								label="Neutered"
 								value={
-									pet.isNeutered === undefined ? "Unknown" : pet.isNeutered ? "Yes" : "No"
+									pet.isNeutered === undefined
+										? "Unknown"
+										: pet.isNeutered
+											? "Yes"
+											: "No"
 								}
 							/>
 						</div>
@@ -357,8 +385,8 @@ export default function PetDetailPage() {
 									Application Sent!
 								</h3>
 								<p style={{ color: "#666", fontSize: "14px", textAlign: "center" }}>
-									Your adoption application for <strong>{pet.name}</strong> has been submitted.
-									We'll be in touch soon!
+									Your adoption application for <strong>{pet.name}</strong> has
+									been submitted. We'll be in touch soon!
 								</p>
 								<button
 									onClick={() => setAdoptOpen(false)}
@@ -387,7 +415,13 @@ export default function PetDetailPage() {
 								>
 									Adopt {pet.name}
 								</h3>
-								<p style={{ color: "#888", fontSize: "13px", marginBottom: "20px" }}>
+								<p
+									style={{
+										color: "#888",
+										fontSize: "13px",
+										marginBottom: "20px",
+									}}
+								>
 									Tell us a bit about why you'd like to adopt {pet.name}.
 								</p>
 
@@ -408,7 +442,13 @@ export default function PetDetailPage() {
 								/>
 
 								{submitError && (
-									<p style={{ color: "#C4857A", fontSize: "13px", marginBottom: "12px" }}>
+									<p
+										style={{
+											color: "#C4857A",
+											fontSize: "13px",
+											marginBottom: "12px",
+										}}
+									>
 										{submitError}
 									</p>
 								)}
