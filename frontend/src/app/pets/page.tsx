@@ -764,7 +764,7 @@ function PetCard({ pet, onAdopt }: { pet: Pet; onAdopt: (id: string) => void }) 
 					}}
 				>
 					Adopt Me
-				</button>
+				</Link>
 			</div>
 		</div>
 	);
