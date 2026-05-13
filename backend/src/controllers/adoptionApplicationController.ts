@@ -88,6 +88,13 @@ export const createApplication = async (req: AuthRequest, res: Response): Promis
 	const userDoc = await usersCollection.doc(req.user.uid).get();
 	const userData = userDoc.data();
 
+	if (!userData || userData.role !== "adopter") {
+		throw new AppError(
+			"Only verified adopters can apply to adopt pets. Please complete eKYC verification first.",
+			403
+		);
+	}
+
 	const applicationData: Omit<AdoptionApplication, "id"> = {
 		petId,
 		name: petData?.name || "",

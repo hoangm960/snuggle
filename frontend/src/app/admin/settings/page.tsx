@@ -289,7 +289,9 @@ export default function SettingsPage() {
 			? "Administrator"
 			: profile.role === "shelter"
 				? "Shelter"
-				: "Visitor";
+				: profile.role === "adopter"
+					? "Adopter"
+					: "Visitor";
 
 	if (loading) {
 		return (
@@ -550,17 +552,20 @@ export default function SettingsPage() {
 						<div className="px-6 py-5 border-b border-border">
 							<p className="font-display text-base font-semibold">Quick Links</p>
 						</div>
-						{["Privacy Policy", "Terms of Service", "Support Center", "Export All Data"].map(
-							(label) => (
-								<button
-									key={label}
-									className="w-full flex items-center justify-between px-6 py-3.5 hover:bg-secondary/40 transition-colors border-b border-border last:border-0 text-sm text-muted-foreground hover:text-foreground"
-								>
-									{label}
-									<ChevronRight className="size-4" />
-								</button>
-							)
-						)}
+						{[
+							"Privacy Policy",
+							"Terms of Service",
+							"Support Center",
+							"Export All Data",
+						].map((label) => (
+							<button
+								key={label}
+								className="w-full flex items-center justify-between px-6 py-3.5 hover:bg-secondary/40 transition-colors border-b border-border last:border-0 text-sm text-muted-foreground hover:text-foreground"
+							>
+								{label}
+								<ChevronRight className="size-4" />
+							</button>
+						))}
 					</div>
 				</div>
 			</div>

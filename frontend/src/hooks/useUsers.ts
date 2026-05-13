@@ -6,7 +6,7 @@ export interface User {
 	email: string;
 	displayName: string | null;
 	photoURL: string | null;
-	role: "visitor" | "admin";
+	role: "visitor" | "adopter" | "shelter" | "admin";
 	accountStatus: "active" | "suspended";
 	createdAt: string;
 	updatedAt?: string;
@@ -26,11 +26,14 @@ interface UseUsersReturn {
 	error: string | null;
 	total: number;
 	fetchUsers: (params?: UseUsersParams) => Promise<void>;
-	updateUserRole: (userId: string, role: "visitor" | "admin") => Promise<boolean>;
+	updateUserRole: (
+		userId: string,
+		role: "visitor" | "adopter" | "shelter" | "admin"
+	) => Promise<boolean>;
 	updateUserStatus: (userId: string, status: "active" | "suspended") => Promise<boolean>;
 	inviteUser: (
 		email: string,
-		role: "visitor" | "admin"
+		role: "visitor" | "adopter" | "shelter" | "admin"
 	) => Promise<{ success: boolean; message: string }>;
 	deleteUser: (userId: string) => Promise<{ success: boolean; message: string }>;
 }
@@ -62,7 +65,10 @@ export const useUsers = (): UseUsersReturn => {
 		}
 	}, []);
 
-	const updateUserRole = async (userId: string, role: "visitor" | "admin"): Promise<boolean> => {
+	const updateUserRole = async (
+		userId: string,
+		role: "visitor" | "adopter" | "shelter" | "admin"
+	): Promise<boolean> => {
 		try {
 			await api.put(`/admin/users/${userId}`, { role });
 			setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role } : u)));
@@ -89,7 +95,7 @@ export const useUsers = (): UseUsersReturn => {
 
 	const inviteUser = async (
 		email: string,
-		role: "visitor" | "admin"
+		role: "visitor" | "adopter" | "shelter" | "admin"
 	): Promise<{ success: boolean; message: string }> => {
 		try {
 			const response = await api.post("/admin/invite", { email, role });

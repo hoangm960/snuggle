@@ -17,7 +17,7 @@ import { CheckIcon, ClockIcon, PawLogo } from "@/assets/icons/ekyc-icons";
 
 export default function EKYCPage() {
 	const router = useRouter();
-	const { user, loading: authLoading } = useAuth();
+	const { user, loading: authLoading, refreshUser } = useAuth();
 
 	const [kycStatus, setKycStatus] = useState<KycStatusResponse | null>(null);
 	const [statusLoading, setStatusLoading] = useState(true);
@@ -32,6 +32,12 @@ export default function EKYCPage() {
 			fetchKycStatus();
 		}
 	}, [user, authLoading, router]);
+
+	useEffect(() => {
+		if (kycStatus?.kyc?.status === "approved" || kycStatus?.user?.isKycVerified) {
+			refreshUser();
+		}
+	}, [kycStatus]);
 
 	const fetchKycStatus = async () => {
 		try {

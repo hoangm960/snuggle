@@ -45,7 +45,7 @@ export interface User {
 	id?: string;
 	email: string;
 	displayName: string;
-	role: "adopter" | "shelter" | "admin";
+	role: "visitor" | "adopter" | "shelter" | "admin";
 	photoURL?: string;
 	phone?: string;
 	bio?: string;

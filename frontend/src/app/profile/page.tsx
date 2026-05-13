@@ -11,14 +11,40 @@ import type { User as UserType } from "@/types";
 
 const inputClass =
 	"w-full h-11 rounded-2xl border px-4 text-sm outline-none transition-colors focus:ring-2 focus:ring-[#7AADA1]";
-const inputStyle = { borderColor: "#E8E8E8", background: "#FAFAFA", fontFamily: "'Poppins', sans-serif" };
+const inputStyle = {
+	borderColor: "#E8E8E8",
+	background: "#FAFAFA",
+	fontFamily: "'Poppins', sans-serif",
+};
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+function Field({
+	label,
+	hint,
+	children,
+}: {
+	label: string;
+	hint?: string;
+	children: React.ReactNode;
+}) {
 	return (
-		<div className="flex flex-col sm:flex-row sm:items-start gap-2 py-4 border-b last:border-0" style={{ borderColor: "#F0F0F0" }}>
+		<div
+			className="flex flex-col sm:flex-row sm:items-start gap-2 py-4 border-b last:border-0"
+			style={{ borderColor: "#F0F0F0" }}
+		>
 			<div style={{ minWidth: "160px" }}>
-				<p style={{ fontSize: "13px", fontWeight: 600, color: "#333", fontFamily: "'Space Grotesk', sans-serif" }}>{label}</p>
-				{hint && <p style={{ fontSize: "11px", color: "#999", marginTop: "2px" }}>{hint}</p>}
+				<p
+					style={{
+						fontSize: "13px",
+						fontWeight: 600,
+						color: "#333",
+						fontFamily: "'Space Grotesk', sans-serif",
+					}}
+				>
+					{label}
+				</p>
+				{hint && (
+					<p style={{ fontSize: "11px", color: "#999", marginTop: "2px" }}>{hint}</p>
+				)}
 			</div>
 			<div className="flex-1">{children}</div>
 		</div>
@@ -73,12 +99,22 @@ export default function ProfilePage() {
 	const initials = (form.displayName || user.email || "?")[0].toUpperCase();
 
 	return (
-		<div className="min-h-screen" style={{ background: "#F9F6F2", fontFamily: "'Poppins', sans-serif" }}>
+		<div
+			className="min-h-screen"
+			style={{ background: "#F9F6F2", fontFamily: "'Poppins', sans-serif" }}
+		>
 			<Navbar />
 
 			<div className="max-w-2xl mx-auto px-6 py-10">
 				<div className="mb-8">
-					<h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "26px", fontWeight: 700, color: "#1C1C1C" }}>
+					<h1
+						style={{
+							fontFamily: "'Space Grotesk', sans-serif",
+							fontSize: "26px",
+							fontWeight: 700,
+							color: "#1C1C1C",
+						}}
+					>
 						My Profile
 					</h1>
 					<p style={{ color: "#888", fontSize: "14px", marginTop: "4px" }}>
@@ -87,17 +123,34 @@ export default function ProfilePage() {
 				</div>
 
 				{/* Profile card */}
-				<div className="rounded-3xl overflow-hidden mb-5" style={{ background: "#fff", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
+				<div
+					className="rounded-3xl overflow-hidden mb-5"
+					style={{ background: "#fff", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}
+				>
 					{/* Avatar header */}
-					<div className="px-8 py-6 flex items-center gap-5" style={{ borderBottom: "1px solid #F0F0F0" }}>
+					<div
+						className="px-8 py-6 flex items-center gap-5"
+						style={{ borderBottom: "1px solid #F0F0F0" }}
+					>
 						<div
 							className="size-16 rounded-2xl flex items-center justify-center font-bold text-xl shrink-0"
-							style={{ background: "#E8F4F1", color: "#216959", fontFamily: "'Space Grotesk', sans-serif" }}
+							style={{
+								background: "#E8F4F1",
+								color: "#216959",
+								fontFamily: "'Space Grotesk', sans-serif",
+							}}
 						>
 							{initials}
 						</div>
 						<div>
-							<p style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "18px", fontWeight: 700, color: "#1C1C1C" }}>
+							<p
+								style={{
+									fontFamily: "'Space Grotesk', sans-serif",
+									fontSize: "18px",
+									fontWeight: 700,
+									color: "#1C1C1C",
+								}}
+							>
 								{form.displayName || user.email}
 							</p>
 							<p style={{ fontSize: "13px", color: "#888", marginTop: "2px" }}>
@@ -105,9 +158,17 @@ export default function ProfilePage() {
 							</p>
 							<span
 								className="inline-flex items-center gap-1 mt-1.5 px-2.5 py-0.5 rounded-full"
-								style={{ background: "#E8F4F1", color: "#216959", fontSize: "11px", fontWeight: 600 }}
+								style={{
+									background: "#E8F4F1",
+									color: "#216959",
+									fontSize: "11px",
+									fontWeight: 600,
+								}}
 							>
-								<div className="size-1.5 rounded-full" style={{ background: "#216959" }} />
+								<div
+									className="size-1.5 rounded-full"
+									style={{ background: "#216959" }}
+								/>
 								Active
 							</span>
 						</div>
@@ -127,7 +188,12 @@ export default function ProfilePage() {
 						<Field label="Email address">
 							<div
 								className="h-11 rounded-2xl border px-4 flex items-center text-sm"
-								style={{ borderColor: "#E8E8E8", background: "#F4F4F4", color: "#999", fontFamily: "'Poppins', sans-serif" }}
+								style={{
+									borderColor: "#E8E8E8",
+									background: "#F4F4F4",
+									color: "#999",
+									fontFamily: "'Poppins', sans-serif",
+								}}
 							>
 								{user.email}
 							</div>
@@ -152,7 +218,14 @@ export default function ProfilePage() {
 								className="w-full rounded-2xl border px-4 py-3 text-sm resize-none outline-none transition-colors focus:ring-2 focus:ring-[#7AADA1]"
 								style={{ ...inputStyle, lineHeight: "1.6" }}
 							/>
-							<p style={{ fontSize: "11px", color: "#bbb", textAlign: "right", marginTop: "4px" }}>
+							<p
+								style={{
+									fontSize: "11px",
+									color: "#bbb",
+									textAlign: "right",
+									marginTop: "4px",
+								}}
+							>
 								{form.bio.length} / 500
 							</p>
 						</Field>
@@ -160,15 +233,21 @@ export default function ProfilePage() {
 				</div>
 
 				{/* Security note */}
-				<div className="rounded-2xl px-5 py-4 flex items-start gap-3 mb-8" style={{ background: "#fff", border: "1px solid #F0F0F0" }}>
+				<div
+					className="rounded-2xl px-5 py-4 flex items-start gap-3 mb-8"
+					style={{ background: "#fff", border: "1px solid #F0F0F0" }}
+				>
 					<Shield className="size-4 shrink-0 mt-0.5" style={{ color: "#7AADA1" }} />
 					<p style={{ fontSize: "13px", color: "#666" }}>
-						To change your password or email, please contact support or use the password reset flow from the login page.
+						To change your password or email, please contact support or use the password
+						reset flow from the login page.
 					</p>
 				</div>
 
 				{error && (
-					<p style={{ color: "#C4857A", fontSize: "13px", marginBottom: "12px" }}>{error}</p>
+					<p style={{ color: "#C4857A", fontSize: "13px", marginBottom: "12px" }}>
+						{error}
+					</p>
 				)}
 
 				<button
@@ -183,9 +262,13 @@ export default function ProfilePage() {
 					}}
 				>
 					{saving ? (
-						<><Loader2 className="size-4 animate-spin" /> Saving…</>
+						<>
+							<Loader2 className="size-4 animate-spin" /> Saving…
+						</>
 					) : saved ? (
-						<><Check className="size-4" /> Saved!</>
+						<>
+							<Check className="size-4" /> Saved!
+						</>
 					) : (
 						"Save changes"
 					)}

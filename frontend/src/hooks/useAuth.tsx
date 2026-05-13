@@ -11,7 +11,14 @@ import {
 	FacebookAuthProvider,
 	User as FirebaseUser,
 } from "firebase/auth";
-import { getStoredUser, clearAuthSession, isAuthenticated, getToken } from "@/lib/cookies";
+import {
+	getStoredUser,
+	setStoredUser,
+	clearAuthSession,
+	isAuthenticated,
+	getToken,
+} from "@/lib/cookies";
+import api from "@/lib/api";
 
 interface AuthContextValue {
 	user: User | null;
@@ -110,7 +117,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		}
 	};
 
-	const refreshUser = () => {
+	const refreshUser = async () => {
+		try {
+			const response = await api.get("/auth/profile");
+			const freshUser = response.data.data;
+			if (freshUser) {
+				setStoredUser(freshUser);
+				setUser(freshUser);
+				return;
+			}
+		} catch {
+			// fallback to cookie if API fails
+		}
 		const storedUser = getStoredUser();
 		const authenticated = isAuthenticated();
 		if (authenticated && storedUser) {

@@ -20,7 +20,7 @@ export const register = async (req: AuthRequest, res: Response): Promise<void> =
 		return;
 	}
 
-	let role: "visitor" | "admin" = "visitor";
+	let role: "visitor" | "adopter" | "shelter" | "admin" = "visitor";
 
 	if (inviteToken) {
 		const invite = await validateInviteToken(inviteToken);

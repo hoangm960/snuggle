@@ -24,6 +24,8 @@ export default function SignContractPage() {
 	useEffect(() => {
 		if (!authLoading && !user) {
 			router.push("/login");
+		} else if (!authLoading && user && user.role !== "adopter") {
+			router.push("/ekyc");
 		}
 	}, [authLoading, user, router]);
 

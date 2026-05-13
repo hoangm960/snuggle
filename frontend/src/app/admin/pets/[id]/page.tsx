@@ -91,8 +91,8 @@ export default function PetDetailEditPage() {
 			? `${pet.ageMonths} month${pet.ageMonths === 1 ? "" : "s"}`
 			: `${(pet.ageMonths / 12).toFixed(1)} years`
 		: pet.age
-		? `${pet.age} year${pet.age === 1 ? "" : "s"}`
-		: "";
+			? `${pet.age} year${pet.age === 1 ? "" : "s"}`
+			: "";
 
 	return (
 		<AdminLayout>
@@ -140,9 +140,7 @@ export default function PetDetailEditPage() {
 				<div className="flex gap-8 flex-col lg:flex-row">
 					{/* Left — Photo gallery */}
 					<div className="flex-shrink-0" style={{ width: "300px" }}>
-						<div
-							className="bg-card border border-border rounded-3xl p-5 shadow-card"
-						>
+						<div className="bg-card border border-border rounded-3xl p-5 shadow-card">
 							<h2 className="font-display font-semibold text-base mb-4">
 								Photo Gallery
 							</h2>
@@ -245,17 +243,16 @@ export default function PetDetailEditPage() {
 									label="Vaccinated"
 									value={pet.isVaccinated ? "Yes" : "No"}
 								/>
-								<InfoRow
-									label="Neutered"
-									value={pet.isNeutered ? "Yes" : "No"}
-								/>
+								<InfoRow label="Neutered" value={pet.isNeutered ? "Yes" : "No"} />
 							</div>
 
 							{/* Arrival date — editable here since it shows as "Born" on detail page */}
 							<div className="mt-4 pt-4 border-t border-border">
 								<label className="block text-xs font-medium text-muted-foreground mb-1.5">
 									Arrival / Born Date{" "}
-									<span className="text-foreground/50">(shown on detail page)</span>
+									<span className="text-foreground/50">
+										(shown on detail page)
+									</span>
 								</label>
 								<input
 									type="date"
@@ -272,7 +269,8 @@ export default function PetDetailEditPage() {
 								Information
 							</h2>
 							<p className="text-xs text-muted-foreground mb-3">
-								This text appears in the "Information" section on the public pet page.
+								This text appears in the "Information" section on the public pet
+								page.
 							</p>
 							<textarea
 								value={description}

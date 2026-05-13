@@ -15,7 +15,7 @@ const from = process.env.SMTP_FROM || "Snuggles <noreply@snuggles.app>";
 export interface InviteEmailParams {
 	to: string;
 	inviteToken: string;
-	role: "visitor" | "admin";
+	role: "visitor" | "adopter" | "shelter" | "admin";
 	invitedByName: string;
 }
 
@@ -28,7 +28,14 @@ export const sendInviteEmail = async ({
 	const appUrl = process.env.APP_URL || "http://localhost:3000";
 	const inviteLink = `${appUrl}/register?invite=${inviteToken}&role=${role}`;
 
-	const roleLabel = role === "admin" ? "Administrator" : "Visitor";
+	const roleLabel =
+		role === "admin"
+			? "Administrator"
+			: role === "shelter"
+				? "Shelter"
+				: role === "adopter"
+					? "Adopter"
+					: "Visitor";
 
 	const htmlContent = `
 		<!DOCTYPE html>

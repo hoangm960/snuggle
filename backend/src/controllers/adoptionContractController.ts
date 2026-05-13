@@ -258,13 +258,25 @@ export const signContract = async (req: AuthRequest, res: Response): Promise<voi
 	const contractData = doc.data() as AdoptionContract;
 	const updateData: Partial<AdoptionContract> = {};
 
+	const userDoc = await usersCollection.doc(req.user.uid).get();
+	const userData = userDoc.data();
+
 	if (role === "adopter") {
+		if (!userData || userData.role !== "adopter") {
+			throw new AppError(
+				"Only verified adopters can sign contracts as adopter. Please complete eKYC verification first.",
+				403
+			);
+		}
 		if (contractData.adopterId !== req.user.uid) {
 			throw new AppError("Not authorized to sign as adopter", 403);
 		}
 		updateData.adopterSignedAt = new Date();
 		if (signedName) updateData.adopterSignedName = signedName;
 	} else if (role === "shelter") {
+		if (!userData || (userData.role !== "shelter" && userData.role !== "admin")) {
+			throw new AppError("Not authorized to sign as shelter", 403);
+		}
 		updateData.shelterSignedAt = new Date();
 		if (signedName) updateData.shelterSignedName = signedName;
 	}
@@ -369,7 +381,10 @@ export const archiveContract = async (req: AuthRequest, res: Response): Promise<
 	res.status(200).json(response);
 };
 
-export const generateContractPdfEndpoint = async (req: AuthRequest, res: Response): Promise<void> => {
+export const generateContractPdfEndpoint = async (
+	req: AuthRequest,
+	res: Response
+): Promise<void> => {
 	if (!req.user) {
 		throw new AppError("Unauthorized", 401);
 	}

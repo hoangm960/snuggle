@@ -42,7 +42,7 @@ export interface User {
 	photoURL?: string;
 	phone?: string;
 	bio?: string;
-	role: "visitor" | "admin";
+	role: "visitor" | "adopter" | "shelter" | "admin";
 	accountStatus: "active" | "suspended";
 	authProvider: "email" | "google" | "apple" | "facebook";
 	emailVerified: boolean;

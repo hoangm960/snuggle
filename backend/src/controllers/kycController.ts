@@ -115,6 +115,7 @@ export const approveKYC = async (kycId: string, adminId: string): Promise<KycVer
 	if (kyc.userId) {
 		await usersCollection.doc(kyc.userId).update({
 			isKycVerified: true,
+			role: "adopter",
 			updatedAt: new Date(),
 		});
 	}

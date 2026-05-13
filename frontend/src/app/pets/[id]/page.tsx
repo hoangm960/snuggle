@@ -260,6 +260,8 @@ export default function PetDetailPage() {
 								onClick={() => {
 									if (!user) {
 										router.push("/login");
+									} else if (user.role === "visitor") {
+										router.push("/ekyc");
 									} else {
 										setAdoptOpen(true);
 									}
