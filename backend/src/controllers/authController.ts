@@ -1,6 +1,6 @@
 import { Response } from "express";
-import { auth, db } from "../config/firebase";
-import { AuthRequest, ApiResponse, User } from "../types";
+import { auth, db, storage } from "../config/firebase";
+import { AuthRequest, ApiResponse, User, NotificationPrefs, AppearancePrefs } from "../types";
 import { AppError } from "../middleware/errorHandler";
 import { validateInviteToken, deleteInvite } from "./adminController";
 import { sendVerificationEmail } from "../services/emailService";
@@ -544,4 +544,142 @@ export const verifyEmail = async (req: AuthRequest, res: Response): Promise<void
 	};
 
 	res.status(200).json(apiResponse);
+};
+
+export const changePassword = async (req: AuthRequest, res: Response): Promise<void> => {
+	if (!req.user) {
+		throw new AppError("Unauthorized", 401);
+	}
+
+	const { currentPassword, newPassword } = req.body;
+
+	const userRecord = await auth.getUser(req.user.uid);
+	if (userRecord.providerData.some((p) => p.providerId === "password")) {
+		const firebaseApiKey = process.env.FIREBASE_API_KEY;
+		if (!firebaseApiKey) {
+			throw new AppError("Firebase API key not configured", 500);
+		}
+
+		const verifyRes = await fetch(
+			`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${firebaseApiKey}`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					email: userRecord.email,
+					password: currentPassword,
+					returnSecureToken: true,
+				}),
+			}
+		);
+
+		const verifyData = (await verifyRes.json()) as { error?: { message?: string } };
+		if (!verifyRes.ok) {
+			if (verifyData.error?.message === "INVALID_PASSWORD") {
+				throw new AppError("Current password is incorrect", 400);
+			}
+			throw new AppError("Failed to verify current password", 400);
+		}
+	}
+
+	await auth.updateUser(req.user.uid, { password: newPassword });
+
+	const response: ApiResponse = {
+		success: true,
+		message: "Password changed successfully",
+	};
+
+	res.status(200).json(response);
+};
+
+export const updateNotificationPrefs = async (req: AuthRequest, res: Response): Promise<void> => {
+	if (!req.user) {
+		throw new AppError("Unauthorized", 401);
+	}
+
+	const prefs = req.body as NotificationPrefs;
+	await usersCollection.doc(req.user.uid).update({
+		notificationPrefs: prefs,
+		updatedAt: new Date(),
+	});
+
+	const response: ApiResponse<{ notificationPrefs: NotificationPrefs }> = {
+		success: true,
+		data: { notificationPrefs: prefs },
+		message: "Notification preferences updated",
+	};
+
+	res.status(200).json(response);
+};
+
+export const updateAppearance = async (req: AuthRequest, res: Response): Promise<void> => {
+	if (!req.user) {
+		throw new AppError("Unauthorized", 401);
+	}
+
+	const appearance = req.body as AppearancePrefs;
+	await usersCollection.doc(req.user.uid).update({
+		appearance,
+		updatedAt: new Date(),
+	});
+
+	const response: ApiResponse<{ appearance: AppearancePrefs }> = {
+		success: true,
+		data: { appearance },
+		message: "Appearance settings updated",
+	};
+
+	res.status(200).json(response);
+};
+
+export const uploadAvatar = async (req: AuthRequest, res: Response): Promise<void> => {
+	if (!req.user) {
+		throw new AppError("Unauthorized", 401);
+	}
+
+	const file = req.file;
+	if (!file) {
+		throw new AppError("No file provided", 400);
+	}
+
+	const bucket = storage.bucket();
+	const timestamp = Date.now();
+	const ext = file.originalname.split(".").pop() || "jpg";
+	const filename = `avatars/${req.user.uid}/${timestamp}.${ext}`;
+
+	const blob = bucket.file(filename);
+	const blobStream = blob.createWriteStream({
+		metadata: {
+			contentType: file.mimetype,
+			cacheControl: "public, max-age=31536000",
+		},
+	});
+
+	await new Promise<void>((resolve, reject) => {
+		blobStream.on("error", reject);
+		blobStream.on("finish", async () => {
+			try {
+				await blob.makePublic();
+				resolve();
+			} catch (err) {
+				reject(err);
+			}
+		});
+		blobStream.end(file.buffer);
+	});
+
+	const photoURL = `https://storage.googleapis.com/${bucket.name}/${filename}`;
+
+	await usersCollection.doc(req.user.uid).update({
+		photoURL,
+		updatedAt: new Date(),
+	});
+
+	const response: ApiResponse<{ photoURL: string }> = {
+		success: true,
+		data: { photoURL },
+		message: "Avatar uploaded successfully",
+	};
+
+	res.status(200).json(response);
 };

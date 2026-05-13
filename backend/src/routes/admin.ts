@@ -9,12 +9,18 @@ import {
 	inviteUser,
 	deleteUser,
 } from "../controllers/adminController";
+import { getDashboardData } from "../controllers/dashboardController";
 import {
 	getAllChats,
 	getChatMessages,
 	getPendingChats,
 	acceptChat,
 } from "../controllers/chatController";
+import {
+	getAllHealthRecords,
+	createHealthRecord,
+	deleteHealthRecord,
+} from "../controllers/adminHealthRecordController";
 import { authenticate } from "../middleware/auth";
 import { requireAdmin } from "../middleware/admin";
 import { asyncHandler } from "../middleware/asyncHandler";
@@ -26,6 +32,18 @@ const router = Router();
 
 router.use(authenticate);
 router.use(requireAdmin);
+
+router.get(
+	"/dashboard",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		const data = await getDashboardData();
+
+		res.status(200).json({
+			success: true,
+			data,
+		});
+	})
+);
 
 router.post(
 	"/invite",
@@ -201,5 +219,11 @@ router.post(
 		});
 	})
 );
+
+router.get("/health-records", asyncHandler(getAllHealthRecords));
+
+router.post("/health-records", asyncHandler(createHealthRecord));
+
+router.delete("/health-records/:petId/:id", asyncHandler(deleteHealthRecord));
 
 export default router;

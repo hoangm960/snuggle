@@ -1,33 +1,62 @@
 import { Response } from "express";
 import { db } from "../config/firebase";
-import { HealthRecord, AuthRequest, ApiResponse } from "../types";
+import { HealthRecord, AuthRequest, ApiResponse, Pet } from "../types";
 import { AppError } from "../middleware/errorHandler";
 import { errorLogger } from "../utils/logger";
+
+interface HealthRecordWithPet extends HealthRecord {
+	petName: string;
+	petSpecies: string;
+}
 
 const getHealthRecordsCollection = (petId: string) =>
 	db.collection("pets").doc(petId).collection("healthRecords");
 
-export const getPetHealthRecords = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getAllHealthRecords = async (req: AuthRequest, res: Response): Promise<void> => {
 	try {
-		const { petId } = req.params;
 		const { type } = req.query;
 
-		let query: FirebaseFirestore.Query = getHealthRecordsCollection(petId);
+		const petsSnapshot = await db.collection("pets").get();
 
-		if (type) {
-			query = query.where("type", "==", type);
+		const allRecords: HealthRecordWithPet[] = [];
+
+		for (const petDoc of petsSnapshot.docs) {
+			const petData = petDoc.data() as Pet;
+			const petId = petDoc.id;
+
+			let query: FirebaseFirestore.Query = getHealthRecordsCollection(petId);
+			if (type) {
+				query = query.where("type", "==", type);
+			}
+
+			const recordsSnapshot = await query.orderBy("recordDate", "desc").get();
+
+			recordsSnapshot.forEach((doc) => {
+				const recordData = doc.data();
+				allRecords.push({
+					id: doc.id,
+					petId,
+					type: recordData.type,
+					title: recordData.title,
+					description: recordData.description,
+					vetName: recordData.vetName,
+					batchNumber: recordData.batchNumber,
+					documentURL: recordData.documentURL,
+					recordDate: recordData.recordDate,
+					createdAt: recordData.createdAt,
+					petName: petData.name,
+					petSpecies: petData.species,
+				});
+			});
 		}
 
-		const snapshot = await query.orderBy("recordDate", "desc").get();
-		const records: HealthRecord[] = [];
+		allRecords.sort(
+			(a, b) => new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime()
+		);
 
-		snapshot.forEach((doc) => {
-			records.push({ id: doc.id, petId, ...doc.data() } as HealthRecord);
-		});
-
-		const response: ApiResponse<HealthRecord[]> = {
+		const response: ApiResponse<HealthRecordWithPet[]> = {
 			success: true,
-			data: records,
+			data: allRecords,
 		};
 
 		res.status(200).json(response);
@@ -46,12 +75,19 @@ export const createHealthRecord = async (req: AuthRequest, res: Response): Promi
 			throw new AppError("Unauthorized", 401);
 		}
 
-		const { petId } = req.params;
-		const { type, title, description, vetName, batchNumber, documentURL, recordDate } =
-			req.body;
+		const { petId, type, title, description, vetName, recordDate } = req.body;
+
+		if (!petId) {
+			throw new AppError("Pet ID is required", 400);
+		}
 
 		if (!type || !["vaccine", "checkup", "treatment"].includes(type)) {
 			throw new AppError("Invalid health record type", 400);
+		}
+
+		const petDoc = await db.collection("pets").doc(petId).get();
+		if (!petDoc.exists) {
+			throw new AppError("Pet not found", 404);
 		}
 
 		const recordData: Omit<HealthRecord, "id"> = {
@@ -60,8 +96,6 @@ export const createHealthRecord = async (req: AuthRequest, res: Response): Promi
 			title,
 			description,
 			vetName,
-			batchNumber,
-			documentURL,
 			addedBy: req.user.uid,
 			recordDate: recordDate ? new Date(recordDate) : new Date(),
 			createdAt: new Date(),

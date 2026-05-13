@@ -1,6 +1,8 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { AdminLayout } from "./_components/AdminLayout";
+import api from "@/lib/api";
 import {
 	PawPrint,
 	ClipboardList,
@@ -11,66 +13,30 @@ import {
 	CheckCircle2,
 	XCircle,
 	ShieldCheck,
+	Loader2,
 } from "lucide-react";
 
-const stats = [
-	{
-		label: "Total Pets",
-		value: "248",
-		change: "+12 this week",
-		icon: PawPrint,
-		color: "#7AADA1",
-		bg: "#E8F4F1",
-	},
-	{
-		label: "Pending Requests",
-		value: "34",
-		change: "+5 today",
-		icon: ClipboardList,
-		color: "#C4857A",
-		bg: "#FAF0EE",
-	},
-	{
-		label: "Active Users",
-		value: "1,204",
-		change: "+89 this month",
-		icon: Users,
-		color: "#216959",
-		bg: "#E8F4F1",
-	},
-];
+interface DashboardStats {
+	totalPets: number;
+	pendingRequests: number;
+	activeUsers: number;
+	totalDonations: number;
+	adoptionRate: number;
+	petsAddedThisWeek: number;
+	requestsAddedToday: number;
+	usersAddedThisMonth: number;
+	donationsThisWeek: number;
+}
 
-const recentRequests = [
-	{
-		id: "REQ-001",
-		pet: "Mochi",
-		adopter: "Sarah Johnson",
-		date: "Apr 28, 2026",
-		status: "pending",
-	},
-	{ id: "REQ-002", pet: "Luna", adopter: "David Kim", date: "Apr 27, 2026", status: "approved" },
-	{
-		id: "REQ-003",
-		pet: "Charlie",
-		adopter: "Emily Chen",
-		date: "Apr 27, 2026",
-		status: "rejected",
-	},
-	{
-		id: "REQ-004",
-		pet: "Bella",
-		adopter: "James Wilson",
-		date: "Apr 26, 2026",
-		status: "pending",
-	},
-	{
-		id: "REQ-005",
-		pet: "Max",
-		adopter: "Olivia Davis",
-		date: "Apr 26, 2026",
-		status: "approved",
-	},
-];
+interface RecentRequest {
+	id: string;
+	petName: string;
+	petThumbnail?: string;
+	adopterName: string;
+	adopterPhoto?: string;
+	appliedAt: string;
+	status: "pending" | "approved" | "rejected" | "completed";
+}
 
 const statusConfig: Record<
 	string,
@@ -79,9 +45,121 @@ const statusConfig: Record<
 	pending: { label: "Pending", color: "#C4857A", bg: "#FAF0EE", icon: Clock },
 	approved: { label: "Approved", color: "#216959", bg: "#E8F4F1", icon: CheckCircle2 },
 	rejected: { label: "Rejected", color: "#999", bg: "#F4F4F4", icon: XCircle },
+	completed: { label: "Completed", color: "#216959", bg: "#E8F4F1", icon: CheckCircle2 },
 };
 
+function formatDate(dateStr: string): string {
+	try {
+		const date = new Date(dateStr);
+		return date.toLocaleDateString("en-US", {
+			month: "short",
+			day: "numeric",
+			year: "numeric",
+		});
+	} catch {
+		return dateStr;
+	}
+}
+
+function formatCount(value: number): string {
+	if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+	if (value >= 100) return value.toString();
+	return value.toLocaleString();
+}
+
 export default function AdminDashboard() {
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+	const [stats, setStats] = useState<DashboardStats | null>(null);
+	const [recentRequests, setRecentRequests] = useState<RecentRequest[]>([]);
+
+	useEffect(() => {
+		const fetchDashboard = async () => {
+			setLoading(true);
+			setError(null);
+			try {
+				const res = await api.get("/admin/dashboard");
+				const data = res.data.data;
+				setStats(data.stats);
+				setRecentRequests(data.recentRequests || []);
+			} catch (err) {
+				console.error("Failed to load dashboard:", err);
+				setError("Failed to load dashboard data");
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchDashboard();
+	}, []);
+
+	if (loading) {
+		return (
+			<AdminLayout>
+				<div className="p-8 flex items-center justify-center h-64">
+					<Loader2 className="size-8 animate-spin text-primary" />
+				</div>
+			</AdminLayout>
+		);
+	}
+
+	if (error || !stats) {
+		return (
+			<AdminLayout>
+				<div className="p-8 flex items-center justify-center h-64">
+					<p className="text-destructive">{error || "Failed to load dashboard"}</p>
+				</div>
+			</AdminLayout>
+		);
+	}
+
+	const statCards = [
+		{
+			label: "Total Pets",
+			value: formatCount(stats.totalPets),
+			change:
+				stats.petsAddedThisWeek > 0
+					? `+${stats.petsAddedThisWeek} this week`
+					: "No new pets this week",
+			icon: PawPrint,
+			color: "#7AADA1",
+			bg: "#E8F4F1",
+		},
+		{
+			label: "Pending Requests",
+			value: formatCount(stats.pendingRequests),
+			change:
+				stats.requestsAddedToday > 0
+					? `+${stats.requestsAddedToday} today`
+					: "No new requests today",
+			icon: ClipboardList,
+			color: "#C4857A",
+			bg: "#FAF0EE",
+		},
+		{
+			label: "Active Users",
+			value: formatCount(stats.activeUsers),
+			change:
+				stats.usersAddedThisMonth > 0
+					? `+${stats.usersAddedThisMonth} this month`
+					: "No new users this month",
+			icon: Users,
+			color: "#216959",
+			bg: "#E8F4F1",
+		},
+		{
+			label: "Total Donations",
+			value: stats.totalDonations > 0 ? `$${formatCount(stats.totalDonations)}` : "$0",
+			change:
+				stats.donationsThisWeek > 0
+					? `+$${stats.donationsThisWeek} this week`
+					: "No donations this week",
+			icon: HeartHandshake,
+			color: "#9A7768",
+			bg: "#F5EFEB",
+		},
+	];
+
 	return (
 		<AdminLayout>
 			<div className="p-8">
@@ -101,8 +179,8 @@ export default function AdminDashboard() {
 					</p>
 				</div>
 
-				<div className="grid grid-cols-3 gap-5 mb-8">
-					{stats.map((s) => (
+				<div className="grid grid-cols-4 gap-5 mb-8">
+					{statCards.map((s) => (
 						<div
 							key={s.label}
 							className="rounded-2xl p-5"
@@ -167,78 +245,104 @@ export default function AdminDashboard() {
 								View all
 							</a>
 						</div>
-						<table className="w-full">
-							<thead>
-								<tr>
-									{["ID", "Pet", "Adopter", "Date", "Status"].map((h) => (
-										<th
-											key={h}
-											className="text-left pb-3"
-											style={{
-												fontSize: "11px",
-												fontWeight: 600,
-												color: "#aaa",
-												textTransform: "uppercase",
-												letterSpacing: "0.08em",
-											}}
-										>
-											{h}
-										</th>
-									))}
-								</tr>
-							</thead>
-							<tbody>
-								{recentRequests.map((r) => {
-									const s = statusConfig[r.status];
-									return (
-										<tr key={r.id} style={{ borderTop: "1px solid #F8F8F8" }}>
-											<td
-												className="py-3"
-												style={{ fontSize: "12px", color: "#aaa" }}
-											>
-												{r.id}
-											</td>
-											<td
-												className="py-3"
+						{recentRequests.length === 0 ? (
+							<p
+								style={{
+									color: "#aaa",
+									fontSize: "13px",
+									textAlign: "center",
+									padding: "20px 0",
+								}}
+							>
+								No recent requests
+							</p>
+						) : (
+							<table className="w-full">
+								<thead>
+									<tr>
+										{["ID", "Pet", "Adopter", "Date", "Status"].map((h) => (
+											<th
+												key={h}
+												className="text-left pb-3"
 												style={{
-													fontSize: "13px",
-													fontWeight: 500,
-													color: "#1C1C1C",
+													fontSize: "11px",
+													fontWeight: 600,
+													color: "#aaa",
+													textTransform: "uppercase",
+													letterSpacing: "0.08em",
 												}}
 											>
-												{r.pet}
-											</td>
-											<td
-												className="py-3"
-												style={{ fontSize: "13px", color: "#666" }}
+												{h}
+											</th>
+										))}
+									</tr>
+								</thead>
+								<tbody>
+									{recentRequests.map((r) => {
+										const s = statusConfig[r.status] || statusConfig.pending;
+										return (
+											<tr
+												key={r.id}
+												style={{ borderTop: "1px solid #F8F8F8" }}
 											>
-												{r.adopter}
-											</td>
-											<td
-												className="py-3"
-												style={{ fontSize: "12px", color: "#aaa" }}
-											>
-												{r.date}
-											</td>
-											<td className="py-3">
-												<span
-													className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full"
-													style={{
-														background: s.bg,
-														color: s.color,
-														fontSize: "11px",
-														fontWeight: 600,
-													}}
+												<td
+													className="py-3"
+													style={{ fontSize: "12px", color: "#aaa" }}
 												>
-													<s.icon className="size-3" />
-													{s.label}
-												</span>
-											</td>
-										</tr>
-									);
-								})}
-							</tbody>
-						</table>
+													{r.id.slice(0, 8)}
+												</td>
+												<td className="py-3">
+													<div className="flex items-center gap-2">
+														{r.petThumbnail ? (
+															<img
+																src={r.petThumbnail}
+																alt={r.petName}
+																className="size-8 rounded-lg object-cover"
+															/>
+														) : null}
+														<span
+															style={{
+																fontSize: "13px",
+																fontWeight: 500,
+																color: "#1C1C1C",
+															}}
+														>
+															{r.petName}
+														</span>
+													</div>
+												</td>
+												<td
+													className="py-3"
+													style={{ fontSize: "13px", color: "#666" }}
+												>
+													{r.adopterName}
+												</td>
+												<td
+													className="py-3"
+													style={{ fontSize: "12px", color: "#aaa" }}
+												>
+													{formatDate(r.appliedAt)}
+												</td>
+												<td className="py-3">
+													<span
+														className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full"
+														style={{
+															background: s.bg,
+															color: s.color,
+															fontSize: "11px",
+															fontWeight: 600,
+														}}
+													>
+														<s.icon className="size-3" />
+														{s.label}
+													</span>
+												</td>
+											</tr>
+										);
+									})}
+								</tbody>
+							</table>
+						)}
 					</div>
 
 					<div
@@ -260,21 +364,21 @@ export default function AdminDashboard() {
 							{[
 								{
 									label: "Review eKYC Submissions",
-									href: "/admin/ekyc",
+									href: "/admin/kyc",
 									icon: ShieldCheck,
-									count: 7,
+									count: stats.pendingRequests,
 								},
 								{
 									label: "Pending Requests",
 									href: "/admin/requests",
 									icon: ClipboardList,
-									count: 34,
+									count: stats.pendingRequests,
 								},
 								{
-									label: "New Pet Listings",
+									label: "Total Pets",
 									href: "/admin/pets",
 									icon: PawPrint,
-									count: 3,
+									count: stats.totalPets,
 								},
 							].map((item) => (
 								<a
@@ -328,10 +432,10 @@ export default function AdminDashboard() {
 									color: "#216959",
 								}}
 							>
-								82%
+								{stats.adoptionRate}%
 							</p>
 							<p style={{ fontSize: "11px", color: "#7AADA1", marginTop: "2px" }}>
-								↑ 6% from last month
+								Based on total applications
 							</p>
 						</div>
 					</div>

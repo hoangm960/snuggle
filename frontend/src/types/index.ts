@@ -26,14 +26,31 @@ export interface Pet {
 	updatedAt: Date;
 }
 
+export interface NotificationPrefs {
+	newRequest: boolean;
+	requestApproved: boolean;
+	newDonation: boolean;
+	newMessage: boolean;
+	weeklyReport: boolean;
+	systemAlerts: boolean;
+}
+
+export interface AppearancePrefs {
+	darkMode: boolean;
+	compactView: boolean;
+	accentColor: string;
+}
+
 export interface User {
 	id?: string;
 	email: string;
 	displayName: string;
-	role: "adopter" | "shelter" | "admin" | "visitor";
+	role: "adopter" | "shelter" | "admin";
 	photoURL?: string;
 	phone?: string;
 	bio?: string;
+	notificationPrefs?: NotificationPrefs;
+	appearance?: AppearancePrefs;
 	createdAt: Date;
 	updatedAt: Date;
 }

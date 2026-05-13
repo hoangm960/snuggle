@@ -29,7 +29,13 @@ export const getAllApplications = async (req: AuthRequest, res: Response): Promi
 	const applications: AdoptionApplication[] = [];
 
 	snapshot.forEach((doc) => {
-		applications.push({ id: doc.id, ...doc.data() } as AdoptionApplication);
+		const data = doc.data();
+		applications.push({
+			id: doc.id,
+			...data,
+			appliedAt: data.appliedAt?.toDate ? data.appliedAt.toDate() : data.appliedAt,
+			reviewedAt: data.reviewedAt?.toDate ? data.reviewedAt.toDate() : data.reviewedAt,
+		} as AdoptionApplication);
 	});
 
 	const response: ApiResponse<AdoptionApplication[]> = {
@@ -48,9 +54,17 @@ export const getApplicationById = async (req: AuthRequest, res: Response): Promi
 		throw new AppError("Application not found", 404);
 	}
 
+	const data = doc.data();
+	const application = {
+		id: doc.id,
+		...data,
+		appliedAt: data?.appliedAt?.toDate ? data.appliedAt.toDate() : data?.appliedAt,
+		reviewedAt: data?.reviewedAt?.toDate ? data.reviewedAt.toDate() : data?.reviewedAt,
+	} as AdoptionApplication;
+
 	const response: ApiResponse<AdoptionApplication> = {
 		success: true,
-		data: { id: doc.id, ...doc.data() } as AdoptionApplication,
+		data: application,
 	};
 
 	res.status(200).json(response);

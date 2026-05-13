@@ -23,7 +23,7 @@ const navMain = [
 	{ href: "/admin/pets", label: "Pets", icon: PawPrint },
 	{ href: "/admin/requests", label: "Adoption Requests", icon: ClipboardList, badge: 12 },
 	{ href: "/admin/users", label: "Users", icon: Users },
-	{ href: "/admin/kyc", label: "eKYC Management", icon: ShieldCheck },
+	{ href: "/admin/ekyc", label: "eKYC Management", icon: ShieldCheck },
 	{ href: "/admin/health-records", label: "Health Records", icon: HeartPulse },
 	{ href: "/admin/contracts", label: "Contracts", icon: FileSignature },
 	{ href: "/admin/reviews", label: "Reviews", icon: Star },

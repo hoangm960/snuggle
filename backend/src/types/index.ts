@@ -20,11 +20,28 @@ export interface ApiResponse<T = unknown> {
 	emailVerificationRequired?: boolean;
 }
 
+export interface NotificationPrefs {
+	newRequest: boolean;
+	requestApproved: boolean;
+	newDonation: boolean;
+	newMessage: boolean;
+	weeklyReport: boolean;
+	systemAlerts: boolean;
+}
+
+export interface AppearancePrefs {
+	darkMode: boolean;
+	compactView: boolean;
+	accentColor: string;
+}
+
 export interface User {
 	id?: string;
 	email: string;
 	displayName: string;
 	photoURL?: string;
+	phone?: string;
+	bio?: string;
 	role: "visitor" | "admin";
 	accountStatus: "active" | "suspended";
 	authProvider: "email" | "google" | "apple" | "facebook";
@@ -34,6 +51,8 @@ export interface User {
 	bio?: string;
 	shelterId?: string;
 	fcmTokens?: string[];
+	notificationPrefs?: NotificationPrefs;
+	appearance?: AppearancePrefs;
 	loginCount?: number;
 	lastLoginAt?: Date;
 	createdAt: Date;
@@ -139,7 +158,8 @@ export interface HealthRecord {
 	id?: string;
 	petId?: string;
 	type: "vaccine" | "checkup" | "treatment";
-	description: string;
+	title?: string;
+	description?: string;
 	vetName?: string;
 	batchNumber?: string;
 	documentURL?: string;
@@ -173,6 +193,8 @@ export interface AdoptionContract {
 	contractHash?: string;
 	adopterSignedAt?: Date;
 	shelterSignedAt?: Date;
+	adopterSignedName?: string;
+	shelterSignedName?: string;
 	status: "draft" | "signed" | "archived";
 	createdAt: Date;
 }

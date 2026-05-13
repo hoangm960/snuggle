@@ -178,15 +178,23 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
 					</button>
 				</div>
 
-				<div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ background: "#F9F6F2" }}>
+				<div
+					className="flex-1 overflow-y-auto p-4 space-y-3"
+					style={{ background: "#F9F6F2" }}
+				>
 					{error && (
-						<div className="rounded-lg px-3 py-2 text-sm" style={{ background: "#fff", color: "#EB4335" }}>
+						<div
+							className="rounded-lg px-3 py-2 text-sm"
+							style={{ background: "#fff", color: "#EB4335" }}
+						>
 							{error}
 						</div>
 					)}
 
 					{isLoading && messages.length === 0 ? (
-						<div className="flex h-full items-center justify-center text-gray-400">Loading...</div>
+						<div className="flex h-full items-center justify-center text-gray-400">
+							Loading...
+						</div>
 					) : messages.length === 0 ? (
 						<div className="flex h-full items-center justify-center text-center text-gray-400">
 							<div className="text-sm">No messages yet. Start the conversation!</div>
@@ -208,7 +216,10 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
 										{isOwnMessage ? (
 											<User className="size-3.5 text-white" />
 										) : (
-											<Bot className="size-3.5" style={{ color: "#7AADA1" }} />
+											<Bot
+												className="size-3.5"
+												style={{ color: "#7AADA1" }}
+											/>
 										)}
 									</div>
 									<div className="max-w-[78%]">
@@ -219,12 +230,18 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
 													? "linear-gradient(135deg, #7AADA1, #216959)"
 													: "#fff",
 												color: isOwnMessage ? "#fff" : "#333",
-												borderBottomLeftRadius: isOwnMessage ? "4px" : undefined,
-												borderBottomRightRadius: isOwnMessage ? undefined : "4px",
+												borderBottomLeftRadius: isOwnMessage
+													? "4px"
+													: undefined,
+												borderBottomRightRadius: isOwnMessage
+													? undefined
+													: "4px",
 												border: isOwnMessage ? "none" : "1px solid #F0F0F0",
 											}}
 										>
-											<p style={{ fontSize: "13px", lineHeight: 1.5 }}>{msg.content}</p>
+											<p style={{ fontSize: "13px", lineHeight: 1.5 }}>
+												{msg.content}
+											</p>
 										</div>
 										<p
 											style={{
@@ -294,7 +311,10 @@ export default function ChatWidget({ onClose }: ChatWidgetProps) {
 						onClick={handleSendMessage}
 						disabled={!newMessage.trim() || !chat?.id || isLoading}
 						className="size-9 rounded-xl flex items-center justify-center transition-opacity disabled:opacity-40"
-						style={{ background: "linear-gradient(135deg, #7AADA1, #216959)", color: "#fff" }}
+						style={{
+							background: "linear-gradient(135deg, #7AADA1, #216959)",
+							color: "#fff",
+						}}
 					>
 						<Send className="size-4" />
 					</button>

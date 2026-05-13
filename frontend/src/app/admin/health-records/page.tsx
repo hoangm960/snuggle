@@ -1,116 +1,80 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "../_components/AdminLayout";
-import { HeartPulse, Plus, Search, Edit2, Trash2, X, PawPrint } from "lucide-react";
+import { HeartPulse, Plus, Search, Edit2, Trash2, X, PawPrint, Loader2 } from "lucide-react";
+import { healthRecordsApi, petsApi, HealthRecordWithPet } from "@/lib/api";
 
-interface HealthRecord {
+interface Pet {
 	id: string;
-	petId: string;
-	petName: string;
-	petSpecies: string;
-	type: "vaccination" | "checkup" | "treatment" | "surgery" | "dental";
-	title: string;
-	description: string;
-	veterinarian: string;
-	date: string;
-	nextDueDate?: string;
+	name: string;
+	species: string;
 }
 
-const mockRecords: HealthRecord[] = [
-	{
-		id: "HR-001",
-		petId: "p1",
-		petName: "Mochi",
-		petSpecies: "cat",
-		type: "vaccination",
-		title: "Rabies Vaccine",
-		description: "Annual rabies vaccination",
-		veterinarian: "Dr. Sarah Lee",
-		date: "Apr 20, 2026",
-		nextDueDate: "Apr 20, 2027",
-	},
-	{
-		id: "HR-002",
-		petId: "p1",
-		petName: "Mochi",
-		petSpecies: "cat",
-		type: "checkup",
-		title: "Annual Wellness Exam",
-		description: "General health checkup, all normal",
-		veterinarian: "Dr. Sarah Lee",
-		date: "Apr 20, 2026",
-	},
-	{
-		id: "HR-003",
-		petId: "p2",
-		petName: "Luna",
-		petSpecies: "dog",
-		type: "treatment",
-		title: "Flea Treatment",
-		description: "Applied topical flea prevention",
-		veterinarian: "Dr. James Park",
-		date: "Apr 15, 2026",
-		nextDueDate: "May 15, 2026",
-	},
-	{
-		id: "HR-004",
-		petId: "p3",
-		petName: "Charlie",
-		petSpecies: "dog",
-		type: "surgery",
-		title: "Spay Surgery",
-		description: "Successful spay surgery, recovery normal",
-		veterinarian: "Dr. Emily Wang",
-		date: "Apr 10, 2026",
-	},
-	{
-		id: "HR-005",
-		petId: "p2",
-		petName: "Luna",
-		petSpecies: "dog",
-		type: "dental",
-		title: "Dental Cleaning",
-		description: "Professional dental cleaning",
-		veterinarian: "Dr. James Park",
-		date: "Mar 28, 2026",
-		nextDueDate: "Mar 28, 2027",
-	},
-];
+interface FormData {
+	petId: string;
+	type: "vaccine" | "checkup" | "treatment";
+	title: string;
+	description: string;
+	vetName: string;
+	recordDate: string;
+}
 
 const typeConfig: Record<string, { label: string; color: string; bg: string }> = {
-	vaccination: { label: "Vaccination", color: "#216959", bg: "#E8F4F1" },
+	vaccine: { label: "Vaccination", color: "#216959", bg: "#E8F4F1" },
 	checkup: { label: "Checkup", color: "#7AADA1", bg: "#F0F8F6" },
 	treatment: { label: "Treatment", color: "#C4857A", bg: "#FAF0EE" },
-	surgery: { label: "Surgery", color: "#9A7768", bg: "#F5EFEB" },
-	dental: { label: "Dental", color: "#666", bg: "#F4F4F4" },
 };
 
-const emptyForm: Omit<HealthRecord, "id"> = {
+const emptyForm: FormData = {
 	petId: "",
-	petName: "",
-	petSpecies: "dog",
 	type: "checkup",
 	title: "",
 	description: "",
-	veterinarian: "",
-	date: "",
-	nextDueDate: "",
+	vetName: "",
+	recordDate: "",
 };
 
 export default function HealthRecordsPage() {
-	const [records, setRecords] = useState(mockRecords);
+	const [records, setRecords] = useState<HealthRecordWithPet[]>([]);
+	const [pets, setPets] = useState<Pet[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [saving, setSaving] = useState(false);
 	const [search, setSearch] = useState("");
 	const [typeFilter, setTypeFilter] = useState("all");
 	const [showModal, setShowModal] = useState(false);
-	const [editRecord, setEditRecord] = useState<HealthRecord | null>(null);
-	const [form, setForm] = useState<Omit<HealthRecord, "id">>(emptyForm);
+	const [editRecord, setEditRecord] = useState<HealthRecordWithPet | null>(null);
+	const [form, setForm] = useState<FormData>(emptyForm);
+
+	useEffect(() => {
+		fetchData();
+	}, []);
+
+	async function fetchData() {
+		try {
+			const [recordsRes, petsRes] = await Promise.all([
+				healthRecordsApi.getAll(typeFilter === "all" ? undefined : typeFilter),
+				petsApi.getAll(),
+			]);
+			setRecords(recordsRes.data.data);
+			setPets(petsRes.data.data);
+		} catch (error) {
+			console.error("Failed to fetch data:", error);
+		} finally {
+			setLoading(false);
+		}
+	}
+
+	function formatDate(date: Date | string): string {
+		const d = new Date(date);
+		return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+	}
 
 	const filtered = records.filter((r) => {
 		const matchSearch =
 			r.petName.toLowerCase().includes(search.toLowerCase()) ||
-			r.title.toLowerCase().includes(search.toLowerCase()) ||
-			r.veterinarian.toLowerCase().includes(search.toLowerCase());
+			(r.title?.toLowerCase() || "").includes(search.toLowerCase()) ||
+			(r.vetName?.toLowerCase() || "").includes(search.toLowerCase());
 		const matchType = typeFilter === "all" || r.type === typeFilter;
 		return matchSearch && matchType;
 	});
@@ -120,36 +84,71 @@ export default function HealthRecordsPage() {
 		setForm(emptyForm);
 		setShowModal(true);
 	}
-	function openEdit(r: HealthRecord) {
+
+	function openEdit(r: HealthRecordWithPet) {
 		setEditRecord(r);
 		setForm({
 			petId: r.petId,
-			petName: r.petName,
-			petSpecies: r.petSpecies,
 			type: r.type,
-			title: r.title,
-			description: r.description,
-			veterinarian: r.veterinarian,
-			date: r.date,
-			nextDueDate: r.nextDueDate ?? "",
+			title: r.title || "",
+			description: r.description || "",
+			vetName: r.vetName || "",
+			recordDate: r.recordDate ? new Date(r.recordDate).toISOString().split("T")[0] : "",
 		});
 		setShowModal(true);
 	}
 
-	function save() {
-		if (editRecord) {
-			setRecords((prev) => prev.map((r) => (r.id === editRecord.id ? { ...r, ...form } : r)));
-		} else {
-			setRecords((prev) => [
-				...prev,
-				{ ...form, id: `HR-${String(prev.length + 1).padStart(3, "0")}` },
-			]);
+	async function save() {
+		setSaving(true);
+		try {
+			if (editRecord) {
+				console.log("Edit not supported via this API yet");
+			} else {
+				const res = await healthRecordsApi.create({
+					petId: form.petId,
+					type: form.type,
+					title: form.title || undefined,
+					description: form.description || undefined,
+					vetName: form.vetName || undefined,
+					recordDate: form.recordDate || undefined,
+				});
+				const newRecord = res.data.data;
+				const pet = pets.find((p) => p.id === form.petId);
+				setRecords((prev) => [
+					{
+						...newRecord,
+						petName: pet?.name || "Unknown",
+						petSpecies: pet?.species || "unknown",
+					},
+					...prev,
+				]);
+			}
+			setShowModal(false);
+		} catch (error) {
+			console.error("Failed to save:", error);
+		} finally {
+			setSaving(false);
 		}
-		setShowModal(false);
 	}
 
-	function del(id: string) {
-		setRecords((prev) => prev.filter((r) => r.id !== id));
+	async function del(petId: string, recordId: string) {
+		if (!confirm("Are you sure you want to delete this record?")) return;
+		try {
+			await healthRecordsApi.delete(petId, recordId);
+			setRecords((prev) => prev.filter((r) => r.id !== recordId));
+		} catch (error) {
+			console.error("Failed to delete:", error);
+		}
+	}
+
+	if (loading) {
+		return (
+			<AdminLayout>
+				<div className="flex items-center justify-center h-64">
+					<Loader2 className="size-8 animate-spin" style={{ color: "#7AADA1" }} />
+				</div>
+			</AdminLayout>
+		);
 	}
 
 	return (
@@ -228,15 +227,7 @@ export default function HealthRecordsPage() {
 					<table className="w-full">
 						<thead style={{ background: "#FAFAFA" }}>
 							<tr>
-								{[
-									"Pet",
-									"Record",
-									"Type",
-									"Veterinarian",
-									"Date",
-									"Next Due",
-									"",
-								].map((h) => (
+								{["Pet", "Record", "Type", "Veterinarian", "Date", ""].map((h) => (
 									<th
 										key={h}
 										className="text-left px-5 py-3.5"
@@ -255,7 +246,7 @@ export default function HealthRecordsPage() {
 						</thead>
 						<tbody>
 							{filtered.map((row) => {
-								const tc = typeConfig[row.type];
+								const tc = typeConfig[row.type] || typeConfig.checkup;
 								return (
 									<tr key={row.id} style={{ borderTop: "1px solid #F5F5F5" }}>
 										<td className="px-5 py-4">
@@ -288,11 +279,15 @@ export default function HealthRecordsPage() {
 													color: "#1C1C1C",
 												}}
 											>
-												{row.title}
+												{row.title || row.description || "Health Record"}
 											</p>
-											<p style={{ fontSize: "11px", color: "#aaa" }}>
-												{row.description}
-											</p>
+											{row.description && (
+												<p style={{ fontSize: "11px", color: "#aaa" }}>
+													{row.description.length > 50
+														? row.description.slice(0, 50) + "..."
+														: row.description}
+												</p>
+											)}
 										</td>
 										<td className="px-5 py-4">
 											<span
@@ -306,22 +301,13 @@ export default function HealthRecordsPage() {
 											className="px-5 py-4"
 											style={{ fontSize: "13px", color: "#666" }}
 										>
-											{row.veterinarian}
+											{row.vetName || "—"}
 										</td>
 										<td
 											className="px-5 py-4"
 											style={{ fontSize: "12px", color: "#aaa" }}
 										>
-											{row.date}
-										</td>
-										<td
-											className="px-5 py-4"
-											style={{
-												fontSize: "12px",
-												color: row.nextDueDate ? "#C4857A" : "#ccc",
-											}}
-										>
-											{row.nextDueDate || "—"}
+											{formatDate(row.recordDate)}
 										</td>
 										<td className="px-5 py-4">
 											<div className="flex items-center gap-2">
@@ -335,7 +321,7 @@ export default function HealthRecordsPage() {
 													/>
 												</button>
 												<button
-													onClick={() => del(row.id)}
+													onClick={() => del(row.petId, row.id)}
 													className="size-8 rounded-lg flex items-center justify-center hover:bg-red-50 transition-colors"
 												>
 													<Trash2
@@ -351,7 +337,7 @@ export default function HealthRecordsPage() {
 							{filtered.length === 0 && (
 								<tr>
 									<td
-										colSpan={7}
+										colSpan={6}
 										className="px-5 py-10 text-center"
 										style={{ color: "#aaa", fontSize: "13px" }}
 									>
@@ -364,7 +350,6 @@ export default function HealthRecordsPage() {
 				</div>
 			</div>
 
-			{/* Add/Edit Modal */}
 			{showModal && (
 				<div
 					className="fixed inset-0 flex items-center justify-center z-50"
@@ -385,7 +370,7 @@ export default function HealthRecordsPage() {
 									color: "#1C1C1C",
 								}}
 							>
-								{editRecord ? "Edit Record" : "Add Health Record"}
+								Add Health Record
 							</h3>
 							<button
 								onClick={() => setShowModal(false)}
@@ -396,24 +381,28 @@ export default function HealthRecordsPage() {
 						</div>
 
 						<div className="space-y-4">
+							<div>
+								<label
+									className="block text-xs font-semibold mb-1.5"
+									style={{ color: "#666" }}
+								>
+									Pet
+								</label>
+								<select
+									value={form.petId}
+									onChange={(e) => setForm({ ...form, petId: e.target.value })}
+									className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+									style={{ border: "1px solid #E8E8E8" }}
+								>
+									<option value="">Select a pet...</option>
+									{pets.map((pet) => (
+										<option key={pet.id} value={pet.id}>
+											{pet.name} ({pet.species})
+										</option>
+									))}
+								</select>
+							</div>
 							<div className="grid grid-cols-2 gap-4">
-								<div>
-									<label
-										className="block text-xs font-semibold mb-1.5"
-										style={{ color: "#666" }}
-									>
-										Pet Name
-									</label>
-									<input
-										value={form.petName}
-										onChange={(e) =>
-											setForm({ ...form, petName: e.target.value })
-										}
-										placeholder="e.g. Mochi"
-										className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
-										style={{ border: "1px solid #E8E8E8" }}
-									/>
-								</div>
 								<div>
 									<label
 										className="block text-xs font-semibold mb-1.5"
@@ -426,7 +415,7 @@ export default function HealthRecordsPage() {
 										onChange={(e) =>
 											setForm({
 												...form,
-												type: e.target.value as HealthRecord["type"],
+												type: e.target.value as FormData["type"],
 											})
 										}
 										className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
@@ -438,6 +427,23 @@ export default function HealthRecordsPage() {
 											</option>
 										))}
 									</select>
+								</div>
+								<div>
+									<label
+										className="block text-xs font-semibold mb-1.5"
+										style={{ color: "#666" }}
+									>
+										Date
+									</label>
+									<input
+										type="date"
+										value={form.recordDate}
+										onChange={(e) =>
+											setForm({ ...form, recordDate: e.target.value })
+										}
+										className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+										style={{ border: "1px solid #E8E8E8" }}
+									/>
 								</div>
 							</div>
 							<div>
@@ -481,48 +487,12 @@ export default function HealthRecordsPage() {
 									Veterinarian
 								</label>
 								<input
-									value={form.veterinarian}
-									onChange={(e) =>
-										setForm({ ...form, veterinarian: e.target.value })
-									}
+									value={form.vetName}
+									onChange={(e) => setForm({ ...form, vetName: e.target.value })}
 									placeholder="e.g. Dr. Sarah Lee"
 									className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
 									style={{ border: "1px solid #E8E8E8" }}
 								/>
-							</div>
-							<div className="grid grid-cols-2 gap-4">
-								<div>
-									<label
-										className="block text-xs font-semibold mb-1.5"
-										style={{ color: "#666" }}
-									>
-										Date
-									</label>
-									<input
-										type="date"
-										value={form.date}
-										onChange={(e) => setForm({ ...form, date: e.target.value })}
-										className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
-										style={{ border: "1px solid #E8E8E8" }}
-									/>
-								</div>
-								<div>
-									<label
-										className="block text-xs font-semibold mb-1.5"
-										style={{ color: "#666" }}
-									>
-										Next Due Date
-									</label>
-									<input
-										type="date"
-										value={form.nextDueDate}
-										onChange={(e) =>
-											setForm({ ...form, nextDueDate: e.target.value })
-										}
-										className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
-										style={{ border: "1px solid #E8E8E8" }}
-									/>
-								</div>
 							</div>
 						</div>
 
@@ -536,10 +506,15 @@ export default function HealthRecordsPage() {
 							</button>
 							<button
 								onClick={save}
-								className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white transition-opacity hover:opacity-90"
+								disabled={!form.petId || saving}
+								className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
 								style={{ background: "linear-gradient(135deg, #7AADA1, #216959)" }}
 							>
-								{editRecord ? "Save Changes" : "Add Record"}
+								{saving ? (
+									<Loader2 className="size-4 animate-spin mx-auto" />
+								) : (
+									"Add Record"
+								)}
 							</button>
 						</div>
 					</div>

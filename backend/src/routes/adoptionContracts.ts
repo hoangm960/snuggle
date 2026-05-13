@@ -5,6 +5,7 @@ import {
 	createContract,
 	signContract,
 	archiveContract,
+	generateContractPdfEndpoint,
 } from "../controllers/adoptionContractController";
 import { authenticate } from "../middleware/auth";
 import { asyncHandler } from "../middleware/asyncHandler";
@@ -23,5 +24,6 @@ router.put(
 	validate(updateContractSchema),
 	asyncHandler(archiveContract)
 );
+router.post("/:id/pdf", authenticate, asyncHandler(generateContractPdfEndpoint));
 
 export default router;
