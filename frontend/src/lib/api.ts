@@ -113,6 +113,7 @@ export interface SignContractDto {
 	role: "adopter" | "shelter";
 	contractFileURL?: string;
 	contractHash?: string;
+	signedName?: string;
 }
 
 export const contractsApi = {
@@ -125,6 +126,9 @@ export const contractsApi = {
 
 	sign: (id: string, data: SignContractDto) =>
 		api.put<{ success: boolean; data: Contract }>(`/contracts/${id}/sign`, data),
+
+	generatePdf: (id: string) =>
+		api.post<{ success: boolean; data: { pdfUrl: string } }>(`/contracts/${id}/pdf`),
 };
 
 export interface Application {

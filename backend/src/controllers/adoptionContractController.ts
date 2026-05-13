@@ -22,11 +22,16 @@ interface EnrichedContract {
 	adopter: string;
 	adopterEmail: string;
 	shelter: string;
-	signedAt?: string;
+	adopterSignedAt?: string;
+	shelterSignedAt?: string;
+	adopterSignedName?: string;
+	shelterSignedName?: string;
+	contractHash?: string;
 	expiresAt: string;
 	status: "active" | "pending_signature" | "expired" | "terminated";
 	adoptionDate: string;
 	adoptionDateRaw: Date;
+	contractFileURL?: string;
 }
 
 function mapBackendStatusToFrontend(
@@ -117,11 +122,16 @@ async function enrichContract(
 		adopter,
 		adopterEmail,
 		shelter,
-		signedAt: formatDate(contract.adopterSignedAt),
+		adopterSignedAt: formatDate(contract.adopterSignedAt),
+		shelterSignedAt: formatDate(contract.shelterSignedAt),
+		adopterSignedName: contract.adopterSignedName,
+		shelterSignedName: contract.shelterSignedName,
+		contractHash: contract.contractHash,
 		expiresAt: computeExpiryDate(createdAt),
 		status: mapBackendStatusToFrontend(contract.status),
 		adoptionDate: adoptionDateStr,
 		adoptionDateRaw: createdAt,
+		contractFileURL: contract.contractFileURL,
 	};
 }
 
@@ -238,7 +248,7 @@ export const signContract = async (req: AuthRequest, res: Response): Promise<voi
 	}
 
 	const { id } = req.params;
-	const { role, contractFileURL, contractHash } = req.body;
+	const { role, contractFileURL, contractHash, signedName } = req.body;
 
 	const doc = await contractsCollection.doc(id).get();
 	if (!doc.exists) {
@@ -253,14 +263,20 @@ export const signContract = async (req: AuthRequest, res: Response): Promise<voi
 			throw new AppError("Not authorized to sign as adopter", 403);
 		}
 		updateData.adopterSignedAt = new Date();
+		if (signedName) updateData.adopterSignedName = signedName;
 	} else if (role === "shelter") {
 		updateData.shelterSignedAt = new Date();
+		if (signedName) updateData.shelterSignedName = signedName;
 	}
 
 	if (contractFileURL) updateData.contractFileURL = contractFileURL;
 	if (contractHash) updateData.contractHash = contractHash;
 
-	if (contractData.adopterSignedAt && updateData.shelterSignedAt) {
+	const fullySigned =
+		(updateData.adopterSignedAt || contractData.adopterSignedAt) &&
+		(updateData.shelterSignedAt || contractData.shelterSignedAt);
+
+	if (fullySigned) {
 		updateData.status = "signed";
 		if (contractData.petId) {
 			await petsCollection.doc(contractData.petId).update({ status: "adopted" });
@@ -282,8 +298,10 @@ export const signContract = async (req: AuthRequest, res: Response): Promise<voi
 		signedBy: role === "adopter" ? "you" : "the shelter",
 	});
 
-	const isFullySigned = contractData.adopterSignedAt && updateData.shelterSignedAt;
-	if (isFullySigned && contractData.petId && contractData.adopterId) {
+	const adopterSignedAtVal = updateData.adopterSignedAt || contractData.adopterSignedAt;
+	const shelterSignedAtVal = updateData.shelterSignedAt || contractData.shelterSignedAt;
+
+	if (contractData.petId && contractData.adopterId) {
 		const pdfUrl = await generateContractPdf({
 			contractId: id,
 			petName: petData?.name || "Unknown",
@@ -295,15 +313,28 @@ export const signContract = async (req: AuthRequest, res: Response): Promise<voi
 			adoptionDate: contractData.createdAt
 				? new Date(contractData.createdAt).toLocaleDateString()
 				: new Date().toLocaleDateString(),
+			adopterSignedName: updateData.adopterSignedName || contractData.adopterSignedName,
+			shelterSignedName: updateData.shelterSignedName || contractData.shelterSignedName,
+			adopterSignedAt: adopterSignedAtVal
+				? new Date(adopterSignedAtVal as Date).toLocaleDateString()
+				: undefined,
+			shelterSignedAt: shelterSignedAtVal
+				? new Date(shelterSignedAtVal as Date).toLocaleDateString()
+				: undefined,
+			contractHash: updateData.contractHash || contractData.contractHash,
 		});
 
-		await sendContractCompletedEmail({
-			to: adopterData?.email || "",
-			displayName: adopterData?.displayName || "",
-			petName: petData?.name || "Unknown",
-			contractId: id,
-			pdfUrl,
-		});
+		await contractsCollection.doc(id).update({ contractFileURL: pdfUrl });
+
+		if (fullySigned) {
+			await sendContractCompletedEmail({
+				to: adopterData?.email || "",
+				displayName: adopterData?.displayName || "",
+				petName: petData?.name || "Unknown",
+				contractId: id,
+				pdfUrl,
+			});
+		}
 	}
 
 	const updatedDoc = await contractsCollection.doc(id).get();
@@ -333,6 +364,94 @@ export const archiveContract = async (req: AuthRequest, res: Response): Promise<
 	const response: ApiResponse = {
 		success: true,
 		message: "Contract archived successfully",
+	};
+
+	res.status(200).json(response);
+};
+
+export const generateContractPdfEndpoint = async (req: AuthRequest, res: Response): Promise<void> => {
+	if (!req.user) {
+		throw new AppError("Unauthorized", 401);
+	}
+
+	const { id } = req.params;
+	const doc = await contractsCollection.doc(id).get();
+	if (!doc.exists) {
+		throw new AppError("Contract not found", 404);
+	}
+
+	const contract = { id: doc.id, ...doc.data() } as AdoptionContract;
+	if (!contract.id) {
+		throw new AppError("Contract not found", 404);
+	}
+
+	let petName = "Unknown Pet";
+	let petSpecies = "";
+	let petBreed = "";
+	let shelterName = "Unknown Shelter";
+	let adopterName = "Unknown Adopter";
+	let adopterEmail = "N/A";
+
+	if (contract.petId) {
+		const petDoc = await petsCollection.doc(contract.petId).get();
+		if (petDoc.exists) {
+			const petData = petDoc.data();
+			petName = petData?.name || petName;
+			petSpecies = petData?.species || petSpecies;
+			petBreed = petData?.breed || petBreed;
+
+			if (petData?.shelterId) {
+				const shelterDoc = await sheltersCollection.doc(petData.shelterId).get();
+				if (shelterDoc.exists) {
+					shelterName = shelterDoc.data()?.name || shelterName;
+				}
+			}
+		}
+	}
+
+	if (contract.adopterId) {
+		const userDoc = await usersCollection.doc(contract.adopterId).get();
+		if (userDoc.exists) {
+			const userData = userDoc.data();
+			adopterName = userData?.displayName || adopterName;
+			adopterEmail = userData?.email || adopterEmail;
+		}
+	}
+
+	const adoptionDate = contract.createdAt
+		? new Date(contract.createdAt).toLocaleDateString()
+		: new Date().toLocaleDateString();
+
+	const adopterSignedAtVal = toDate(contract.adopterSignedAt);
+	const adopterSignedAt = adopterSignedAtVal
+		? adopterSignedAtVal.toLocaleDateString()
+		: undefined;
+	const shelterSignedAtVal = toDate(contract.shelterSignedAt);
+	const shelterSignedAt = shelterSignedAtVal
+		? shelterSignedAtVal.toLocaleDateString()
+		: undefined;
+
+	const pdfUrl = await generateContractPdf({
+		contractId: id,
+		petName,
+		petSpecies,
+		petBreed,
+		adopterName,
+		adopterEmail,
+		shelterName,
+		adoptionDate,
+		adopterSignedName: contract.adopterSignedName,
+		shelterSignedName: contract.shelterSignedName,
+		adopterSignedAt,
+		shelterSignedAt,
+		contractHash: contract.contractHash,
+	});
+
+	await contractsCollection.doc(id).update({ contractFileURL: pdfUrl });
+
+	const response: ApiResponse<{ pdfUrl: string }> = {
+		success: true,
+		data: { pdfUrl },
 	};
 
 	res.status(200).json(response);

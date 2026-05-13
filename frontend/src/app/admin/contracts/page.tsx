@@ -29,6 +29,7 @@ export default function ContractsPage() {
 	const [contracts, setContracts] = useState<Contract[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
 	useEffect(() => {
 		const fetchContracts = async () => {
@@ -47,6 +48,30 @@ export default function ContractsPage() {
 		};
 		fetchContracts();
 	}, []);
+
+	const handleDownload = async (contract: Contract) => {
+		if (contract.contractFileURL) {
+			window.open(contract.contractFileURL, "_blank");
+			return;
+		}
+
+		setDownloadingId(contract.id);
+		try {
+			const res = await contractsApi.generatePdf(contract.id);
+			if (res.data.success && res.data.data?.pdfUrl) {
+				window.open(res.data.data.pdfUrl, "_blank");
+				setContracts((prev) =>
+					prev.map((c) =>
+						c.id === contract.id ? { ...c, contractFileURL: res.data.data.pdfUrl } : c
+					)
+				);
+			}
+		} catch (err) {
+			console.error("Failed to generate PDF", err);
+		} finally {
+			setDownloadingId(null);
+		}
+	};
 
 	const filtered = contracts.filter((c) => {
 		const matchSearch =
@@ -264,13 +289,22 @@ export default function ContractsPage() {
 														<Eye className="size-3" /> View
 													</button>
 													<button
-														className="size-7 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
+														onClick={() => handleDownload(row)}
+														disabled={downloadingId === row.id}
+														className="size-7 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors disabled:opacity-40"
 														style={{ border: "1px solid #E8E8E8" }}
 													>
-														<Download
-															className="size-3.5"
-															style={{ color: "#888" }}
-														/>
+														{downloadingId === row.id ? (
+															<Loader2
+																className="size-3.5 animate-spin"
+																style={{ color: "#888" }}
+															/>
+														) : (
+															<Download
+																className="size-3.5"
+																style={{ color: "#888" }}
+															/>
+														)}
 													</button>
 												</div>
 											</td>
@@ -361,10 +395,20 @@ export default function ContractsPage() {
 								{ label: "Shelter", value: selected.shelter },
 								{ label: "Adoption Date", value: selected.adoptionDate },
 								{
-									label: "Contract Signed",
-									value: selected.signedAt ?? "Not yet signed",
+									label: "Signed by Adopter",
+									value: selected.adopterSignedAt ?? "Not yet",
+								},
+								{
+									label: "Signed by Shelter",
+									value: selected.shelterSignedAt ?? "Not yet",
 								},
 								{ label: "Expiry Date", value: selected.expiresAt },
+								{
+									label: "Signature Hash",
+									value: selected.contractHash
+										? `${selected.contractHash.slice(0, 12)}...`
+										: "N/A",
+								},
 							].map((item) => (
 								<div
 									key={item.label}
@@ -429,10 +473,17 @@ export default function ContractsPage() {
 
 						<div className="flex gap-3">
 							<button
-								className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium"
+								onClick={() => handleDownload(selected)}
+								disabled={downloadingId === selected.id}
+								className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50"
 								style={{ border: "1px solid #E8E8E8", color: "#666" }}
 							>
-								<Download className="size-4" /> Download PDF
+								{downloadingId === selected.id ? (
+									<Loader2 className="size-4 animate-spin" />
+								) : (
+									<Download className="size-4" />
+								)}{" "}
+								Download PDF
 							</button>
 							<button
 								onClick={() => setSelected(null)}

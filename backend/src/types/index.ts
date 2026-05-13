@@ -191,6 +191,8 @@ export interface AdoptionContract {
 	contractHash?: string;
 	adopterSignedAt?: Date;
 	shelterSignedAt?: Date;
+	adopterSignedName?: string;
+	shelterSignedName?: string;
 	status: "draft" | "signed" | "archived";
 	createdAt: Date;
 }

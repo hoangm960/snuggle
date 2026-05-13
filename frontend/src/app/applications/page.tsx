@@ -137,10 +137,20 @@ function ContractModal({
 						{ label: "Shelter", value: contract.shelter },
 						{ label: "Adoption Date", value: contract.adoptionDate },
 						{
-							label: "Contract Signed",
-							value: contract.signedAt ?? "Not yet signed",
+							label: "Signed by Adopter",
+							value: contract.adopterSignedAt ?? "Not yet",
+						},
+						{
+							label: "Signed by Shelter",
+							value: contract.shelterSignedAt ?? "Not yet",
 						},
 						{ label: "Expiry Date", value: contract.expiresAt },
+						{
+							label: "Signature Hash",
+							value: contract.contractHash
+								? `${contract.contractHash.slice(0, 12)}...`
+								: "N/A",
+						},
 					].map((item) => (
 						<div
 							key={item.label}

@@ -10,6 +10,11 @@ export interface ContractPdfData {
 	adopterEmail: string;
 	shelterName: string;
 	adoptionDate: string;
+	adopterSignedName?: string;
+	shelterSignedName?: string;
+	adopterSignedAt?: string;
+	shelterSignedAt?: string;
+	contractHash?: string;
 }
 
 export async function generateContractPdf(data: ContractPdfData): Promise<string> {
@@ -105,15 +110,34 @@ export async function generateContractPdf(data: ContractPdfData): Promise<string
 		doc.moveDown(1);
 
 		doc.fontSize(12).font("Helvetica");
-		doc.text("Adopter Signature: _______________________________");
-		doc.moveDown(0.5);
-		doc.text(`Date: ${new Date().toLocaleDateString()}`);
+		doc.text("Adopter Signature:");
+		doc.moveDown(0.3);
+		if (data.adopterSignedName) {
+			doc.fontSize(14).font("Helvetica-Bold").text(data.adopterSignedName);
+		} else {
+			doc.fontSize(12).font("Helvetica").text("_______________________________");
+		}
+		doc.moveDown(0.3);
+		doc.fontSize(12).font("Helvetica");
+		doc.text(`Date: ${data.adopterSignedAt || new Date().toLocaleDateString()}`);
 		doc.moveDown(1.5);
 
-		doc.text("Shelter Representative: ___________________________");
-		doc.moveDown(0.5);
-		doc.text(`Date: ${new Date().toLocaleDateString()}`);
+		doc.text("Shelter Representative:");
+		doc.moveDown(0.3);
+		if (data.shelterSignedName) {
+			doc.fontSize(14).font("Helvetica-Bold").text(data.shelterSignedName);
+		} else {
+			doc.fontSize(12).font("Helvetica").text("_______________________________");
+		}
+		doc.moveDown(0.3);
+		doc.fontSize(12).font("Helvetica");
+		doc.text(`Date: ${data.shelterSignedAt || new Date().toLocaleDateString()}`);
 		doc.moveDown(2);
+
+		if (data.contractHash) {
+			doc.fontSize(10).font("Helvetica").text(`Verification Hash: ${data.contractHash}`);
+			doc.moveDown(1);
+		}
 
 		doc.fontSize(10)
 			.font("Helvetica-Oblique")

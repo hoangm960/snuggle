@@ -61,6 +61,7 @@ export default function SignContractPage() {
 			await contractsApi.sign(contractId, {
 				role: "adopter",
 				contractHash: hash,
+				signedName: signedName,
 			});
 			setSuccess(true);
 		} catch (err) {
