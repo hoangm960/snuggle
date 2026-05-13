@@ -28,6 +28,7 @@ db.settings({ ignoreUndefinedProperties: true });
 
 export const auth = admin.auth();
 export const storage = admin.storage();
+export const bucket = admin.storage().bucket();
 export { db };
 
 export default admin;

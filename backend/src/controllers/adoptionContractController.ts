@@ -2,6 +2,12 @@ import { Response } from "express";
 import { db } from "../config/firebase";
 import { AdoptionContract, AuthRequest, ApiResponse } from "../types";
 import { AppError } from "../middleware/errorHandler";
+import {
+	sendContractCreatedEmail,
+	sendContractSignedEmail,
+	sendContractCompletedEmail,
+} from "../services/emailService";
+import { generateContractPdf } from "../services/contractPdfService";
 
 const contractsCollection = db.collection("adoptionContracts");
 const applicationsCollection = db.collection("adoptionApplications");
@@ -11,6 +17,7 @@ const sheltersCollection = db.collection("shelters");
 
 interface EnrichedContract {
 	id: string;
+	applicationId?: string;
 	petName: string;
 	adopter: string;
 	adopterEmail: string;
@@ -43,13 +50,79 @@ function computeExpiryDate(createdAt: Date): string {
 	return expiry.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-function formatDate(date: Date | undefined): string | undefined {
-	if (!date) return undefined;
-	return new Date(date).toLocaleDateString("en-US", {
+function toDate(value: unknown): Date | undefined {
+	if (!value) return undefined;
+	if (typeof (value as { toDate?: () => Date }).toDate === "function") {
+		return (value as { toDate: () => Date }).toDate();
+	}
+	if (value instanceof Date) return value;
+	if (typeof value === "string" || typeof value === "number") return new Date(value);
+	return undefined;
+}
+
+function formatDate(date: unknown): string | undefined {
+	const d = toDate(date);
+	if (!d) return undefined;
+	return d.toLocaleDateString("en-US", {
 		month: "short",
 		day: "numeric",
 		year: "numeric",
 	});
+}
+
+async function enrichContract(
+	contract: AdoptionContract & { id: string }
+): Promise<EnrichedContract> {
+	let petName = "Unknown Pet";
+	let shelter = "Unknown Shelter";
+	let adopter = "Unknown Adopter";
+	let adopterEmail = "N/A";
+
+	if (contract.petId) {
+		const petDoc = await petsCollection.doc(contract.petId).get();
+		if (petDoc.exists) {
+			const petData = petDoc.data();
+			petName = petData?.name || petName;
+
+			if (petData?.shelterId) {
+				const shelterDoc = await sheltersCollection.doc(petData.shelterId).get();
+				if (shelterDoc.exists) {
+					shelter = shelterDoc.data()?.name || shelter;
+				}
+			}
+		}
+	}
+
+	if (contract.adopterId) {
+		const userDoc = await usersCollection.doc(contract.adopterId).get();
+		if (userDoc.exists) {
+			const userData = userDoc.data();
+			adopter = userData?.displayName || adopter;
+			adopterEmail = userData?.email || adopterEmail;
+		}
+	}
+
+	const contractCreatedAt = toDate(contract.createdAt);
+	const createdAt = contractCreatedAt ? contractCreatedAt : new Date();
+	const adoptionDateStr = createdAt.toLocaleDateString("en-US", {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+	});
+
+	return {
+		id: contract.id,
+		applicationId: contract.applicationId,
+		petName,
+		adopter,
+		adopterEmail,
+		shelter,
+		signedAt: formatDate(contract.adopterSignedAt),
+		expiresAt: computeExpiryDate(createdAt),
+		status: mapBackendStatusToFrontend(contract.status),
+		adoptionDate: adoptionDateStr,
+		adoptionDateRaw: createdAt,
+	};
 }
 
 export const getAllContracts = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -74,58 +147,7 @@ export const getAllContracts = async (req: AuthRequest, res: Response): Promise<
 	const contractsWithId = contracts.filter((c): c is AdoptionContract & { id: string } => !!c.id);
 
 	const enrichedContracts: EnrichedContract[] = await Promise.all(
-		contractsWithId.map(async (contract) => {
-			let petName = "Unknown Pet";
-			let shelter = "Unknown Shelter";
-			let adopter = "Unknown Adopter";
-			let adopterEmail = "N/A";
-
-			if (contract.petId) {
-				const petDoc = await petsCollection.doc(contract.petId).get();
-				if (petDoc.exists) {
-					const petData = petDoc.data();
-					petName = petData?.name || petName;
-
-					if (petData?.shelterId) {
-						const shelterDoc = await sheltersCollection.doc(petData.shelterId).get();
-						if (shelterDoc.exists) {
-							shelter = shelterDoc.data()?.name || shelter;
-						}
-					}
-				}
-			}
-
-			if (contract.adopterId) {
-				const userDoc = await usersCollection.doc(contract.adopterId).get();
-				if (userDoc.exists) {
-					const userData = userDoc.data();
-					adopter =
-						`${userData?.firstName || ""} ${userData?.lastName || ""}`.trim() ||
-						adopter;
-					adopterEmail = userData?.email || adopterEmail;
-				}
-			}
-
-			const createdAt = contract.createdAt ? new Date(contract.createdAt) : new Date();
-			const adoptionDateStr = createdAt.toLocaleDateString("en-US", {
-				month: "short",
-				day: "numeric",
-				year: "numeric",
-			});
-
-			return {
-				id: contract.id,
-				petName,
-				adopter,
-				adopterEmail,
-				shelter,
-				signedAt: formatDate(contract.adopterSignedAt),
-				expiresAt: computeExpiryDate(createdAt),
-				status: mapBackendStatusToFrontend(contract.status),
-				adoptionDate: adoptionDateStr,
-				adoptionDateRaw: createdAt,
-			};
-		})
+		contractsWithId.map((contract) => enrichContract(contract))
 	);
 
 	const response: ApiResponse<EnrichedContract[]> = {
@@ -144,9 +166,16 @@ export const getContractById = async (req: AuthRequest, res: Response): Promise<
 		throw new AppError("Contract not found", 404);
 	}
 
-	const response: ApiResponse<AdoptionContract> = {
+	const contract = { id: doc.id, ...doc.data() } as AdoptionContract;
+	if (!contract.id) {
+		throw new AppError("Contract not found", 404);
+	}
+
+	const enriched = await enrichContract(contract as AdoptionContract & { id: string });
+
+	const response: ApiResponse<EnrichedContract> = {
 		success: true,
-		data: { id: doc.id, ...doc.data() } as AdoptionContract,
+		data: enriched,
 	};
 
 	res.status(200).json(response);
@@ -181,6 +210,18 @@ export const createContract = async (req: AuthRequest, res: Response): Promise<v
 	const contract: AdoptionContract = { id: docRef.id, ...contractData };
 
 	await petsCollection.doc(appData?.petId).update({ contractId: docRef.id });
+
+	const petDoc = await petsCollection.doc(appData?.petId).get();
+	const petData = petDoc.data();
+	const adopterDoc = await usersCollection.doc(contractData.adopterId).get();
+	const adopterData = adopterDoc.data();
+
+	await sendContractCreatedEmail({
+		to: adopterData?.email || "",
+		displayName: adopterData?.displayName || "",
+		petName: petData?.name || "Unknown",
+		contractId: docRef.id,
+	});
 
 	const response: ApiResponse<AdoptionContract> = {
 		success: true,
@@ -221,19 +262,59 @@ export const signContract = async (req: AuthRequest, res: Response): Promise<voi
 
 	if (contractData.adopterSignedAt && updateData.shelterSignedAt) {
 		updateData.status = "signed";
+		if (contractData.petId) {
+			await petsCollection.doc(contractData.petId).update({ status: "adopted" });
+		}
 	}
 
 	await contractsCollection.doc(id).update(updateData);
 
+	const adopterDoc = await usersCollection.doc(contractData.adopterId).get();
+	const adopterData = adopterDoc.data();
+	const petDoc = contractData.petId ? await petsCollection.doc(contractData.petId).get() : null;
+	const petData = petDoc?.data();
+
+	await sendContractSignedEmail({
+		to: adopterData?.email || "",
+		displayName: adopterData?.displayName || "",
+		petName: petData?.name || "Unknown",
+		contractId: id,
+		signedBy: role === "adopter" ? "you" : "the shelter",
+	});
+
+	const isFullySigned = contractData.adopterSignedAt && updateData.shelterSignedAt;
+	if (isFullySigned && contractData.petId && contractData.adopterId) {
+		const pdfUrl = await generateContractPdf({
+			contractId: id,
+			petName: petData?.name || "Unknown",
+			petSpecies: petData?.species || "",
+			petBreed: petData?.breed || "",
+			adopterName: adopterData?.displayName || "",
+			adopterEmail: adopterData?.email || "",
+			shelterName: "Shelter",
+			adoptionDate: contractData.createdAt
+				? new Date(contractData.createdAt).toLocaleDateString()
+				: new Date().toLocaleDateString(),
+		});
+
+		await sendContractCompletedEmail({
+			to: adopterData?.email || "",
+			displayName: adopterData?.displayName || "",
+			petName: petData?.name || "Unknown",
+			contractId: id,
+			pdfUrl,
+		});
+	}
+
 	const updatedDoc = await contractsCollection.doc(id).get();
-	const contract: AdoptionContract = {
+	const updatedContract: AdoptionContract = {
 		id: updatedDoc.id,
 		...updatedDoc.data(),
 	} as AdoptionContract;
 
 	const response: ApiResponse<AdoptionContract> = {
 		success: true,
-		data: contract,
+		data: updatedContract,
 		message: "Contract signed successfully",
 	};
 
