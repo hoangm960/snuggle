@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { AdminLayout } from "../_components/AdminLayout";
 import api from "@/lib/api";
-import { Check, X, Eye, Loader2 } from "lucide-react";
+import { Check, X, Eye, Loader2, FileSignature } from "lucide-react";
+import { contractsApi, CreateContractDto } from "@/lib/api";
 
 interface Application {
 	id: string;
@@ -99,17 +100,37 @@ export default function RequestsPage() {
 		setActionLoading(id);
 		setActionMsg(null);
 		try {
-			await api.put(`/admin/applications/${id}/status`, {
-				status: newStatus,
-			});
+			await api.put(`/admin/applications/${id}/status`, { status: newStatus });
 			setActionMsg({
 				type: "success",
 				text: `Application ${newStatus === "approved" ? "approved" : "rejected"} successfully`,
 			});
-			const statusFilter = tab === "All" ? undefined : tab;
-			fetchApplications(statusFilter);
-		} catch {
+			fetchApplications(tab === "All" ? undefined : tab);
+		} catch (err) {
 			setActionMsg({ type: "error", text: "Failed to update application" });
+		} finally {
+			setActionLoading(null);
+			setTimeout(() => setActionMsg(null), 3000);
+		}
+	};
+
+	const handleGenerateContract = async (app: Application) => {
+		setActionLoading(app.id);
+		setActionMsg(null);
+		try {
+			const contractData: CreateContractDto = {
+				applicationId: app.id,
+				petId: app.petId,
+				adopterId: app.adopterId,
+			};
+			await contractsApi.create(contractData);
+			setActionMsg({
+				type: "success",
+				text: `Contract generated for ${app.petName}`,
+			});
+			fetchApplications(tab === "All" ? undefined : tab);
+		} catch (err) {
+			setActionMsg({ type: "error", text: "Failed to generate contract" });
 		} finally {
 			setActionLoading(null);
 			setTimeout(() => setActionMsg(null), 3000);
@@ -245,30 +266,48 @@ export default function RequestsPage() {
 							)}
 
 							<div className="flex gap-2">
-								<button
-									onClick={() => handleStatusUpdate(r.id, "approved")}
-									disabled={actionLoading === r.id || r.status !== "pending"}
-									className="flex-1 h-10 rounded-full bg-success/15 text-success font-semibold text-sm hover:bg-success hover:text-primary-foreground transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
-								>
-									{actionLoading === r.id ? (
-										<Loader2 className="size-4 animate-spin" />
-									) : (
-										<Check className="size-4" />
-									)}{" "}
-									Approve
-								</button>
-								<button
-									onClick={() => handleStatusUpdate(r.id, "rejected")}
-									disabled={actionLoading === r.id || r.status !== "pending"}
-									className="flex-1 h-10 rounded-full bg-destructive/15 text-destructive font-semibold text-sm hover:bg-destructive hover:text-destructive-foreground transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
-								>
-									{actionLoading === r.id ? (
-										<Loader2 className="size-4 animate-spin" />
-									) : (
-										<X className="size-4" />
-									)}{" "}
-									Reject
-								</button>
+								{r.status === "pending" && (
+									<>
+										<button
+											onClick={() => handleStatusUpdate(r.id, "approved")}
+											disabled={actionLoading === r.id}
+											className="flex-1 h-10 rounded-full bg-success/15 text-success font-semibold text-sm hover:bg-success hover:text-primary-foreground transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+										>
+											{actionLoading === r.id ? (
+												<Loader2 className="size-4 animate-spin" />
+											) : (
+												<Check className="size-4" />
+											)}{" "}
+											Approve
+										</button>
+										<button
+											onClick={() => handleStatusUpdate(r.id, "rejected")}
+											disabled={actionLoading === r.id}
+											className="flex-1 h-10 rounded-full bg-destructive/15 text-destructive font-semibold text-sm hover:bg-destructive hover:text-destructive-foreground transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+										>
+											{actionLoading === r.id ? (
+												<Loader2 className="size-4 animate-spin" />
+											) : (
+												<X className="size-4" />
+											)}{" "}
+											Reject
+										</button>
+									</>
+								)}
+								{r.status === "approved" && (
+									<button
+										onClick={() => handleGenerateContract(r)}
+										disabled={actionLoading === r.id}
+										className="flex-1 h-10 rounded-full bg-primary/15 text-primary font-semibold text-sm hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+									>
+										{actionLoading === r.id ? (
+											<Loader2 className="size-4 animate-spin" />
+										) : (
+											<FileSignature className="size-4" />
+										)}{" "}
+										Generate Contract
+									</button>
+								)}
 							</div>
 						</article>
 					))}

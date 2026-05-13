@@ -95,10 +95,59 @@ export interface Contract {
 	expiresAt: string;
 	status: "active" | "pending_signature" | "expired" | "terminated";
 	adoptionDate: string;
+	petId?: string;
+	adopterId?: string;
+	applicationId?: string;
+	contractFileURL?: string;
+	adopterSignedAt?: string;
+	shelterSignedAt?: string;
+}
+
+export interface CreateContractDto {
+	applicationId: string;
+	petId: string;
+	adopterId: string;
+}
+
+export interface SignContractDto {
+	role: "adopter" | "shelter";
+	contractFileURL?: string;
+	contractHash?: string;
 }
 
 export const contractsApi = {
 	getAll: () => api.get<{ success: boolean; data: Contract[] }>("/contracts"),
+
+	getById: (id: string) => api.get<{ success: boolean; data: Contract }>(`/contracts/${id}`),
+
+	create: (data: CreateContractDto) =>
+		api.post<{ success: boolean; data: Contract }>("/contracts", data),
+
+	sign: (id: string, data: SignContractDto) =>
+		api.put<{ success: boolean; data: Contract }>(`/contracts/${id}/sign`, data),
+};
+
+export interface Application {
+	id: string;
+	petId: string;
+	name: string;
+	adopterId: string;
+	adopterName: string;
+	shelterId: string;
+	status: "pending" | "approved" | "rejected" | "completed";
+	message?: string;
+	adminNote?: string;
+	appliedAt: string;
+	reviewedAt?: string;
+	petThumbnail?: string;
+	petSpecies?: string;
+}
+
+export const applicationsApi = {
+	getMyApplications: (adopterId: string) =>
+		api.get<{ success: boolean; data: Application[] }>("/applications", {
+			params: { adopterId },
+		}),
 };
 
 export default api;
