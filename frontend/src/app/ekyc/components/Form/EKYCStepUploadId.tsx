@@ -1,4 +1,5 @@
 import { RefObject } from "react";
+import Image from "next/image";
 import { UploadIcon } from "@/assets/icons/ekyc-icons";
 
 interface EKYCStepUploadIdProps {
@@ -45,11 +46,7 @@ export function EKYCStepUploadId({ file, onFileSelect, inputRef }: EKYCStepUploa
 						onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#E0E0E0")}
 						onClick={() => inputRef.current?.click()}
 					>
-						<img
-							src={opt.icon}
-							alt={opt.label}
-							style={{ width: "32px", height: "32px" }}
-						/>
+						<Image src={opt.icon} alt={opt.label} width={32} height={32} unoptimized />
 						<span
 							style={{
 								fontFamily: "'Space Grotesk', sans-serif",

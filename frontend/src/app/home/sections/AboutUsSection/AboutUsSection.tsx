@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function AboutUsSection() {
 	return (
 		<section id="about-us" className="relative" style={{ zIndex: 1 }}>
@@ -10,20 +12,22 @@ export default function AboutUsSection() {
 				}}
 			>
 				{/* bg1.svg — sits at the bottom of the section, overflows into stats below */}
-				<img
+				<Image
 					src="/images/decorate/bg1.svg"
 					alt=""
 					aria-hidden="true"
+					width={1200}
+					height={400}
 					style={{
 						position: "absolute",
 						bottom: "-30vh",
 						left: "50%",
 						transform: "translateX(-50%)",
-						width: "110vw",
 						height: "auto",
-						zIndex: 0,
+						maxWidth: "none",
 						pointerEvents: "none",
 					}}
+					unoptimized
 				/>
 
 				{/* Text — left-aligned, photo shows through on the right */}

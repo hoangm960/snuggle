@@ -37,7 +37,7 @@ export default function EKYCPage() {
 		if (kycStatus?.kyc?.status === "approved" || kycStatus?.user?.isKycVerified) {
 			refreshUser();
 		}
-	}, [kycStatus]);
+	}, [kycStatus, refreshUser]);
 
 	const fetchKycStatus = async () => {
 		try {

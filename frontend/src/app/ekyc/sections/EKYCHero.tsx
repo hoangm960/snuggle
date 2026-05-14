@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export function EKYCHero() {
@@ -149,10 +150,12 @@ export function EKYCHero() {
 									flexShrink: 0,
 								}}
 							>
-								<img
+								<Image
 									src="/images/ekyc/Login/user.svg"
 									alt="User"
-									style={{ width: "28px", height: "28px" }}
+									width={28}
+									height={28}
+									unoptimized
 								/>
 							</div>
 							<div>
@@ -213,14 +216,13 @@ export function EKYCHero() {
 										justifyContent: "center",
 									}}
 								>
-									<img
+									<Image
 										src={src}
 										alt=""
-										style={{
-											width: "22px",
-											height: "22px",
-											filter: "brightness(10)",
-										}}
+										width={22}
+										height={22}
+										style={{ filter: "brightness(10)" }}
+										unoptimized
 									/>
 								</div>
 							))}
@@ -267,17 +269,17 @@ export function EKYCHero() {
 						</div>
 					</div>
 
-					<img
+					<Image
 						src="/images/ekyc/Hand.svg"
 						alt=""
+						width={80}
+						height={80}
 						style={{
 							position: "absolute",
 							bottom: "-20px",
 							right: "-20px",
-							width: "80px",
-							height: "80px",
-							filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.15))",
 						}}
+						unoptimized
 					/>
 				</div>
 			</div>
@@ -292,10 +294,12 @@ export function EKYCHero() {
 					justifyContent: "center",
 				}}
 			>
-				<img
+				<Image
 					src="/images/ekyc/arrow copy.svg"
 					alt=""
-					style={{ width: "24px", height: "36px" }}
+					width={24}
+					height={36}
+					unoptimized
 				/>
 			</div>
 		</section>

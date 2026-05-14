@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import api from "@/lib/api";
 import { auth } from "@/lib/firebase";
 import {
@@ -151,11 +152,7 @@ export default function LoginPage() {
 			<div className="flex flex-1">
 				{/* Left column — background image */}
 				<div className="hidden lg:flex lg:w-[45%] xl:w-1/2 relative flex-shrink-0">
-					<img
-						src="/images/hero1.png"
-						alt="Pets"
-						className="absolute inset-0 w-full h-full object-cover"
-					/>
+					<Image src="/images/hero1.png" alt="Pets" fill className="object-cover" />
 					<div className="absolute inset-0 bg-[#7AACA1]/10" />
 				</div>
 
@@ -173,7 +170,7 @@ export default function LoginPage() {
 
 							{/* Sign up link — below heading */}
 							<p className="text-xs text-center text-[#999999] mb-14">
-								Don't have an account?{" "}
+								Don{"'"}t have an account?{" "}
 								<Link
 									href="/register"
 									style={{ color: "#7AADA1" }}

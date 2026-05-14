@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AdminLayout } from "../_components/AdminLayout";
+import Image from "next/image";
 import { Plus, Upload, Search, MoreVertical, X, FileEdit, MapPin } from "lucide-react";
 import { usePets } from "@/hooks/usePets";
 import type { Pet } from "@/types";
@@ -201,15 +202,16 @@ export default function PetsPage() {
 							className="bg-card border border-border rounded-3xl overflow-hidden shadow-card hover:shadow-soft hover:-translate-y-1 transition-all group"
 						>
 							<div className="relative aspect-[4/3] overflow-hidden bg-muted">
-								<img
+								<Image
 									src={
 										pet.thumbnail ||
 										pet.photoUrls?.[0] ||
 										"/images/placeholder.png"
 									}
 									alt={pet.name}
+									fill
+									className="object-cover"
 									loading="lazy"
-									className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
 								/>
 								<span
 									className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[11px] font-semibold backdrop-blur-md ${statusColor[pet.status]}`}
@@ -286,14 +288,15 @@ export default function PetsPage() {
 						<div className="space-y-4">
 							<label className="block border-2 border-dashed border-border rounded-2xl p-8 text-center hover:border-primary cursor-pointer transition-colors overflow-hidden">
 								{form.imagePreview || (editId && form.image) ? (
-									<div className="relative">
-										<img
+									<div className="relative size-32 mx-auto">
+										<Image
 											src={
 												form.imagePreview ||
 												(editId ? "/images/placeholder.png" : "")
 											}
 											alt="Preview"
-											className="size-32 mx-auto object-cover rounded-xl"
+											fill
+											className="object-cover rounded-xl"
 										/>
 										<p className="text-xs text-muted-foreground mt-2">
 											Click to change image

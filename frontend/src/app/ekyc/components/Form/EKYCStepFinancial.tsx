@@ -1,4 +1,5 @@
 import { RefObject } from "react";
+import Image from "next/image";
 import { UploadIcon } from "@/assets/icons/ekyc-icons";
 
 interface EKYCStepFinancialProps {
@@ -23,10 +24,12 @@ export function EKYCStepFinancial({ file, onFileSelect, inputRef }: EKYCStepFina
 						margin: "0 auto 16px",
 					}}
 				>
-					<img
+					<Image
 						src="/images/ekyc/Icons-2.svg"
 						alt="Financial"
-						style={{ width: "32px", height: "32px" }}
+						width={32}
+						height={32}
+						unoptimized
 					/>
 				</div>
 				<p

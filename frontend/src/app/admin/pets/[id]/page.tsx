@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { ChevronLeft, ImagePlus, X, Save, Loader2 } from "lucide-react";
 import { AdminLayout } from "../../_components/AdminLayout";
 import { usePets } from "@/hooks/usePets";
@@ -33,6 +34,7 @@ export default function PetDetailEditPage() {
 			}
 			setLoading(false);
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [id]);
 
 	const handleAddPhoto = async (file: File) => {
@@ -155,10 +157,11 @@ export default function PetDetailEditPage() {
 									style={{ width: "100%", aspectRatio: "1" }}
 								>
 									{pet.thumbnail ? (
-										<img
+										<Image
 											src={pet.thumbnail}
 											alt={pet.name}
-											className="w-full h-full object-cover"
+											fill
+											className="object-cover"
 										/>
 									) : (
 										<div className="w-full h-full flex items-center justify-center text-4xl">
@@ -180,10 +183,11 @@ export default function PetDetailEditPage() {
 											className="relative rounded-xl overflow-hidden bg-muted group"
 											style={{ aspectRatio: "1" }}
 										>
-											<img
+											<Image
 												src={url}
 												alt={`${pet.name} photo ${idx + 1}`}
-												className="w-full h-full object-cover"
+												fill
+												className="object-cover"
 											/>
 											<button
 												onClick={() => handleRemovePhoto(idx)}
@@ -269,8 +273,8 @@ export default function PetDetailEditPage() {
 								Information
 							</h2>
 							<p className="text-xs text-muted-foreground mb-3">
-								This text appears in the "Information" section on the public pet
-								page.
+								This text appears in the {'"'}Information{'"'} section on the public
+								pet page.
 							</p>
 							<textarea
 								value={description}

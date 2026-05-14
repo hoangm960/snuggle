@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
 	Heart,
 	ChevronRight,
@@ -125,6 +126,7 @@ export default function PetDetailPage() {
 			setPet(data);
 			setLoading(false);
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [id]);
 
 	// Pre-fill email from auth user
@@ -303,10 +305,11 @@ export default function PetDetailPage() {
 							style={{ width: "340px", height: "340px", background: "#E8E8E8" }}
 						>
 							{photos.length > 0 ? (
-								<img
+								<Image
 									src={photos[selectedPhoto]}
 									alt={pet.name}
-									className="w-full h-full object-cover"
+									fill
+									className="object-cover"
 								/>
 							) : (
 								<div
@@ -335,10 +338,11 @@ export default function PetDetailPage() {
 											opacity: selectedPhoto === idx ? 1 : 0.6,
 										}}
 									>
-										<img
+										<Image
 											src={url}
 											alt={`${pet.name} ${idx + 1}`}
-											className="w-full h-full object-cover"
+											fill
+											className="object-cover"
 										/>
 									</button>
 								))}
@@ -678,7 +682,7 @@ export default function PetDetailPage() {
 								}}
 							>
 								Your adoption application for <strong>{pet.name}</strong> has been
-								submitted. We'll review it and be in touch soon!
+								submitted. We{"'"}ll review it and be in touch soon!
 							</p>
 							<button
 								onClick={() => {
@@ -815,7 +819,7 @@ export default function PetDetailPage() {
 										</div>
 										<div>
 											<label className={labelCls}>
-												ID / Driver's License #
+												ID / Driver{"'"}s License #
 											</label>
 											<input
 												className={inputCls}

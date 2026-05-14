@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 const STEPS = [
 	{
 		icon: "/images/ekyc/Icons.svg",
@@ -82,17 +84,18 @@ export function EKYCHowItWorks() {
 										flexShrink: 0,
 									}}
 								>
-									<img
+									<Image
 										src={s.icon}
 										alt={s.title}
+										width={28}
+										height={28}
 										style={{
-											width: "28px",
-											height: "28px",
 											filter:
 												s.iconBg === "#3D2C1E" || s.iconBg === "#C4857A"
 													? "brightness(10)"
 													: "none",
 										}}
+										unoptimized
 									/>
 								</div>
 								{i < STEPS.length - 1 && (

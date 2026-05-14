@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { CheckIcon } from "@/assets/icons/ekyc-icons";
 
 const WHY_ITEMS = [
@@ -57,10 +58,12 @@ export function EKYCWhy() {
 									flexShrink: 0,
 								}}
 							>
-								<img
+								<Image
 									src="/images/ekyc/Login/user.svg"
 									alt="User"
-									style={{ width: "32px", height: "32px" }}
+									width={32}
+									height={32}
+									unoptimized
 								/>
 							</div>
 							<div>
@@ -121,14 +124,13 @@ export function EKYCWhy() {
 										justifyContent: "center",
 									}}
 								>
-									<img
+									<Image
 										src={src}
 										alt=""
-										style={{
-											width: "26px",
-											height: "26px",
-											filter: "brightness(10)",
-										}}
+										width={26}
+										height={26}
+										style={{ filter: "brightness(10)" }}
+										unoptimized
 									/>
 								</div>
 							))}

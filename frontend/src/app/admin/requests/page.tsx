@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { AdminLayout } from "../_components/AdminLayout";
 import { Check, X, ChevronDown, ChevronUp, Loader2, RefreshCw, FileSignature } from "lucide-react";
 import api, { contractsApi } from "@/lib/api";
@@ -246,9 +247,11 @@ export default function RequestsPage() {
 
 								<div className="flex gap-4 items-center mb-5">
 									{app.petThumbnail ? (
-										<img
+										<Image
 											src={app.petThumbnail}
 											alt={app.petName}
+											width={64}
+											height={64}
 											className="size-16 rounded-2xl object-cover shrink-0"
 										/>
 									) : (

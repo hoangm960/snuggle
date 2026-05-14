@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Heart, Loader2, ExternalLink } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,7 +21,7 @@ export default function FavoritesPage() {
 
 	useEffect(() => {
 		if (!authLoading && !user) router.push("/login");
-	}, [user, authLoading]);
+	}, [user, authLoading, router]);
 
 	useEffect(() => {
 		if (favoriteIds.size === 0) {
@@ -184,18 +185,12 @@ function FavoritePetCard({ pet, onUnfavorite }: { pet: Pet; onUnfavorite: () => 
 				className="relative w-full overflow-hidden"
 				style={{ paddingTop: "70%", background: "#F9F6F2" }}
 			>
-				<img
+				<Image
 					src={pet.thumbnail || pet.photoUrls?.[0] || "/images/pets/placeholder.png"}
 					alt={pet.name}
-					style={{
-						position: "absolute",
-						inset: 0,
-						width: "100%",
-						height: "100%",
-						objectFit: "cover",
-						transition: "transform 0.4s",
-						transform: hovered ? "scale(1.05)" : "scale(1)",
-					}}
+					fill
+					className="object-cover"
+					sizes="(max-width: 768px) 50vw, 33vw"
 				/>
 
 				{/* Heart remove button */}

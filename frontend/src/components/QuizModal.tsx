@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { X, ArrowLeft, ArrowRight, Loader2, RefreshCw } from "lucide-react";
 import { useQuiz } from "@/hooks/useQuiz";
 import type { QuizQuestion } from "@/types";
@@ -114,6 +115,7 @@ export function QuizModal({ open, onClose }: QuizModalProps) {
 			setAnswers({});
 			reset();
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [open]);
 
 	if (!open) return null;
@@ -325,14 +327,12 @@ export function QuizModal({ open, onClose }: QuizModalProps) {
 												}}
 											>
 												{m.pet.thumbnail ? (
-													<img
+													<Image
 														src={m.pet.thumbnail}
 														alt={m.pet.name}
-														style={{
-															width: "100%",
-															height: "100%",
-															objectFit: "cover",
-														}}
+														fill
+														className="object-cover"
+														sizes="80px"
 													/>
 												) : (
 													<div className="flex items-center justify-center h-full text-2xl">

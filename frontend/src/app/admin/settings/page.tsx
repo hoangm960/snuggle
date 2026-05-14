@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
 import { AdminLayout } from "../_components/AdminLayout";
 import {
 	User,
@@ -333,9 +334,11 @@ export default function SettingsPage() {
 										<Loader2 className="size-5 animate-spin text-muted-foreground" />
 									</div>
 								) : avatarPreview || profile.photoURL ? (
-									<img
+									<Image
 										src={avatarPreview || profile.photoURL}
 										alt={profile.displayName}
+										width={80}
+										height={80}
 										className="size-20 rounded-3xl object-cover"
 									/>
 								) : (

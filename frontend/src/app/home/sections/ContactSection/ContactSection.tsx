@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 export default function ContactSection() {
 	const [form, setForm] = useState({ name: "", email: "", message: "" });
@@ -8,10 +9,12 @@ export default function ContactSection() {
 	return (
 		<div style={{ overflow: "hidden", marginTop: "-80px", paddingTop: "80px" }}>
 			<section id="contact" className="relative px-6 md:px-10 lg:px-20 py-16 md:py-24">
-				<img
+				<Image
 					src="/images/decorate/bg3.svg"
 					alt=""
 					aria-hidden="true"
+					width={1200}
+					height={400}
 					style={{
 						position: "absolute",
 						top: "-80px",
@@ -183,15 +186,15 @@ export default function ContactSection() {
 						className="hidden lg:flex flex-1 items-end justify-center"
 						style={{ minHeight: "420px" }}
 					>
-						<img
+						<Image
 							src="/images/pets_cute.png"
 							alt="Cute pets"
+							fill
+							className="object-cover"
 							style={{
-								width: "100%",
-								height: "100%",
-								objectFit: "cover",
 								objectPosition: "center bottom",
 							}}
+							sizes="(max-width: 1024px) 0px, 50vw"
 						/>
 					</div>
 				</div>

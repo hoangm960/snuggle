@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { AdminLayout } from "../_components/AdminLayout";
 import { useUsers, User } from "@/hooks/useUsers";
 import {
@@ -240,12 +241,14 @@ export default function UsersPage() {
 											>
 												<td className="px-6 py-4">
 													<div className="flex items-center gap-3">
-														<img
+														<Image
 															src={
 																u.photoURL ||
 																`https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName || "U")}&background=random`
 															}
 															alt={u.displayName || "User"}
+															width={40}
+															height={40}
 															className="size-10 rounded-full object-cover"
 														/>
 														<p className="font-medium text-sm">

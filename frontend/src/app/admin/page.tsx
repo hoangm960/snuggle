@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "./_components/AdminLayout";
 import api from "@/lib/api";
+import Image from "next/image";
 import {
 	PawPrint,
 	ClipboardList,
@@ -176,7 +177,7 @@ export default function AdminDashboard() {
 						Dashboard
 					</h1>
 					<p style={{ color: "#888", fontSize: "14px", marginTop: "4px" }}>
-						Welcome back! Here's what's happening at Snuggle.
+						Welcome back! Here{"'"}s what{"'"}s happening at Snuggle.
 					</p>
 				</div>
 
@@ -295,9 +296,11 @@ export default function AdminDashboard() {
 												<td className="py-3">
 													<div className="flex items-center gap-2">
 														{r.petThumbnail ? (
-															<img
+															<Image
 																src={r.petThumbnail}
 																alt={r.petName}
+																width={32}
+																height={32}
 																className="size-8 rounded-lg object-cover"
 															/>
 														) : null}
