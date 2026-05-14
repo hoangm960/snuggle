@@ -15,7 +15,7 @@ const from = process.env.SMTP_FROM || "Snuggles <noreply@snuggles.app>";
 export interface InviteEmailParams {
 	to: string;
 	inviteToken: string;
-	role: "visitor" | "admin";
+	role: "visitor" | "adopter" | "shelter" | "admin";
 	invitedByName: string;
 }
 
@@ -28,7 +28,14 @@ export const sendInviteEmail = async ({
 	const appUrl = process.env.APP_URL || "http://localhost:3000";
 	const inviteLink = `${appUrl}/register?invite=${inviteToken}&role=${role}`;
 
-	const roleLabel = role === "admin" ? "Administrator" : "Visitor";
+	const roleLabel =
+		role === "admin"
+			? "Administrator"
+			: role === "shelter"
+				? "Shelter"
+				: role === "adopter"
+					? "Adopter"
+					: "Visitor";
 
 	const htmlContent = `
 		<!DOCTYPE html>
@@ -435,5 +442,267 @@ export const sendOtpEmail = async ({ to, displayName, code }: OtpEmailParams): P
 	} catch (error) {
 		console.error(`Failed to send OTP email to ${to}:`, error);
 		throw new Error("Failed to send verification code email");
+	}
+};
+
+export interface ContractCreatedEmailParams {
+	to: string;
+	displayName: string;
+	petName: string;
+	contractId: string;
+}
+
+export const sendContractCreatedEmail = async ({
+	to,
+	displayName,
+	petName,
+	contractId,
+}: ContractCreatedEmailParams): Promise<void> => {
+	const appUrl = process.env.APP_URL || "http://localhost:3000";
+	const contractLink = `${appUrl}/my-contracts`;
+
+	const htmlContent = `
+		<!DOCTYPE html>
+		<html>
+		<head>
+			<meta charset="utf-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		</head>
+		<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5;">
+			<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+				<tr>
+					<td align="center">
+						<table width="100%" cellpadding="0" cellspacing="0" style="max-width: 500px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+							<tr>
+								<td style="background: linear-gradient(135deg, #5D9C59 0%, #7CB342 100%); padding: 32px; text-align: center;">
+									<h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Snuggles</h1>
+								</td>
+							</tr>
+							<tr>
+								<td style="padding: 32px;">
+									<h2 style="margin: 0 0 16px; color: #1a1a1a; font-size: 22px; font-weight: 600;">Adoption Contract Ready!</h2>
+									<p style="margin: 0 0 16px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+										Hi${displayName ? ` ${displayName}` : ""},
+									</p>
+									<p style="margin: 0 0 16px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+										Great news! Your adoption contract for <strong>${petName}</strong> is ready to be signed.
+									</p>
+									<p style="margin: 0 0 24px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+										Please review and sign the contract to complete your adoption. Both you and the shelter need to sign for the adoption to be finalized.
+									</p>
+									<table width="100%" cellpadding="0" cellspacing="0">
+										<tr>
+											<td align="center">
+												<a href="${contractLink}" style="display: inline-block; background: linear-gradient(135deg, #5D9C59 0%, #7CB342 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-size: 16px; font-weight: 600;">
+													View Contract
+												</a>
+											</td>
+										</tr>
+									</table>
+									<p style="margin: 24px 0 0; color: #888888; font-size: 13px; line-height: 1.6;">
+										Contract ID: ${contractId}
+									</p>
+								</td>
+							</tr>
+							<tr>
+								<td style="background-color: #f9f9f9; padding: 24px; text-align: center;">
+									<p style="margin: 0; color: #888888; font-size: 13px;">
+										&copy; ${new Date().getFullYear()} Snuggles. All rights reserved.
+									</p>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+		</body>
+		</html>
+	`;
+
+	try {
+		await transporter.sendMail({
+			from,
+			to,
+			subject: `Your Adoption Contract for ${petName} is Ready!`,
+			html: htmlContent,
+		});
+		console.log(`Contract created email sent to ${to}`);
+	} catch (error) {
+		console.error(`Failed to send contract created email to ${to}:`, error);
+	}
+};
+
+export interface ContractSignedEmailParams {
+	to: string;
+	displayName: string;
+	petName: string;
+	contractId: string;
+	signedBy: "you" | "the shelter";
+}
+
+export const sendContractSignedEmail = async ({
+	to,
+	displayName,
+	petName,
+	contractId,
+	signedBy,
+}: ContractSignedEmailParams): Promise<void> => {
+	const appUrl = process.env.APP_URL || "http://localhost:3000";
+	const contractLink = `${appUrl}/my-contracts`;
+
+	const htmlContent = `
+		<!DOCTYPE html>
+		<html>
+		<head>
+			<meta charset="utf-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		</head>
+		<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5;">
+			<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+				<tr>
+					<td align="center">
+						<table width="100%" cellpadding="0" cellspacing="0" style="max-width: 500px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+							<tr>
+								<td style="background: linear-gradient(135deg, #5D9C59 0%, #7CB342 100%); padding: 32px; text-align: center;">
+									<h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Snuggles</h1>
+								</td>
+							</tr>
+							<tr>
+								<td style="padding: 32px;">
+									<h2 style="margin: 0 0 16px; color: #1a1a1a; font-size: 22px; font-weight: 600;">Contract Signed!</h2>
+									<p style="margin: 0 0 16px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+										Hi${displayName ? ` ${displayName}` : ""},
+									</p>
+									<p style="margin: 0 0 16px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+										<strong>${signedBy === "you" ? "You have" : "The shelter has"}</strong> signed the adoption contract for <strong>${petName}</strong>.
+									</p>
+									<p style="margin: 0 0 24px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+										${signedBy === "you" ? "The shelter still needs to sign. You'll receive another email once they've completed their signature." : "The adoption is now complete! You can download the final contract below."}
+									</p>
+									<table width="100%" cellpadding="0" cellspacing="0">
+										<tr>
+											<td align="center">
+												<a href="${contractLink}" style="display: inline-block; background: linear-gradient(135deg, #5D9C59 0%, #7CB342 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-size: 16px; font-weight: 600;">
+													View Contract
+												</a>
+											</td>
+										</tr>
+									</table>
+									<p style="margin: 24px 0 0; color: #888888; font-size: 13px; line-height: 1.6;">
+										Contract ID: ${contractId}
+									</p>
+								</td>
+							</tr>
+							<tr>
+								<td style="background-color: #f9f9f9; padding: 24px; text-align: center;">
+									<p style="margin: 0; color: #888888; font-size: 13px;">
+										&copy; ${new Date().getFullYear()} Snuggles. All rights reserved.
+									</p>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+		</body>
+		</html>
+	`;
+
+	try {
+		await transporter.sendMail({
+			from,
+			to,
+			subject: `Adoption Contract Update for ${petName}`,
+			html: htmlContent,
+		});
+		console.log(`Contract signed email sent to ${to}`);
+	} catch (error) {
+		console.error(`Failed to send contract signed email to ${to}:`, error);
+	}
+};
+
+export interface ContractCompletedEmailParams {
+	to: string;
+	displayName: string;
+	petName: string;
+	contractId: string;
+	pdfUrl: string;
+}
+
+export const sendContractCompletedEmail = async ({
+	to,
+	displayName,
+	petName,
+	contractId,
+	pdfUrl,
+}: ContractCompletedEmailParams): Promise<void> => {
+	const htmlContent = `
+		<!DOCTYPE html>
+		<html>
+		<head>
+			<meta charset="utf-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		</head>
+		<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5;">
+			<table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+				<tr>
+					<td align="center">
+						<table width="100%" cellpadding="0" cellspacing="0" style="max-width: 500px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+							<tr>
+								<td style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 32px; text-align: center;">
+									<h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Snuggles</h1>
+								</td>
+							</tr>
+							<tr>
+								<td style="padding: 32px;">
+									<h2 style="margin: 0 0 16px; color: #1a1a1a; font-size: 22px; font-weight: 600;">Adoption Complete! 🎉</h2>
+									<p style="margin: 0 0 16px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+										Hi${displayName ? ` ${displayName}` : ""},
+									</p>
+									<p style="margin: 0 0 16px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+										Congratulations! Your adoption of <strong>${petName}</strong> is now complete. Both parties have signed the contract.
+									</p>
+									<p style="margin: 0 0 24px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+										Welcome to your new life together! We're sure ${petName} will bring you lots of joy.
+									</p>
+									<table width="100%" cellpadding="0" cellspacing="0">
+										<tr>
+											<td align="center">
+												<a href="${pdfUrl}" style="display: inline-block; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-size: 16px; font-weight: 600;">
+													Download Contract PDF
+												</a>
+											</td>
+										</tr>
+									</table>
+									<p style="margin: 24px 0 0; color: #888888; font-size: 13px; line-height: 1.6;">
+										Contract ID: ${contractId}
+									</p>
+								</td>
+							</tr>
+							<tr>
+								<td style="background-color: #f9f9f9; padding: 24px; text-align: center;">
+									<p style="margin: 0; color: #888888; font-size: 13px;">
+										&copy; ${new Date().getFullYear()} Snuggles. All rights reserved.
+									</p>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+		</body>
+		</html>
+	`;
+
+	try {
+		await transporter.sendMail({
+			from,
+			to,
+			subject: `Congratulations! You've Adopted ${petName}!`,
+			html: htmlContent,
+		});
+		console.log(`Contract completed email sent to ${to}`);
+	} catch (error) {
+		console.error(`Failed to send contract completed email to ${to}:`, error);
 	}
 };

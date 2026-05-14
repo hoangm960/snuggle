@@ -21,7 +21,10 @@ const createTestApp = (): Express => {
 
 		res.status(200).json({
 			success: true,
-			data: { kyc: null, user: { id: "user1", email: "test@test.com", displayName: "Test User" } },
+			data: {
+				kyc: null,
+				user: { id: "user1", email: "test@test.com", displayName: "Test User" },
+			},
 		});
 	});
 
@@ -35,7 +38,14 @@ const createTestApp = (): Express => {
 		const { fullName, dateOfBirth, idNumber, phone, idDocumentURL, financialDocumentURL } =
 			req.body;
 
-		if (!fullName || !dateOfBirth || !idNumber || !phone || !idDocumentURL || !financialDocumentURL) {
+		if (
+			!fullName ||
+			!dateOfBirth ||
+			!idNumber ||
+			!phone ||
+			!idDocumentURL ||
+			!financialDocumentURL
+		) {
 			res.status(400).json({ success: false, error: "All fields are required" });
 			return;
 		}
@@ -147,7 +157,14 @@ const createTestApp = (): Express => {
 
 		res.status(200).json({
 			success: true,
-			data: { total: 0, pending: 0, approved: 0, rejected: 0, approvedToday: 0, rejectedToday: 0 },
+			data: {
+				total: 0,
+				pending: 0,
+				approved: 0,
+				rejected: 0,
+				approvedToday: 0,
+				rejectedToday: 0,
+			},
 		});
 	});
 
@@ -249,11 +266,16 @@ const createTestApp = (): Express => {
 describe("KYC API", () => {
 	const app = createTestApp();
 	const userToken = jwt.sign({ uid: "user-123", email: "test@example.com" }, TEST_SECRET);
-	const adminToken = jwt.sign({ uid: "admin-123", email: "admin@test.com", isAdmin: true }, TEST_SECRET);
+	const adminToken = jwt.sign(
+		{ uid: "admin-123", email: "admin@test.com", isAdmin: true },
+		TEST_SECRET
+	);
 
 	describe("GET /api/kyc/me", () => {
 		it("should return KYC status for authenticated user", async () => {
-			const response = await request(app).get("/api/kyc/me").set("Authorization", `Bearer ${userToken}`);
+			const response = await request(app)
+				.get("/api/kyc/me")
+				.set("Authorization", `Bearer ${userToken}`);
 
 			expect(response.status).toBe(200);
 			expect(response.body.success).toBe(true);
@@ -315,7 +337,9 @@ describe("KYC API", () => {
 		});
 
 		it("should return 401 without token", async () => {
-			const response = await request(app).post("/api/kyc/upload").attach("file", Buffer.from("test content"), "test.jpg");
+			const response = await request(app)
+				.post("/api/kyc/upload")
+				.attach("file", Buffer.from("test content"), "test.jpg");
 
 			expect(response.status).toBe(401);
 		});

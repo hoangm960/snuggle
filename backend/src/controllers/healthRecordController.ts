@@ -47,7 +47,8 @@ export const createHealthRecord = async (req: AuthRequest, res: Response): Promi
 		}
 
 		const { petId } = req.params;
-		const { type, description, vetName, batchNumber, documentURL, recordDate } = req.body;
+		const { type, title, description, vetName, batchNumber, documentURL, recordDate } =
+			req.body;
 
 		if (!type || !["vaccine", "checkup", "treatment"].includes(type)) {
 			throw new AppError("Invalid health record type", 400);
@@ -56,6 +57,7 @@ export const createHealthRecord = async (req: AuthRequest, res: Response): Promi
 		const recordData: Omit<HealthRecord, "id"> = {
 			petId,
 			type,
+			title,
 			description,
 			vetName,
 			batchNumber,

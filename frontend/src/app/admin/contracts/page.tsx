@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "../_components/AdminLayout";
 import {
 	FileSignature,
@@ -11,77 +11,9 @@ import {
 	CheckCircle2,
 	Clock,
 	AlertCircle,
+	Loader2,
 } from "lucide-react";
-
-interface Contract {
-	id: string;
-	petName: string;
-	adopter: string;
-	adopterEmail: string;
-	shelter: string;
-	signedAt?: string;
-	expiresAt: string;
-	status: "active" | "pending_signature" | "expired" | "terminated";
-	adoptionDate: string;
-}
-
-const mockContracts: Contract[] = [
-	{
-		id: "CON-001",
-		petName: "Mochi",
-		adopter: "Sarah Johnson",
-		adopterEmail: "sarah@email.com",
-		shelter: "Happy Paws Shelter",
-		signedAt: "Apr 25, 2026",
-		expiresAt: "Apr 25, 2027",
-		status: "active",
-		adoptionDate: "Apr 25, 2026",
-	},
-	{
-		id: "CON-002",
-		petName: "Luna",
-		adopter: "David Kim",
-		adopterEmail: "david@email.com",
-		shelter: "City Animal Rescue",
-		signedAt: undefined,
-		expiresAt: "May 1, 2027",
-		status: "pending_signature",
-		adoptionDate: "Apr 27, 2026",
-	},
-	{
-		id: "CON-003",
-		petName: "Charlie",
-		adopter: "Emily Chen",
-		adopterEmail: "emily@email.com",
-		shelter: "Happy Paws Shelter",
-		signedAt: "Mar 10, 2025",
-		expiresAt: "Mar 10, 2026",
-		status: "expired",
-		adoptionDate: "Mar 10, 2025",
-	},
-	{
-		id: "CON-004",
-		petName: "Bella",
-		adopter: "James Wilson",
-		adopterEmail: "james@email.com",
-		shelter: "Furry Friends Hub",
-		signedAt: "Apr 20, 2026",
-		expiresAt: "Apr 20, 2027",
-		status: "active",
-		adoptionDate: "Apr 20, 2026",
-	},
-	{
-		id: "CON-005",
-		petName: "Max",
-		adopter: "Olivia Davis",
-		adopterEmail: "olivia@email.com",
-		shelter: "City Animal Rescue",
-		signedAt: "Jan 5, 2026",
-		expiresAt: "Jan 5, 2027",
-		status: "terminated",
-		adoptionDate: "Jan 5, 2026",
-	},
-];
+import { contractsApi, Contract } from "@/lib/api";
 
 const statusConfig = {
 	active: { label: "Active", color: "#216959", bg: "#E8F4F1", icon: CheckCircle2 },
@@ -94,8 +26,54 @@ export default function ContractsPage() {
 	const [search, setSearch] = useState("");
 	const [statusFilter, setStatusFilter] = useState("all");
 	const [selected, setSelected] = useState<Contract | null>(null);
+	const [contracts, setContracts] = useState<Contract[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+	const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-	const filtered = mockContracts.filter((c) => {
+	useEffect(() => {
+		const fetchContracts = async () => {
+			try {
+				setLoading(true);
+				const response = await contractsApi.getAll();
+				if (response.data.success) {
+					setContracts(response.data.data);
+				}
+			} catch (err) {
+				setError("Failed to load contracts");
+				console.error(err);
+			} finally {
+				setLoading(false);
+			}
+		};
+		fetchContracts();
+	}, []);
+
+	const handleDownload = async (contract: Contract) => {
+		if (contract.contractFileURL) {
+			window.open(contract.contractFileURL, "_blank");
+			return;
+		}
+
+		setDownloadingId(contract.id);
+		try {
+			const res = await contractsApi.generatePdf(contract.id);
+			if (res.data.success && res.data.data?.pdfUrl) {
+				window.open(res.data.data.pdfUrl, "_blank");
+				setContracts((prev) =>
+					prev.map((c) =>
+						c.id === contract.id ? { ...c, contractFileURL: res.data.data.pdfUrl } : c
+					)
+				);
+			}
+		} catch (err) {
+			console.error("Failed to generate PDF", err);
+		} finally {
+			setDownloadingId(null);
+		}
+	};
+
+	const filtered = contracts.filter((c) => {
 		const matchSearch =
 			c.petName.toLowerCase().includes(search.toLowerCase()) ||
 			c.adopter.toLowerCase().includes(search.toLowerCase()) ||
@@ -198,101 +176,26 @@ export default function ContractsPage() {
 							</tr>
 						</thead>
 						<tbody>
-							{filtered.map((row) => {
-								const sc = statusConfig[row.status];
-								return (
-									<tr key={row.id} style={{ borderTop: "1px solid #F5F5F5" }}>
-										<td
-											className="px-5 py-4"
-											style={{
-												fontSize: "12px",
-												color: "#aaa",
-												fontFamily: "monospace",
-											}}
-										>
-											{row.id}
-										</td>
-										<td
-											className="px-5 py-4"
-											style={{
-												fontSize: "13px",
-												fontWeight: 500,
-												color: "#1C1C1C",
-											}}
-										>
-											{row.petName}
-										</td>
-										<td className="px-5 py-4">
-											<p style={{ fontSize: "13px", color: "#444" }}>
-												{row.adopter}
-											</p>
-											<p style={{ fontSize: "11px", color: "#aaa" }}>
-												{row.adopterEmail}
-											</p>
-										</td>
-										<td
-											className="px-5 py-4"
-											style={{ fontSize: "13px", color: "#666" }}
-										>
-											{row.shelter}
-										</td>
-										<td
-											className="px-5 py-4"
-											style={{ fontSize: "12px", color: "#aaa" }}
-										>
-											{row.adoptionDate}
-										</td>
-										<td
-											className="px-5 py-4"
-											style={{
-												fontSize: "12px",
-												color:
-													row.status === "expired" ? "#C4857A" : "#aaa",
-											}}
-										>
-											{row.expiresAt}
-										</td>
-										<td className="px-5 py-4">
-											<span
-												className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full"
-												style={{
-													background: sc.bg,
-													color: sc.color,
-													fontSize: "11px",
-													fontWeight: 600,
-												}}
-											>
-												<sc.icon className="size-3" />
-												{sc.label}
-											</span>
-										</td>
-										<td className="px-5 py-4">
-											<div className="flex items-center gap-1.5">
-												<button
-													onClick={() => setSelected(row)}
-													className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-gray-50"
-													style={{
-														border: "1px solid #E8E8E8",
-														color: "#666",
-													}}
-												>
-													<Eye className="size-3" /> View
-												</button>
-												<button
-													className="size-7 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
-													style={{ border: "1px solid #E8E8E8" }}
-												>
-													<Download
-														className="size-3.5"
-														style={{ color: "#888" }}
-													/>
-												</button>
-											</div>
-										</td>
-									</tr>
-								);
-							})}
-							{filtered.length === 0 && (
+							{loading ? (
+								<tr>
+									<td colSpan={8} className="px-5 py-10 text-center">
+										<Loader2
+											className="size-6 animate-spin mx-auto"
+											style={{ color: "#7AADA1" }}
+										/>
+									</td>
+								</tr>
+							) : error ? (
+								<tr>
+									<td
+										colSpan={8}
+										className="px-5 py-10 text-center"
+										style={{ color: "#C4857A", fontSize: "13px" }}
+									>
+										{error}
+									</td>
+								</tr>
+							) : filtered.length === 0 ? (
 								<tr>
 									<td
 										colSpan={8}
@@ -302,6 +205,112 @@ export default function ContractsPage() {
 										No contracts found.
 									</td>
 								</tr>
+							) : (
+								filtered.map((row) => {
+									const sc = statusConfig[row.status];
+									return (
+										<tr key={row.id} style={{ borderTop: "1px solid #F5F5F5" }}>
+											<td
+												className="px-5 py-4"
+												style={{
+													fontSize: "12px",
+													color: "#aaa",
+													fontFamily: "monospace",
+												}}
+											>
+												{row.id}
+											</td>
+											<td
+												className="px-5 py-4"
+												style={{
+													fontSize: "13px",
+													fontWeight: 500,
+													color: "#1C1C1C",
+												}}
+											>
+												{row.petName}
+											</td>
+											<td className="px-5 py-4">
+												<p style={{ fontSize: "13px", color: "#444" }}>
+													{row.adopter}
+												</p>
+												<p style={{ fontSize: "11px", color: "#aaa" }}>
+													{row.adopterEmail}
+												</p>
+											</td>
+											<td
+												className="px-5 py-4"
+												style={{ fontSize: "13px", color: "#666" }}
+											>
+												{row.shelter}
+											</td>
+											<td
+												className="px-5 py-4"
+												style={{ fontSize: "12px", color: "#aaa" }}
+											>
+												{row.adoptionDate}
+											</td>
+											<td
+												className="px-5 py-4"
+												style={{
+													fontSize: "12px",
+													color:
+														row.status === "expired"
+															? "#C4857A"
+															: "#aaa",
+												}}
+											>
+												{row.expiresAt}
+											</td>
+											<td className="px-5 py-4">
+												<span
+													className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full"
+													style={{
+														background: sc.bg,
+														color: sc.color,
+														fontSize: "11px",
+														fontWeight: 600,
+													}}
+												>
+													<sc.icon className="size-3" />
+													{sc.label}
+												</span>
+											</td>
+											<td className="px-5 py-4">
+												<div className="flex items-center gap-1.5">
+													<button
+														onClick={() => setSelected(row)}
+														className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-gray-50"
+														style={{
+															border: "1px solid #E8E8E8",
+															color: "#666",
+														}}
+													>
+														<Eye className="size-3" /> View
+													</button>
+													<button
+														onClick={() => handleDownload(row)}
+														disabled={downloadingId === row.id}
+														className="size-7 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors disabled:opacity-40"
+														style={{ border: "1px solid #E8E8E8" }}
+													>
+														{downloadingId === row.id ? (
+															<Loader2
+																className="size-3.5 animate-spin"
+																style={{ color: "#888" }}
+															/>
+														) : (
+															<Download
+																className="size-3.5"
+																style={{ color: "#888" }}
+															/>
+														)}
+													</button>
+												</div>
+											</td>
+										</tr>
+									);
+								})
 							)}
 						</tbody>
 					</table>
@@ -386,10 +395,20 @@ export default function ContractsPage() {
 								{ label: "Shelter", value: selected.shelter },
 								{ label: "Adoption Date", value: selected.adoptionDate },
 								{
-									label: "Contract Signed",
-									value: selected.signedAt ?? "Not yet signed",
+									label: "Signed by Adopter",
+									value: selected.adopterSignedAt ?? "Not yet",
+								},
+								{
+									label: "Signed by Shelter",
+									value: selected.shelterSignedAt ?? "Not yet",
 								},
 								{ label: "Expiry Date", value: selected.expiresAt },
+								{
+									label: "Signature Hash",
+									value: selected.contractHash
+										? `${selected.contractHash.slice(0, 12)}...`
+										: "N/A",
+								},
 							].map((item) => (
 								<div
 									key={item.label}
@@ -454,10 +473,17 @@ export default function ContractsPage() {
 
 						<div className="flex gap-3">
 							<button
-								className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium"
+								onClick={() => handleDownload(selected)}
+								disabled={downloadingId === selected.id}
+								className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50"
 								style={{ border: "1px solid #E8E8E8", color: "#666" }}
 							>
-								<Download className="size-4" /> Download PDF
+								{downloadingId === selected.id ? (
+									<Loader2 className="size-4 animate-spin" />
+								) : (
+									<Download className="size-4" />
+								)}{" "}
+								Download PDF
 							</button>
 							<button
 								onClick={() => setSelected(null)}

@@ -32,12 +32,14 @@ export default function FavoritesPage() {
 			Array.from(favoriteIds).map((petId) =>
 				api.get(`/pets/${petId}`).then((r) => r.data.data as Pet)
 			)
-		).then((results) => {
-			const fetched = results
-				.filter((r): r is PromiseFulfilledResult<Pet> => r.status === "fulfilled")
-				.map((r) => r.value);
-			setPets(fetched);
-		}).finally(() => setPetsLoading(false));
+		)
+			.then((results) => {
+				const fetched = results
+					.filter((r): r is PromiseFulfilledResult<Pet> => r.status === "fulfilled")
+					.map((r) => r.value);
+				setPets(fetched);
+			})
+			.finally(() => setPetsLoading(false));
 	}, [favoriteIds]);
 
 	const isLoading = authLoading || favLoading || petsLoading;
@@ -54,7 +56,10 @@ export default function FavoritesPage() {
 	}
 
 	return (
-		<div className="min-h-screen" style={{ background: "#F9F6F2", fontFamily: "'Poppins', sans-serif" }}>
+		<div
+			className="min-h-screen"
+			style={{ background: "#F9F6F2", fontFamily: "'Poppins', sans-serif" }}
+		>
 			<Navbar />
 
 			<div className="max-w-5xl mx-auto px-5 py-10">
@@ -112,7 +117,14 @@ export default function FavoritesPage() {
 						>
 							No favorites yet
 						</h2>
-						<p style={{ color: "#888", fontSize: "14px", marginBottom: "24px", maxWidth: "320px" }}>
+						<p
+							style={{
+								color: "#888",
+								fontSize: "14px",
+								marginBottom: "24px",
+								maxWidth: "320px",
+							}}
+						>
 							Browse pets and tap the heart icon to save your favorites here.
 						</p>
 						<Link
@@ -153,8 +165,8 @@ function FavoritePetCard({ pet, onUnfavorite }: { pet: Pet; onUnfavorite: () => 
 	const displayAge = pet.ageMonths
 		? `${pet.ageMonths} month${pet.ageMonths === 1 ? "" : "s"}`
 		: pet.age
-		? `${pet.age} year${pet.age === 1 ? "" : "s"}`
-		: "";
+			? `${pet.age} year${pet.age === 1 ? "" : "s"}`
+			: "";
 
 	return (
 		<div
@@ -168,7 +180,10 @@ function FavoritePetCard({ pet, onUnfavorite }: { pet: Pet; onUnfavorite: () => 
 			onMouseLeave={() => setHovered(false)}
 		>
 			{/* Image */}
-			<div className="relative w-full overflow-hidden" style={{ paddingTop: "70%", background: "#F9F6F2" }}>
+			<div
+				className="relative w-full overflow-hidden"
+				style={{ paddingTop: "70%", background: "#F9F6F2" }}
+			>
 				<img
 					src={pet.thumbnail || pet.photoUrls?.[0] || "/images/pets/placeholder.png"}
 					alt={pet.name}
@@ -185,7 +200,10 @@ function FavoritePetCard({ pet, onUnfavorite }: { pet: Pet; onUnfavorite: () => 
 
 				{/* Heart remove button */}
 				<button
-					onClick={(e) => { e.preventDefault(); onUnfavorite(); }}
+					onClick={(e) => {
+						e.preventDefault();
+						onUnfavorite();
+					}}
 					className="absolute top-3 right-3 flex items-center justify-center transition-all hover:scale-110"
 					style={{
 						width: "34px",
@@ -270,7 +288,8 @@ function FavoritePetCard({ pet, onUnfavorite }: { pet: Pet; onUnfavorite: () => 
 				</div>
 
 				<p style={{ color: "#888", fontSize: "12px", marginBottom: "12px" }}>
-					{pet.breed}{displayAge ? ` · ${displayAge}` : ""}
+					{pet.breed}
+					{displayAge ? ` · ${displayAge}` : ""}
 				</p>
 
 				<Link

@@ -1,18 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AdminLayout } from "../_components/AdminLayout";
-import { Check, X, ChevronDown, ChevronUp, Loader2, RefreshCw } from "lucide-react";
-import { useApplications } from "@/hooks/useApplications";
-import { usePets } from "@/hooks/usePets";
-import type { AdoptionApplication } from "@/types";
+import { Check, X, ChevronDown, ChevronUp, Loader2, RefreshCw, FileSignature } from "lucide-react";
+import api, { contractsApi } from "@/lib/api";
 
-type StatusFilter = "all" | AdoptionApplication["status"];
+type StatusFilter = "all" | "pending" | "approved" | "rejected" | "completed";
 
-const statusConfig: Record<
-	AdoptionApplication["status"],
-	{ label: string; badge: string }
-> = {
+interface Application {
+	id: string;
+	petId: string;
+	petName: string;
+	petThumbnail?: string;
+	petSpecies?: string;
+	adopterId: string;
+	adopterName: string;
+	status: "pending" | "approved" | "rejected" | "completed";
+	message?: string;
+	adminNote?: string;
+	appliedAt: string;
+}
+
+interface AppStats {
+	all: number;
+	pending: number;
+	approved: number;
+	rejected: number;
+	completed: number;
+}
+
+const statusConfig: Record<Application["status"], { label: string; badge: string }> = {
 	pending: { label: "Pending", badge: "bg-warning/15 text-warning" },
 	approved: { label: "Approved", badge: "bg-success/15 text-success" },
 	rejected: { label: "Rejected", badge: "bg-destructive/15 text-destructive" },
@@ -27,13 +44,17 @@ const TABS: { key: StatusFilter; label: string }[] = [
 	{ key: "completed", label: "Completed" },
 ];
 
-function formatDate(date: Date | string | undefined) {
-	if (!date) return "—";
-	return new Date(date).toLocaleDateString("en-US", {
-		month: "short",
-		day: "numeric",
-		year: "numeric",
-	});
+function formatDate(date: string): string {
+	if (!date) return "\u2014";
+	try {
+		return new Date(date).toLocaleDateString("en-US", {
+			month: "short",
+			day: "numeric",
+			year: "numeric",
+		});
+	} catch {
+		return date;
+	}
 }
 
 function Initials({ name, size = 10 }: { name: string; size?: number }) {
@@ -54,18 +75,41 @@ function Initials({ name, size = 10 }: { name: string; size?: number }) {
 }
 
 export default function RequestsPage() {
-	const { applications, loading, error, fetchApplications, updateStatus } = useApplications();
-	const { pets } = usePets();
-
 	const [tab, setTab] = useState<StatusFilter>("all");
-	const [updating, setUpdating] = useState<string | null>(null);
+	const [applications, setApplications] = useState<Application[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+	const [actionLoading, setActionLoading] = useState<string | null>(null);
+	const [actionMsg, setActionMsg] = useState<{
+		type: "success" | "error";
+		text: string;
+	} | null>(null);
 	const [expanded, setExpanded] = useState<string | null>(null);
 	const [noteInputs, setNoteInputs] = useState<Record<string, string>>({});
+	const [stats, setStats] = useState<AppStats | null>(null);
 
-	const filtered =
-		tab === "all" ? applications : applications.filter((a) => a.status === tab);
+	const fetchApplications = useCallback(async () => {
+		setLoading(true);
+		setError(null);
+		try {
+			const res = await api.get("/admin/applications");
+			const data = res.data.data;
+			setApplications(data.applications || []);
+			setStats(data.stats || null);
+		} catch {
+			setError("Failed to load applications");
+		} finally {
+			setLoading(false);
+		}
+	}, []);
 
-	const counts: Record<StatusFilter, number> = {
+	useEffect(() => {
+		fetchApplications();
+	}, [fetchApplications]);
+
+	const filtered = tab === "all" ? applications : applications.filter((a) => a.status === tab);
+
+	const counts: AppStats = stats || {
 		all: applications.length,
 		pending: applications.filter((a) => a.status === "pending").length,
 		approved: applications.filter((a) => a.status === "approved").length,
@@ -73,17 +117,53 @@ export default function RequestsPage() {
 		completed: applications.filter((a) => a.status === "completed").length,
 	};
 
-	const getPet = (petId: string) => pets.find((p) => p.id === petId);
+	const handleAction = async (id: string, status: Application["status"], note?: string) => {
+		setActionLoading(id);
+		setActionMsg(null);
+		try {
+			await api.put(`/admin/applications/${id}/status`, {
+				status,
+				adminNote: note,
+			});
+			const label =
+				status === "approved"
+					? "approved"
+					: status === "rejected"
+						? "rejected"
+						: "completed";
+			setActionMsg({
+				type: "success",
+				text: `Application ${label} successfully`,
+			});
+			fetchApplications();
+		} catch {
+			setActionMsg({ type: "error", text: "Failed to update application" });
+		} finally {
+			setActionLoading(null);
+			setExpanded(null);
+			setTimeout(() => setActionMsg(null), 3000);
+		}
+	};
 
-	const handleAction = async (
-		id: string,
-		status: AdoptionApplication["status"]
-	) => {
-		setUpdating(id);
-		const note = noteInputs[id];
-		await updateStatus(id, status, note);
-		setUpdating(null);
-		setExpanded(null);
+	const handleGenerateContract = async (app: Application) => {
+		setActionLoading(app.id);
+		setActionMsg(null);
+		try {
+			await contractsApi.create({
+				applicationId: app.id,
+				petId: app.petId,
+				adopterId: app.adopterId,
+			});
+			setActionMsg({
+				type: "success",
+				text: `Contract generated for ${app.petName}`,
+			});
+		} catch {
+			setActionMsg({ type: "error", text: "Failed to generate contract" });
+		} finally {
+			setActionLoading(null);
+			setTimeout(() => setActionMsg(null), 3000);
+		}
 	};
 
 	return (
@@ -91,7 +171,6 @@ export default function RequestsPage() {
 			title="Adoption Requests"
 			subtitle="Review applications and approve forever homes."
 		>
-			{/* Tabs */}
 			<div className="flex gap-2 mb-6 overflow-x-auto pb-1">
 				{TABS.map(({ key, label }) => (
 					<button
@@ -122,7 +201,6 @@ export default function RequestsPage() {
 				</button>
 			</div>
 
-			{/* States */}
 			{loading ? (
 				<div className="flex items-center justify-center py-20">
 					<Loader2 className="size-6 animate-spin text-muted-foreground" />
@@ -139,14 +217,15 @@ export default function RequestsPage() {
 				</div>
 			) : filtered.length === 0 ? (
 				<div className="text-center py-20">
-					<p className="text-muted-foreground text-sm">No {tab === "all" ? "" : tab} applications yet.</p>
+					<p className="text-muted-foreground text-sm">
+						No {tab === "all" ? "" : tab} applications yet.
+					</p>
 				</div>
 			) : (
 				<div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 					{filtered.map((app) => {
-						const pet = getPet(app.petId);
 						const cfg = statusConfig[app.status];
-						const isUpdating = updating === app.id;
+						const isUpdating = actionLoading === app.id;
 						const isExpanded = expanded === app.id;
 
 						return (
@@ -154,22 +233,22 @@ export default function RequestsPage() {
 								key={app.id}
 								className="bg-card border border-border rounded-3xl p-6 shadow-card hover:shadow-soft transition-shadow"
 							>
-								{/* Header */}
 								<div className="flex items-start justify-between mb-4">
 									<span className="text-[10px] font-mono text-muted-foreground">
 										{app.id?.slice(0, 8).toUpperCase()}
 									</span>
-									<span className={`px-3 py-1 rounded-full text-[11px] font-semibold ${cfg.badge}`}>
+									<span
+										className={`px-3 py-1 rounded-full text-[11px] font-semibold ${cfg.badge}`}
+									>
 										{cfg.label}
 									</span>
 								</div>
 
-								{/* Pet info */}
 								<div className="flex gap-4 items-center mb-5">
-									{pet?.thumbnail ? (
+									{app.petThumbnail ? (
 										<img
-											src={pet.thumbnail}
-											alt={app.name}
+											src={app.petThumbnail}
+											alt={app.petName}
 											className="size-16 rounded-2xl object-cover shrink-0"
 										/>
 									) : (
@@ -179,10 +258,10 @@ export default function RequestsPage() {
 									)}
 									<div className="flex-1 min-w-0">
 										<h3 className="font-display text-lg font-semibold truncate">
-											{app.name}
+											{app.petName}
 										</h3>
 										<p className="text-xs text-muted-foreground">
-											{pet ? `${pet.breed} · ${pet.species}` : "Pet details unavailable"}
+											{app.petSpecies || "Pet details unavailable"}
 										</p>
 									</div>
 									<div className="text-right shrink-0">
@@ -195,16 +274,18 @@ export default function RequestsPage() {
 									</div>
 								</div>
 
-								{/* Applicant */}
 								<div className="flex items-center gap-3 p-4 rounded-2xl bg-secondary/40 mb-4">
 									<Initials name={app.adopterName || "?"} size={10} />
 									<div className="flex-1 min-w-0">
-										<p className="text-sm font-semibold truncate">{app.adopterName}</p>
-										<p className="text-[11px] text-muted-foreground">Applicant</p>
+										<p className="text-sm font-semibold truncate">
+											{app.adopterName}
+										</p>
+										<p className="text-[11px] text-muted-foreground">
+											Applicant
+										</p>
 									</div>
 								</div>
 
-								{/* Message preview */}
 								{app.message && (
 									<button
 										onClick={() => setExpanded(isExpanded ? null : app.id!)}
@@ -230,7 +311,6 @@ export default function RequestsPage() {
 									</button>
 								)}
 
-								{/* Admin note (shown if set) */}
 								{app.adminNote && (
 									<div className="mb-4 px-3 py-2 rounded-xl bg-muted text-xs text-muted-foreground">
 										<span className="font-semibold">Note: </span>
@@ -238,7 +318,6 @@ export default function RequestsPage() {
 									</div>
 								)}
 
-								{/* Actions */}
 								{app.status === "pending" && (
 									<div className="space-y-2">
 										<textarea
@@ -255,7 +334,13 @@ export default function RequestsPage() {
 										/>
 										<div className="flex gap-2">
 											<button
-												onClick={() => handleAction(app.id!, "approved")}
+												onClick={() =>
+													handleAction(
+														app.id!,
+														"approved",
+														noteInputs[app.id!]
+													)
+												}
 												disabled={isUpdating}
 												className="flex-1 h-10 rounded-full bg-success/15 text-success font-semibold text-sm hover:bg-success hover:text-primary-foreground transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
 											>
@@ -267,7 +352,13 @@ export default function RequestsPage() {
 												Approve
 											</button>
 											<button
-												onClick={() => handleAction(app.id!, "rejected")}
+												onClick={() =>
+													handleAction(
+														app.id!,
+														"rejected",
+														noteInputs[app.id!]
+													)
+												}
 												disabled={isUpdating}
 												className="flex-1 h-10 rounded-full bg-destructive/15 text-destructive font-semibold text-sm hover:bg-destructive hover:text-destructive-foreground transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
 											>
@@ -284,21 +375,33 @@ export default function RequestsPage() {
 
 								{app.status === "approved" && (
 									<button
-										onClick={() => handleAction(app.id!, "completed")}
+										onClick={() => handleGenerateContract(app)}
 										disabled={isUpdating}
 										className="w-full h-10 rounded-full bg-primary/15 text-primary-deep font-semibold text-sm hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
 									>
 										{isUpdating ? (
 											<Loader2 className="size-4 animate-spin" />
 										) : (
-											<Check className="size-4" />
+											<FileSignature className="size-4" />
 										)}
-										Mark as Completed
+										Generate Contract
 									</button>
 								)}
 							</article>
 						);
 					})}
+				</div>
+			)}
+
+			{actionMsg && (
+				<div
+					className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-3 rounded-lg text-sm z-50 ${
+						actionMsg.type === "success"
+							? "bg-success/10 text-success"
+							: "bg-destructive/10 text-destructive"
+					}`}
+				>
+					{actionMsg.text}
 				</div>
 			)}
 		</AdminLayout>

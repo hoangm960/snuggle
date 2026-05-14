@@ -9,24 +9,46 @@ import {
 	inviteUser,
 	deleteUser,
 } from "../controllers/adminController";
+import { getDashboardData } from "../controllers/dashboardController";
 import {
 	getAllChats,
 	getChatMessages,
 	getPendingChats,
 	acceptChat,
 } from "../controllers/chatController";
+import {
+	getAllHealthRecords,
+	createHealthRecord,
+	deleteHealthRecord,
+} from "../controllers/adminHealthRecordController";
 import { authenticate } from "../middleware/auth";
 import { requireAdmin } from "../middleware/admin";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { AppError } from "../middleware/errorHandler";
 import { validate } from "../middleware/validate";
-import { inviteUserSchema, updateUserSchema, updateReviewStatusSchema } from "../utils/validators/otherValidator";
+import {
+	inviteUserSchema,
+	updateUserSchema,
+	updateReviewStatusSchema,
+} from "../utils/validators/otherValidator";
 import { db } from "../config/firebase";
 
 const router = Router();
 
 router.use(authenticate);
 router.use(requireAdmin);
+
+router.get(
+	"/dashboard",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		const data = await getDashboardData();
+
+		res.status(200).json({
+			success: true,
+			data,
+		});
+	})
+);
 
 router.post(
 	"/invite",
@@ -287,16 +309,23 @@ router.put(
 			});
 
 			const trustScore = count > 0 ? totalRating / count : 0;
-			await db.collection("shelters").doc(shelterId).update({
-				trustScore: Math.round(trustScore * 10) / 10,
-				totalReviews: count,
-			});
+			await db
+				.collection("shelters")
+				.doc(shelterId)
+				.update({
+					trustScore: Math.round(trustScore * 10) / 10,
+					totalReviews: count,
+				});
 		}
 
 		const updated = await reviewRef.get();
 		const review: Review = { id: updated.id, shelterId, ...updated.data() } as Review;
 
-		res.status(200).json({ success: true, data: review, message: `Review ${status} successfully` });
+		res.status(200).json({
+			success: true,
+			data: review,
+			message: `Review ${status} successfully`,
+		});
 	})
 );
 
@@ -360,5 +389,10 @@ router.delete(
 		res.status(200).json({ success: true, message: "Question deleted" });
 	})
 );
+router.get("/health-records", asyncHandler(getAllHealthRecords));
+
+router.post("/health-records", asyncHandler(createHealthRecord));
+
+router.delete("/health-records/:petId/:id", asyncHandler(deleteHealthRecord));
 
 export default router;

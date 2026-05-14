@@ -76,10 +76,10 @@ export const updateAdopterProfileSchema = createAdopterProfileSchema.partial();
 
 export const inviteUserSchema = z.object({
 	email: z.string().email("Invalid email format"),
-	role: z.enum(["visitor", "admin"]),
+	role: z.enum(["visitor", "adopter", "shelter", "admin"]),
 });
 
 export const updateUserSchema = z.object({
-	role: z.enum(["visitor", "admin"]).optional(),
+	role: z.enum(["visitor", "adopter", "shelter", "admin"]).optional(),
 	accountStatus: z.enum(["active", "suspended"]).optional(),
 });

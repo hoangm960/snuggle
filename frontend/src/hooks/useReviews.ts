@@ -18,7 +18,11 @@ interface UseReviewsReturn {
 	loading: boolean;
 	error: string | null;
 	fetchReviews: () => Promise<void>;
-	updateStatus: (shelterId: string, id: string, status: Review["status"]) => Promise<Review | null>;
+	updateStatus: (
+		shelterId: string,
+		id: string,
+		status: Review["status"]
+	) => Promise<Review | null>;
 }
 
 export const useReviews = (): UseReviewsReturn => {

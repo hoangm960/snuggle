@@ -46,6 +46,10 @@ export function clearAuthSession(): void {
 	deleteCookie(COOKIE_NAMES.user);
 }
 
+export function setStoredUser(user: User): void {
+	setCookie(COOKIE_NAMES.user, JSON.stringify(user), 7);
+}
+
 export function getToken(): string | null {
 	return getCookie(COOKIE_NAMES.token);
 }

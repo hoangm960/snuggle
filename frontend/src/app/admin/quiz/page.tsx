@@ -26,73 +26,339 @@ type WeightKey = "dog" | "cat" | "other" | "small" | "medium" | "large";
 // ─── Predefined templates ─────────────────────────────────────────────────────
 const TEMPLATES: Omit<QuizQuestion, "id" | "createdAt" | "updatedAt">[] = [
 	{
-		order: 0, category: "Lifestyle", isActive: true,
+		order: 0,
+		category: "Lifestyle",
+		isActive: true,
 		question: "How busy is your daily routine?",
 		options: [
-			{ value: "very-busy", label: "Very busy", subLabel: "Work long hours, rarely home", icon: "⚡", weights: { species: { dog: 0, cat: 3, other: 2 }, size: { small: 3, medium: 1, large: 0 } } },
-			{ value: "moderately-busy", label: "Moderately busy", subLabel: "Work 9–5, free evenings", icon: "⏰", weights: { species: { dog: 2, cat: 3, other: 2 }, size: { small: 2, medium: 2, large: 1 } } },
-			{ value: "flexible", label: "Flexible schedule", subLabel: "Work from home or part-time", icon: "☀️", weights: { species: { dog: 3, cat: 2, other: 2 }, size: { small: 2, medium: 3, large: 2 } } },
-			{ value: "lots-of-time", label: "Lots of free time", subLabel: "Retired or student", icon: "🌿", weights: { species: { dog: 3, cat: 2, other: 1 }, size: { small: 1, medium: 2, large: 3 } } },
+			{
+				value: "very-busy",
+				label: "Very busy",
+				subLabel: "Work long hours, rarely home",
+				icon: "⚡",
+				weights: {
+					species: { dog: 0, cat: 3, other: 2 },
+					size: { small: 3, medium: 1, large: 0 },
+				},
+			},
+			{
+				value: "moderately-busy",
+				label: "Moderately busy",
+				subLabel: "Work 9–5, free evenings",
+				icon: "⏰",
+				weights: {
+					species: { dog: 2, cat: 3, other: 2 },
+					size: { small: 2, medium: 2, large: 1 },
+				},
+			},
+			{
+				value: "flexible",
+				label: "Flexible schedule",
+				subLabel: "Work from home or part-time",
+				icon: "☀️",
+				weights: {
+					species: { dog: 3, cat: 2, other: 2 },
+					size: { small: 2, medium: 3, large: 2 },
+				},
+			},
+			{
+				value: "lots-of-time",
+				label: "Lots of free time",
+				subLabel: "Retired or student",
+				icon: "🌿",
+				weights: {
+					species: { dog: 3, cat: 2, other: 1 },
+					size: { small: 1, medium: 2, large: 3 },
+				},
+			},
 		],
 	},
 	{
-		order: 1, category: "Living Space", isActive: true,
+		order: 1,
+		category: "Living Space",
+		isActive: true,
 		question: "Where do you live?",
 		options: [
-			{ value: "small-apartment", label: "Small apartment", subLabel: "Under 40 m²", icon: "🏢", weights: { species: { dog: 1, cat: 3, other: 3 }, size: { small: 3, medium: 1, large: 0 } } },
-			{ value: "large-apartment", label: "Large apartment", subLabel: "40–80 m² with balcony", icon: "🏙️", weights: { species: { dog: 2, cat: 3, other: 2 }, size: { small: 3, medium: 2, large: 1 } } },
-			{ value: "house-no-yard", label: "House, no yard", subLabel: "Townhouse / row house", icon: "🏡", weights: { species: { dog: 2, cat: 2, other: 2 }, size: { small: 2, medium: 3, large: 2 } } },
-			{ value: "house-with-yard", label: "House with yard", subLabel: "Outdoor space available", icon: "🌳", weights: { species: { dog: 3, cat: 2, other: 1 }, size: { small: 1, medium: 2, large: 3 } } },
+			{
+				value: "small-apartment",
+				label: "Small apartment",
+				subLabel: "Under 40 m²",
+				icon: "🏢",
+				weights: {
+					species: { dog: 1, cat: 3, other: 3 },
+					size: { small: 3, medium: 1, large: 0 },
+				},
+			},
+			{
+				value: "large-apartment",
+				label: "Large apartment",
+				subLabel: "40–80 m² with balcony",
+				icon: "🏙️",
+				weights: {
+					species: { dog: 2, cat: 3, other: 2 },
+					size: { small: 3, medium: 2, large: 1 },
+				},
+			},
+			{
+				value: "house-no-yard",
+				label: "House, no yard",
+				subLabel: "Townhouse / row house",
+				icon: "🏡",
+				weights: {
+					species: { dog: 2, cat: 2, other: 2 },
+					size: { small: 2, medium: 3, large: 2 },
+				},
+			},
+			{
+				value: "house-with-yard",
+				label: "House with yard",
+				subLabel: "Outdoor space available",
+				icon: "🌳",
+				weights: {
+					species: { dog: 3, cat: 2, other: 1 },
+					size: { small: 1, medium: 2, large: 3 },
+				},
+			},
 		],
 	},
 	{
-		order: 2, category: "Relationship", isActive: true,
+		order: 2,
+		category: "Relationship",
+		isActive: true,
 		question: "What kind of bond do you want with your pet?",
 		options: [
-			{ value: "cuddly", label: "Cuddly companion", subLabel: "Loves to be held and petted", icon: "❤️", weights: { species: { dog: 3, cat: 3, other: 0 }, size: { small: 3, medium: 2, large: 1 } } },
-			{ value: "playful", label: "Active playmate", subLabel: "Games, fetch, training tricks", icon: "🏃", weights: { species: { dog: 3, cat: 1, other: 1 }, size: { small: 1, medium: 2, large: 3 } } },
-			{ value: "observe", label: "Observe & admire", subLabel: "Beautiful, low-touch pet", icon: "🌸", weights: { species: { dog: 0, cat: 1, other: 3 }, size: { small: 3, medium: 2, large: 1 } } },
-			{ value: "chill", label: "Chill companion", subLabel: "Calm, peaceful presence", icon: "🌙", weights: { species: { dog: 1, cat: 3, other: 2 }, size: { small: 2, medium: 3, large: 2 } } },
+			{
+				value: "cuddly",
+				label: "Cuddly companion",
+				subLabel: "Loves to be held and petted",
+				icon: "❤️",
+				weights: {
+					species: { dog: 3, cat: 3, other: 0 },
+					size: { small: 3, medium: 2, large: 1 },
+				},
+			},
+			{
+				value: "playful",
+				label: "Active playmate",
+				subLabel: "Games, fetch, training tricks",
+				icon: "🏃",
+				weights: {
+					species: { dog: 3, cat: 1, other: 1 },
+					size: { small: 1, medium: 2, large: 3 },
+				},
+			},
+			{
+				value: "observe",
+				label: "Observe & admire",
+				subLabel: "Beautiful, low-touch pet",
+				icon: "🌸",
+				weights: {
+					species: { dog: 0, cat: 1, other: 3 },
+					size: { small: 3, medium: 2, large: 1 },
+				},
+			},
+			{
+				value: "chill",
+				label: "Chill companion",
+				subLabel: "Calm, peaceful presence",
+				icon: "🌙",
+				weights: {
+					species: { dog: 1, cat: 3, other: 2 },
+					size: { small: 2, medium: 3, large: 2 },
+				},
+			},
 		],
 	},
 	{
-		order: 3, category: "Experience", isActive: true,
+		order: 3,
+		category: "Experience",
+		isActive: true,
 		question: "How experienced are you with pets?",
 		options: [
-			{ value: "first-time", label: "First-time owner", subLabel: "Completely new to having pets", icon: "🌱", weights: { species: { dog: 2, cat: 3, other: 1 }, size: { small: 3, medium: 2, large: 0 } } },
-			{ value: "some-experience", label: "Some experience", subLabel: "Had a common pet before", icon: "⭐", weights: { species: { dog: 3, cat: 3, other: 2 }, size: { small: 2, medium: 3, large: 2 } } },
-			{ value: "experienced", label: "Experienced", subLabel: "Owned multiple pets", icon: "🏆", weights: { species: { dog: 3, cat: 3, other: 3 }, size: { small: 1, medium: 2, large: 3 } } },
-			{ value: "exotic", label: "Exotic enthusiast", subLabel: "Comfortable with unusual animals", icon: "🦎", weights: { species: { dog: 1, cat: 1, other: 3 }, size: { small: 2, medium: 2, large: 2 } } },
+			{
+				value: "first-time",
+				label: "First-time owner",
+				subLabel: "Completely new to having pets",
+				icon: "🌱",
+				weights: {
+					species: { dog: 2, cat: 3, other: 1 },
+					size: { small: 3, medium: 2, large: 0 },
+				},
+			},
+			{
+				value: "some-experience",
+				label: "Some experience",
+				subLabel: "Had a common pet before",
+				icon: "⭐",
+				weights: {
+					species: { dog: 3, cat: 3, other: 2 },
+					size: { small: 2, medium: 3, large: 2 },
+				},
+			},
+			{
+				value: "experienced",
+				label: "Experienced",
+				subLabel: "Owned multiple pets",
+				icon: "🏆",
+				weights: {
+					species: { dog: 3, cat: 3, other: 3 },
+					size: { small: 1, medium: 2, large: 3 },
+				},
+			},
+			{
+				value: "exotic",
+				label: "Exotic enthusiast",
+				subLabel: "Comfortable with unusual animals",
+				icon: "🦎",
+				weights: {
+					species: { dog: 1, cat: 1, other: 3 },
+					size: { small: 2, medium: 2, large: 2 },
+				},
+			},
 		],
 	},
 	{
-		order: 4, category: "Household", isActive: true,
+		order: 4,
+		category: "Household",
+		isActive: true,
 		question: "Who else lives with you?",
 		options: [
-			{ value: "alone", label: "Just me", subLabel: "Living solo", icon: "🙋", weights: { species: { dog: 2, cat: 3, other: 2 }, size: { small: 2, medium: 2, large: 2 } } },
-			{ value: "partner", label: "Me & partner", subLabel: "Two adults", icon: "👫", weights: { species: { dog: 3, cat: 3, other: 2 }, size: { small: 2, medium: 3, large: 2 } } },
-			{ value: "kids", label: "Kids at home", subLabel: "Young children present", icon: "👶", weights: { species: { dog: 3, cat: 2, other: 0 }, size: { small: 1, medium: 2, large: 3 } } },
-			{ value: "other-pets", label: "Other pets", subLabel: "Dogs, cats, or others already", icon: "🐾", weights: { species: { dog: 2, cat: 2, other: 1 }, size: { small: 2, medium: 2, large: 2 } } },
+			{
+				value: "alone",
+				label: "Just me",
+				subLabel: "Living solo",
+				icon: "🙋",
+				weights: {
+					species: { dog: 2, cat: 3, other: 2 },
+					size: { small: 2, medium: 2, large: 2 },
+				},
+			},
+			{
+				value: "partner",
+				label: "Me & partner",
+				subLabel: "Two adults",
+				icon: "👫",
+				weights: {
+					species: { dog: 3, cat: 3, other: 2 },
+					size: { small: 2, medium: 3, large: 2 },
+				},
+			},
+			{
+				value: "kids",
+				label: "Kids at home",
+				subLabel: "Young children present",
+				icon: "👶",
+				weights: {
+					species: { dog: 3, cat: 2, other: 0 },
+					size: { small: 1, medium: 2, large: 3 },
+				},
+			},
+			{
+				value: "other-pets",
+				label: "Other pets",
+				subLabel: "Dogs, cats, or others already",
+				icon: "🐾",
+				weights: {
+					species: { dog: 2, cat: 2, other: 1 },
+					size: { small: 2, medium: 2, large: 2 },
+				},
+			},
 		],
 	},
 	{
-		order: 5, category: "Activity", isActive: true,
+		order: 5,
+		category: "Activity",
+		isActive: true,
 		question: "How active do you want your lifestyle with a pet to be?",
 		options: [
-			{ value: "very-active", label: "Very active", subLabel: "Daily runs, hikes, outdoor play", icon: "🏔️", weights: { species: { dog: 3, cat: 0, other: 0 }, size: { small: 0, medium: 1, large: 3 } } },
-			{ value: "moderately-active", label: "Moderately active", subLabel: "Regular walks and play sessions", icon: "🚶", weights: { species: { dog: 3, cat: 1, other: 1 }, size: { small: 1, medium: 3, large: 2 } } },
-			{ value: "occasionally-active", label: "Occasionally active", subLabel: "Short walks, indoor play", icon: "🛋️", weights: { species: { dog: 1, cat: 3, other: 2 }, size: { small: 3, medium: 2, large: 1 } } },
-			{ value: "low-activity", label: "Low activity", subLabel: "Minimal exercise required", icon: "😌", weights: { species: { dog: 0, cat: 3, other: 3 }, size: { small: 3, medium: 2, large: 0 } } },
+			{
+				value: "very-active",
+				label: "Very active",
+				subLabel: "Daily runs, hikes, outdoor play",
+				icon: "🏔️",
+				weights: {
+					species: { dog: 3, cat: 0, other: 0 },
+					size: { small: 0, medium: 1, large: 3 },
+				},
+			},
+			{
+				value: "moderately-active",
+				label: "Moderately active",
+				subLabel: "Regular walks and play sessions",
+				icon: "🚶",
+				weights: {
+					species: { dog: 3, cat: 1, other: 1 },
+					size: { small: 1, medium: 3, large: 2 },
+				},
+			},
+			{
+				value: "occasionally-active",
+				label: "Occasionally active",
+				subLabel: "Short walks, indoor play",
+				icon: "🛋️",
+				weights: {
+					species: { dog: 1, cat: 3, other: 2 },
+					size: { small: 3, medium: 2, large: 1 },
+				},
+			},
+			{
+				value: "low-activity",
+				label: "Low activity",
+				subLabel: "Minimal exercise required",
+				icon: "😌",
+				weights: {
+					species: { dog: 0, cat: 3, other: 3 },
+					size: { small: 3, medium: 2, large: 0 },
+				},
+			},
 		],
 	},
 	{
-		order: 6, category: "Budget", isActive: true,
+		order: 6,
+		category: "Budget",
+		isActive: true,
 		question: "What's your monthly budget for pet care?",
 		options: [
-			{ value: "budget-conscious", label: "Budget-conscious", subLabel: "Under $50/month", icon: "💰", weights: { species: { dog: 0, cat: 2, other: 3 }, size: { small: 3, medium: 1, large: 0 } } },
-			{ value: "moderate-budget", label: "Moderate", subLabel: "$50–$150/month", icon: "💳", weights: { species: { dog: 2, cat: 3, other: 2 }, size: { small: 2, medium: 3, large: 1 } } },
-			{ value: "comfortable", label: "Comfortable", subLabel: "$150–$300/month", icon: "💵", weights: { species: { dog: 3, cat: 3, other: 2 }, size: { small: 1, medium: 2, large: 3 } } },
-			{ value: "flexible-budget", label: "No concerns", subLabel: "Budget is flexible", icon: "🏦", weights: { species: { dog: 3, cat: 3, other: 3 }, size: { small: 1, medium: 2, large: 3 } } },
+			{
+				value: "budget-conscious",
+				label: "Budget-conscious",
+				subLabel: "Under $50/month",
+				icon: "💰",
+				weights: {
+					species: { dog: 0, cat: 2, other: 3 },
+					size: { small: 3, medium: 1, large: 0 },
+				},
+			},
+			{
+				value: "moderate-budget",
+				label: "Moderate",
+				subLabel: "$50–$150/month",
+				icon: "💳",
+				weights: {
+					species: { dog: 2, cat: 3, other: 2 },
+					size: { small: 2, medium: 3, large: 1 },
+				},
+			},
+			{
+				value: "comfortable",
+				label: "Comfortable",
+				subLabel: "$150–$300/month",
+				icon: "💵",
+				weights: {
+					species: { dog: 3, cat: 3, other: 2 },
+					size: { small: 1, medium: 2, large: 3 },
+				},
+			},
+			{
+				value: "flexible-budget",
+				label: "No concerns",
+				subLabel: "Budget is flexible",
+				icon: "🏦",
+				weights: {
+					species: { dog: 3, cat: 3, other: 3 },
+					size: { small: 1, medium: 2, large: 3 },
+				},
+			},
 		],
 	},
 ];
@@ -153,7 +419,9 @@ function OptionEditor({
 				</div>
 				<input
 					value={opt.value}
-					onChange={(e) => onChange(i, "value", e.target.value.toLowerCase().replace(/\s+/g, "-"))}
+					onChange={(e) =>
+						onChange(i, "value", e.target.value.toLowerCase().replace(/\s+/g, "-"))
+					}
 					placeholder="key"
 					className="w-28 h-9 rounded-xl border border-input bg-background px-3 text-xs font-mono outline-none focus:ring-1 focus:ring-ring shrink-0"
 				/>
@@ -179,9 +447,24 @@ function OptionEditor({
 							<div key={k} className="flex items-center justify-between mb-1.5">
 								<span className="text-xs capitalize text-foreground">{k}</span>
 								<input
-									type="number" min={0} max={3}
-									value={(group === "species" ? opt.weights.species?.[k as "dog"|"cat"|"other"] : opt.weights.size?.[k as "small"|"medium"|"large"]) ?? 1}
-									onChange={(e) => onWeight(i, group, k as WeightKey, parseInt(e.target.value) || 0)}
+									type="number"
+									min={0}
+									max={3}
+									value={
+										(group === "species"
+											? opt.weights.species?.[k as "dog" | "cat" | "other"]
+											: opt.weights.size?.[
+													k as "small" | "medium" | "large"
+												]) ?? 1
+									}
+									onChange={(e) =>
+										onWeight(
+											i,
+											group,
+											k as WeightKey,
+											parseInt(e.target.value) || 0
+										)
+									}
 									className="w-14 h-7 text-center rounded-lg border border-input bg-background text-xs outline-none"
 								/>
 							</div>
@@ -219,7 +502,9 @@ export default function AdminQuizPage() {
 	const [libraryOpen, setLibraryOpen] = useState(false);
 	const [addingIdx, setAddingIdx] = useState<number | null>(null);
 
-	useEffect(() => { fetchQuestions(); }, []);
+	useEffect(() => {
+		fetchQuestions();
+	}, []);
 
 	const fetchQuestions = async () => {
 		setLoading(true);
@@ -303,11 +588,17 @@ export default function AdminQuizPage() {
 			opts[i] = { ...opts[i], [field]: value };
 			return { ...p, options: opts };
 		});
-	const updateCreateWeight = (i: number, group: "species" | "size", key: WeightKey, val: number) =>
+	const updateCreateWeight = (
+		i: number,
+		group: "species" | "size",
+		key: WeightKey,
+		val: number
+	) =>
 		setCreateForm((p) => {
 			const opts = [...p.options];
 			const w = { ...opts[i].weights };
-			if (group === "species") w.species = { ...w.species, [key]: Math.max(0, Math.min(3, val)) };
+			if (group === "species")
+				w.species = { ...w.species, [key]: Math.max(0, Math.min(3, val)) };
 			else w.size = { ...w.size, [key]: Math.max(0, Math.min(3, val)) };
 			opts[i] = { ...opts[i], weights: w };
 			return { ...p, options: opts };
@@ -343,7 +634,8 @@ export default function AdminQuizPage() {
 			if (!p) return p;
 			const opts = [...p.options];
 			const w = { ...opts[i].weights };
-			if (group === "species") w.species = { ...w.species, [key]: Math.max(0, Math.min(3, val)) };
+			if (group === "species")
+				w.species = { ...w.species, [key]: Math.max(0, Math.min(3, val)) };
 			else w.size = { ...w.size, [key]: Math.max(0, Math.min(3, val)) };
 			opts[i] = { ...opts[i], weights: w };
 			return { ...p, options: opts };
@@ -355,7 +647,9 @@ export default function AdminQuizPage() {
 		try {
 			await api.delete(`/admin/quiz/${id}`);
 			setQuestions((prev) => prev.filter((q) => q.id !== id));
-		} catch { /* ignore */ } finally {
+		} catch {
+			/* ignore */
+		} finally {
 			setDeleteConfirm(null);
 		}
 	};
@@ -381,7 +675,9 @@ export default function AdminQuizPage() {
 		try {
 			const res = await api.put(`/admin/quiz/${q.id}`, { isActive: !q.isActive });
 			setQuestions((prev) => prev.map((item) => (item.id === q.id ? res.data.data : item)));
-		} catch { /* ignore */ }
+		} catch {
+			/* ignore */
+		}
 	};
 
 	// ── Library ────────────────────────────────────────────────────────────────
@@ -406,7 +702,6 @@ export default function AdminQuizPage() {
 
 	return (
 		<AdminLayout title="Pet Quiz" subtitle="Build and manage the pet compatibility quiz.">
-
 			{/* ── Top bar ── */}
 			<div className="flex items-center justify-between mb-6">
 				<p className="text-xs text-muted-foreground">
@@ -426,7 +721,11 @@ export default function AdminQuizPage() {
 								disabled={bulkDeleting}
 								className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-destructive text-destructive-foreground text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
 							>
-								{bulkDeleting ? <Loader2 className="size-3 animate-spin" /> : <Trash2 className="size-3" />}
+								{bulkDeleting ? (
+									<Loader2 className="size-3 animate-spin" />
+								) : (
+									<Trash2 className="size-3" />
+								)}
 								Delete {selected.size}
 							</button>
 						)}
@@ -452,7 +751,9 @@ export default function AdminQuizPage() {
 			{error && (
 				<div className="mb-4 px-4 py-3 rounded-2xl bg-destructive/10 text-destructive text-sm flex items-center justify-between">
 					<span>{error}</span>
-					<button onClick={() => setError(null)}><X className="size-4" /></button>
+					<button onClick={() => setError(null)}>
+						<X className="size-4" />
+					</button>
 				</div>
 			)}
 
@@ -472,17 +773,23 @@ export default function AdminQuizPage() {
 									onClick={() => selectMode && toggleSelected(q.id!)}
 									className="bg-card border rounded-2xl p-5 flex items-start gap-4 shadow-card transition-colors"
 									style={{
-										borderColor: isSelected ? "hsl(var(--primary))" : "hsl(var(--border))",
-										background: isSelected ? "hsl(var(--primary) / 0.04)" : undefined,
+										borderColor: isSelected
+											? "hsl(var(--primary))"
+											: "hsl(var(--border))",
+										background: isSelected
+											? "hsl(var(--primary) / 0.04)"
+											: undefined,
 										cursor: selectMode ? "pointer" : "default",
 									}}
 								>
 									{/* Checkbox (select mode) or order controls */}
 									{selectMode ? (
 										<div className="pt-0.5 shrink-0">
-											{isSelected
-												? <CheckSquare className="size-5 text-primary" />
-												: <Square className="size-5 text-muted-foreground" />}
+											{isSelected ? (
+												<CheckSquare className="size-5 text-primary" />
+											) : (
+												<Square className="size-5 text-muted-foreground" />
+											)}
 										</div>
 									) : (
 										<div className="flex flex-col items-center gap-1 pt-0.5 shrink-0">
@@ -493,7 +800,9 @@ export default function AdminQuizPage() {
 											>
 												<ChevronUp className="size-3.5" />
 											</button>
-											<span className="text-xs font-mono text-muted-foreground">{idx + 1}</span>
+											<span className="text-xs font-mono text-muted-foreground">
+												{idx + 1}
+											</span>
 											<button
 												onClick={() => moveQuestion(q.id!, 1)}
 												disabled={idx === questions.length - 1}
@@ -510,14 +819,21 @@ export default function AdminQuizPage() {
 											<span className="text-[10px] font-bold uppercase tracking-widest text-primary">
 												{q.category}
 											</span>
-											<span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${q.isActive ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}`}>
+											<span
+												className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${q.isActive ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}`}
+											>
 												{q.isActive ? "Active" : "Inactive"}
 											</span>
 										</div>
-										<p className="text-sm font-semibold text-foreground mb-3">{q.question}</p>
+										<p className="text-sm font-semibold text-foreground mb-3">
+											{q.question}
+										</p>
 										<div className="flex flex-wrap gap-2">
 											{q.options.map((opt) => (
-												<span key={opt.value} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary text-xs font-medium">
+												<span
+													key={opt.value}
+													className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary text-xs font-medium"
+												>
 													{opt.icon} {opt.label}
 												</span>
 											))}
@@ -527,13 +843,27 @@ export default function AdminQuizPage() {
 									{/* Row actions (hidden in select mode) */}
 									{!selectMode && (
 										<div className="flex items-center gap-1 shrink-0">
-											<button onClick={() => handleToggleActive(q)} className="size-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors" title={q.isActive ? "Deactivate" : "Activate"}>
-												{q.isActive ? <ToggleRight className="size-4 text-success" /> : <ToggleLeft className="size-4 text-muted-foreground" />}
+											<button
+												onClick={() => handleToggleActive(q)}
+												className="size-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors"
+												title={q.isActive ? "Deactivate" : "Activate"}
+											>
+												{q.isActive ? (
+													<ToggleRight className="size-4 text-success" />
+												) : (
+													<ToggleLeft className="size-4 text-muted-foreground" />
+												)}
 											</button>
-											<button onClick={() => openEdit(q)} className="size-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors">
+											<button
+												onClick={() => openEdit(q)}
+												className="size-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors"
+											>
 												<Pencil className="size-3.5 text-muted-foreground" />
 											</button>
-											<button onClick={() => setDeleteConfirm(q.id!)} className="size-8 rounded-lg flex items-center justify-center hover:bg-destructive/10 transition-colors">
+											<button
+												onClick={() => setDeleteConfirm(q.id!)}
+												className="size-8 rounded-lg flex items-center justify-center hover:bg-destructive/10 transition-colors"
+											>
 												<Trash2 className="size-3.5 text-destructive" />
 											</button>
 										</div>
@@ -554,7 +884,9 @@ export default function AdminQuizPage() {
 									<Plus className="size-5" />
 								</div>
 								<span className="text-sm font-semibold">Create Question</span>
-								<span className="text-xs opacity-70">Add a custom question to the quiz</span>
+								<span className="text-xs opacity-70">
+									Add a custom question to the quiz
+								</span>
 							</button>
 							<div className="mt-3 flex justify-center">
 								<button
@@ -572,11 +904,23 @@ export default function AdminQuizPage() {
 
 			{/* ════════════ Create Modal ════════════ */}
 			{createOpen && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={(e) => e.target === e.currentTarget && setCreateOpen(false)}>
-					<div className="w-full max-w-2xl bg-card rounded-3xl border border-border shadow-xl overflow-hidden" style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
+				<div
+					className="fixed inset-0 z-50 flex items-center justify-center p-4"
+					style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+					onClick={(e) => e.target === e.currentTarget && setCreateOpen(false)}
+				>
+					<div
+						className="w-full max-w-2xl bg-card rounded-3xl border border-border shadow-xl overflow-hidden"
+						style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}
+					>
 						<div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border">
-							<h3 className="font-display text-base font-semibold">Create Question</h3>
-							<button onClick={() => setCreateOpen(false)} className="size-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground">
+							<h3 className="font-display text-base font-semibold">
+								Create Question
+							</h3>
+							<button
+								onClick={() => setCreateOpen(false)}
+								className="size-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+							>
 								<X className="size-4" />
 							</button>
 						</div>
@@ -584,42 +928,106 @@ export default function AdminQuizPage() {
 						<div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
 							<div className="grid grid-cols-2 gap-3">
 								<div>
-									<label className="block text-xs font-semibold text-muted-foreground mb-1.5">Category</label>
-									<input value={createForm.category} onChange={(e) => setCreateForm((p) => ({ ...p, category: e.target.value }))} placeholder="e.g. Lifestyle" className="w-full h-10 rounded-xl border border-input bg-secondary/40 px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+									<label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+										Category
+									</label>
+									<input
+										value={createForm.category}
+										onChange={(e) =>
+											setCreateForm((p) => ({
+												...p,
+												category: e.target.value,
+											}))
+										}
+										placeholder="e.g. Lifestyle"
+										className="w-full h-10 rounded-xl border border-input bg-secondary/40 px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+									/>
 								</div>
 								<div className="flex items-end pb-0.5">
 									<label className="flex items-center gap-2 cursor-pointer">
-										<span className="text-xs font-semibold text-muted-foreground">Active</span>
-										<button onClick={() => setCreateForm((p) => ({ ...p, isActive: !p.isActive }))}>
-											{createForm.isActive ? <ToggleRight className="size-6 text-success" /> : <ToggleLeft className="size-6 text-muted-foreground" />}
+										<span className="text-xs font-semibold text-muted-foreground">
+											Active
+										</span>
+										<button
+											onClick={() =>
+												setCreateForm((p) => ({
+													...p,
+													isActive: !p.isActive,
+												}))
+											}
+										>
+											{createForm.isActive ? (
+												<ToggleRight className="size-6 text-success" />
+											) : (
+												<ToggleLeft className="size-6 text-muted-foreground" />
+											)}
 										</button>
 									</label>
 								</div>
 							</div>
 							<div>
-								<label className="block text-xs font-semibold text-muted-foreground mb-1.5">Question</label>
-								<input value={createForm.question} onChange={(e) => setCreateForm((p) => ({ ...p, question: e.target.value }))} placeholder="e.g. How busy is your daily routine?" className="w-full h-10 rounded-xl border border-input bg-secondary/40 px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+								<label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+									Question
+								</label>
+								<input
+									value={createForm.question}
+									onChange={(e) =>
+										setCreateForm((p) => ({ ...p, question: e.target.value }))
+									}
+									placeholder="e.g. How busy is your daily routine?"
+									className="w-full h-10 rounded-xl border border-input bg-secondary/40 px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+								/>
 							</div>
 
 							<div>
 								<div className="flex items-center justify-between mb-3">
-									<label className="text-xs font-semibold text-muted-foreground">Options ({createForm.options.length})</label>
-									<button onClick={addCreateOption} className="text-xs font-semibold text-primary flex items-center gap-1 hover:underline">
+									<label className="text-xs font-semibold text-muted-foreground">
+										Options ({createForm.options.length})
+									</label>
+									<button
+										onClick={addCreateOption}
+										className="text-xs font-semibold text-primary flex items-center gap-1 hover:underline"
+									>
 										<Plus className="size-3" /> Add option
 									</button>
 								</div>
 								<div className="space-y-3">
 									{createForm.options.map((opt, i) => (
-										<OptionEditor key={i} opt={opt} i={i} canRemove={createForm.options.length > 2} onChange={updateCreateOption} onWeight={updateCreateWeight} onRemove={removeCreateOption} />
+										<OptionEditor
+											key={i}
+											opt={opt}
+											i={i}
+											canRemove={createForm.options.length > 2}
+											onChange={updateCreateOption}
+											onWeight={updateCreateWeight}
+											onRemove={removeCreateOption}
+										/>
 									))}
 								</div>
 							</div>
 						</div>
 
 						<div className="px-6 py-4 border-t border-border flex justify-end gap-3">
-							<button onClick={() => setCreateOpen(false)} className="h-10 px-5 rounded-full border border-border text-sm font-semibold text-muted-foreground hover:bg-secondary">Cancel</button>
-							<button onClick={handleCreate} disabled={creating || !createForm.category.trim() || !createForm.question.trim()} className="h-10 px-5 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex items-center gap-2 hover:opacity-90 disabled:opacity-50">
-								{creating ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+							<button
+								onClick={() => setCreateOpen(false)}
+								className="h-10 px-5 rounded-full border border-border text-sm font-semibold text-muted-foreground hover:bg-secondary"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={handleCreate}
+								disabled={
+									creating ||
+									!createForm.category.trim() ||
+									!createForm.question.trim()
+								}
+								className="h-10 px-5 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex items-center gap-2 hover:opacity-90 disabled:opacity-50"
+							>
+								{creating ? (
+									<Loader2 className="size-4 animate-spin" />
+								) : (
+									<Save className="size-4" />
+								)}
 								Create
 							</button>
 						</div>
@@ -629,21 +1037,45 @@ export default function AdminQuizPage() {
 
 			{/* ════════════ Edit Modal ════════════ */}
 			{editForm && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={(e) => e.target === e.currentTarget && setEditForm(null)}>
-					<div className="w-full max-w-2xl bg-card rounded-3xl border border-border shadow-xl overflow-hidden" style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
+				<div
+					className="fixed inset-0 z-50 flex items-center justify-center p-4"
+					style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+					onClick={(e) => e.target === e.currentTarget && setEditForm(null)}
+				>
+					<div
+						className="w-full max-w-2xl bg-card rounded-3xl border border-border shadow-xl overflow-hidden"
+						style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}
+					>
 						<div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border">
 							<div>
-								<h3 className="font-display text-base font-semibold">Edit Question</h3>
-								<p className="text-xs text-muted-foreground mt-0.5">{editForm.category}</p>
+								<h3 className="font-display text-base font-semibold">
+									Edit Question
+								</h3>
+								<p className="text-xs text-muted-foreground mt-0.5">
+									{editForm.category}
+								</p>
 							</div>
 							<div className="flex items-center gap-3">
 								<label className="flex items-center gap-1.5 cursor-pointer">
 									<span className="text-xs text-muted-foreground">Active</span>
-									<button onClick={() => setEditForm((p) => p ? { ...p, isActive: !p.isActive } : p)}>
-										{editForm.isActive ? <ToggleRight className="size-5 text-success" /> : <ToggleLeft className="size-5 text-muted-foreground" />}
+									<button
+										onClick={() =>
+											setEditForm((p) =>
+												p ? { ...p, isActive: !p.isActive } : p
+											)
+										}
+									>
+										{editForm.isActive ? (
+											<ToggleRight className="size-5 text-success" />
+										) : (
+											<ToggleLeft className="size-5 text-muted-foreground" />
+										)}
 									</button>
 								</label>
-								<button onClick={() => setEditForm(null)} className="size-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground">
+								<button
+									onClick={() => setEditForm(null)}
+									className="size-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+								>
 									<X className="size-4" />
 								</button>
 							</div>
@@ -651,30 +1083,80 @@ export default function AdminQuizPage() {
 
 						<div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
 							<div>
-								<label className="block text-xs font-semibold text-muted-foreground mb-1.5">Question</label>
-								<input value={editForm.question} onChange={(e) => setEditForm((p) => p ? { ...p, question: e.target.value } : p)} className="w-full h-10 rounded-xl border border-input bg-secondary/40 px-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+								<label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+									Question
+								</label>
+								<input
+									value={editForm.question}
+									onChange={(e) =>
+										setEditForm((p) =>
+											p ? { ...p, question: e.target.value } : p
+										)
+									}
+									className="w-full h-10 rounded-xl border border-input bg-secondary/40 px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+								/>
 							</div>
 							<div>
-								<p className="text-xs font-semibold text-muted-foreground mb-3">Options & Weights <span className="font-normal opacity-70">(0 = avoid · 3 = strongly prefer)</span></p>
+								<p className="text-xs font-semibold text-muted-foreground mb-3">
+									Options & Weights{" "}
+									<span className="font-normal opacity-70">
+										(0 = avoid · 3 = strongly prefer)
+									</span>
+								</p>
 								<div className="space-y-3">
 									{editForm.options.map((opt, i) => (
-										<OptionEditor key={i} opt={opt} i={i} canRemove={editForm.options.length > 2}
+										<OptionEditor
+											key={i}
+											opt={opt}
+											i={i}
+											canRemove={editForm.options.length > 2}
 											onChange={updateEditOption}
 											onWeight={updateEditWeight}
-											onRemove={(idx) => setEditForm((p) => p ? { ...p, options: p.options.filter((_, j) => j !== idx) } : p)}
+											onRemove={(idx) =>
+												setEditForm((p) =>
+													p
+														? {
+																...p,
+																options: p.options.filter(
+																	(_, j) => j !== idx
+																),
+															}
+														: p
+												)
+											}
 										/>
 									))}
 								</div>
-								<button onClick={() => setEditForm((p) => p ? { ...p, options: [...p.options, emptyOption()] } : p)} className="mt-3 text-xs font-semibold text-primary flex items-center gap-1 hover:underline">
+								<button
+									onClick={() =>
+										setEditForm((p) =>
+											p ? { ...p, options: [...p.options, emptyOption()] } : p
+										)
+									}
+									className="mt-3 text-xs font-semibold text-primary flex items-center gap-1 hover:underline"
+								>
 									<Plus className="size-3" /> Add option
 								</button>
 							</div>
 						</div>
 
 						<div className="px-6 py-4 border-t border-border flex justify-end gap-3">
-							<button onClick={() => setEditForm(null)} className="h-10 px-5 rounded-full border border-border text-sm font-semibold text-muted-foreground hover:bg-secondary">Cancel</button>
-							<button onClick={handleSaveEdit} disabled={saving} className="h-10 px-5 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex items-center gap-2 hover:opacity-90 disabled:opacity-50">
-								{saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+							<button
+								onClick={() => setEditForm(null)}
+								className="h-10 px-5 rounded-full border border-border text-sm font-semibold text-muted-foreground hover:bg-secondary"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={handleSaveEdit}
+								disabled={saving}
+								className="h-10 px-5 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex items-center gap-2 hover:opacity-90 disabled:opacity-50"
+							>
+								{saving ? (
+									<Loader2 className="size-4 animate-spin" />
+								) : (
+									<Save className="size-4" />
+								)}
 								Save
 							</button>
 						</div>
@@ -684,14 +1166,28 @@ export default function AdminQuizPage() {
 
 			{/* ════════════ Library Modal ════════════ */}
 			{libraryOpen && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={(e) => e.target === e.currentTarget && setLibraryOpen(false)}>
-					<div className="w-full max-w-2xl bg-card rounded-3xl border border-border shadow-xl overflow-hidden" style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
+				<div
+					className="fixed inset-0 z-50 flex items-center justify-center p-4"
+					style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+					onClick={(e) => e.target === e.currentTarget && setLibraryOpen(false)}
+				>
+					<div
+						className="w-full max-w-2xl bg-card rounded-3xl border border-border shadow-xl overflow-hidden"
+						style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}
+					>
 						<div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border">
 							<div>
-								<h3 className="font-display text-base font-semibold">Question Library</h3>
-								<p className="text-xs text-muted-foreground mt-0.5">Add predefined questions to your quiz</p>
+								<h3 className="font-display text-base font-semibold">
+									Question Library
+								</h3>
+								<p className="text-xs text-muted-foreground mt-0.5">
+									Add predefined questions to your quiz
+								</p>
 							</div>
-							<button onClick={() => setLibraryOpen(false)} className="size-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground">
+							<button
+								onClick={() => setLibraryOpen(false)}
+								className="size-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+							>
 								<X className="size-4" />
 							</button>
 						</div>
@@ -701,15 +1197,25 @@ export default function AdminQuizPage() {
 								const added = isTemplateAdded(tpl);
 								const isAdding = addingIdx === idx;
 								return (
-									<div key={idx} className="rounded-2xl border border-border p-4 flex items-start gap-4">
+									<div
+										key={idx}
+										className="rounded-2xl border border-border p-4 flex items-start gap-4"
+									>
 										<div className="flex-1 min-w-0">
 											<div className="flex items-center gap-2 mb-1">
-												<span className="text-[10px] font-bold uppercase tracking-widest text-primary">{tpl.category}</span>
+												<span className="text-[10px] font-bold uppercase tracking-widest text-primary">
+													{tpl.category}
+												</span>
 											</div>
-											<p className="text-sm font-semibold text-foreground mb-2">{tpl.question}</p>
+											<p className="text-sm font-semibold text-foreground mb-2">
+												{tpl.question}
+											</p>
 											<div className="flex flex-wrap gap-1.5">
 												{tpl.options.map((opt) => (
-													<span key={opt.value} className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-secondary text-xs font-medium">
+													<span
+														key={opt.value}
+														className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-secondary text-xs font-medium"
+													>
 														{opt.icon} {opt.label}
 													</span>
 												))}
@@ -726,7 +1232,11 @@ export default function AdminQuizPage() {
 													disabled={isAdding}
 													className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 disabled:opacity-50"
 												>
-													{isAdding ? <Loader2 className="size-3 animate-spin" /> : <Plus className="size-3" />}
+													{isAdding ? (
+														<Loader2 className="size-3 animate-spin" />
+													) : (
+														<Plus className="size-3" />
+													)}
 													Add
 												</button>
 											)}
@@ -737,7 +1247,12 @@ export default function AdminQuizPage() {
 						</div>
 
 						<div className="px-6 py-4 border-t border-border flex justify-end">
-							<button onClick={() => setLibraryOpen(false)} className="h-10 px-5 rounded-full border border-border text-sm font-semibold text-muted-foreground hover:bg-secondary">Close</button>
+							<button
+								onClick={() => setLibraryOpen(false)}
+								className="h-10 px-5 rounded-full border border-border text-sm font-semibold text-muted-foreground hover:bg-secondary"
+							>
+								Close
+							</button>
 						</div>
 					</div>
 				</div>
@@ -745,13 +1260,26 @@ export default function AdminQuizPage() {
 
 			{/* ════════════ Single delete confirm ════════════ */}
 			{deleteConfirm && (
-				<div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.5)" }}>
+				<div
+					className="fixed inset-0 z-50 flex items-center justify-center p-4"
+					style={{ background: "rgba(0,0,0,0.5)" }}
+				>
 					<div className="bg-card rounded-2xl border border-border p-6 w-full max-w-sm shadow-xl">
 						<h4 className="font-display font-semibold mb-2">Delete this question?</h4>
 						<p className="text-sm text-muted-foreground mb-5">This cannot be undone.</p>
 						<div className="flex gap-3">
-							<button onClick={() => setDeleteConfirm(null)} className="flex-1 h-10 rounded-full border border-border text-sm font-semibold text-muted-foreground hover:bg-secondary">Cancel</button>
-							<button onClick={() => handleDelete(deleteConfirm)} className="flex-1 h-10 rounded-full bg-destructive text-destructive-foreground text-sm font-semibold hover:opacity-90">Delete</button>
+							<button
+								onClick={() => setDeleteConfirm(null)}
+								className="flex-1 h-10 rounded-full border border-border text-sm font-semibold text-muted-foreground hover:bg-secondary"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={() => handleDelete(deleteConfirm)}
+								className="flex-1 h-10 rounded-full bg-destructive text-destructive-foreground text-sm font-semibold hover:opacity-90"
+							>
+								Delete
+							</button>
 						</div>
 					</div>
 				</div>

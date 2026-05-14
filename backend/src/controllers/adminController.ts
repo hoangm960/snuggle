@@ -138,7 +138,7 @@ export const getUserActivityHistory = async (userId: string) => {
 export const updateUserRole = async (
 	adminId: string,
 	targetUserId: string,
-	newRole: "visitor" | "admin"
+	newRole: "visitor" | "adopter" | "shelter" | "admin"
 ): Promise<User> => {
 	if (adminId === targetUserId) {
 		throw new Error("Action Denied: You cannot modify your own administrative status");
@@ -244,7 +244,7 @@ function generateInviteToken(): string {
 
 export interface InviteUserParams {
 	email: string;
-	role: "visitor" | "admin";
+	role: "visitor" | "adopter" | "shelter" | "admin";
 	adminId: string;
 	adminName: string;
 }
@@ -320,7 +320,7 @@ export const inviteUser = async ({
 
 export const validateInviteToken = async (
 	token: string
-): Promise<{ email: string; role: "visitor" | "admin" } | null> => {
+): Promise<{ email: string; role: "visitor" | "adopter" | "shelter" | "admin" } | null> => {
 	const invites = await invitationsCollection.where("inviteToken", "==", token).get();
 
 	if (invites.empty) {

@@ -42,7 +42,8 @@ export const getMatches = async (req: Request, res: Response): Promise<void> => 
 
 		// Compute max possible score and per-question weights
 		let maxTotal = 0;
-		const questionWeights: { species: Record<string, number>; size: Record<string, number> }[] = [];
+		const questionWeights: { species: Record<string, number>; size: Record<string, number> }[] =
+			[];
 
 		for (const question of questions) {
 			const answerValue = answers[question.id!];
@@ -56,14 +57,14 @@ export const getMatches = async (req: Request, res: Response): Promise<void> => 
 			const maxSize = Math.max(0, ...Object.values(sizeWeights).map(Number));
 			maxTotal += maxSpecies + maxSize;
 
-			questionWeights.push({ species: speciesWeights as Record<string, number>, size: sizeWeights as Record<string, number> });
+			questionWeights.push({
+				species: speciesWeights as Record<string, number>,
+				size: sizeWeights as Record<string, number>,
+			});
 		}
 
 		// Fetch all available pets
-		const petsSnapshot = await db
-			.collection("pets")
-			.where("status", "==", "available")
-			.get();
+		const petsSnapshot = await db.collection("pets").where("status", "==", "available").get();
 
 		const pets: Pet[] = petsSnapshot.docs.map((doc) => ({
 			id: doc.id,
@@ -133,7 +134,11 @@ export const createQuestion = async (req: AuthRequest, res: Response): Promise<v
 		// Determine next order if not provided
 		let resolvedOrder = order;
 		if (resolvedOrder === undefined) {
-			const snapshot = await db.collection("quizQuestions").orderBy("order", "desc").limit(1).get();
+			const snapshot = await db
+				.collection("quizQuestions")
+				.orderBy("order", "desc")
+				.limit(1)
+				.get();
 			resolvedOrder = snapshot.empty ? 0 : (snapshot.docs[0].data().order || 0) + 1;
 		}
 

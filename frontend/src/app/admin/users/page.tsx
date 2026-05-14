@@ -16,6 +16,8 @@ import {
 
 const roleColor: Record<User["role"], string> = {
 	visitor: "bg-primary-soft text-primary-deep",
+	adopter: "bg-success/15 text-success",
+	shelter: "bg-warning/15 text-warning",
 	admin: "bg-accent/15 text-accent",
 };
 
@@ -30,7 +32,9 @@ export default function UsersPage() {
 	const [debouncedSearch, setDebouncedSearch] = useState("");
 	const [showInviteModal, setShowInviteModal] = useState(false);
 	const [inviteEmail, setInviteEmail] = useState("");
-	const [inviteRole, setInviteRole] = useState<"visitor" | "admin">("visitor");
+	const [inviteRole, setInviteRole] = useState<"visitor" | "adopter" | "shelter" | "admin">(
+		"visitor"
+	);
 	const [inviteLoading, setInviteLoading] = useState(false);
 	const [inviteMessage, setInviteMessage] = useState<{
 		type: "success" | "error";
@@ -105,7 +109,10 @@ export default function UsersPage() {
 		setActiveDropdown(activeDropdown === userId ? null : userId);
 	};
 
-	const handleRoleChange = async (userId: string, newRole: "visitor" | "admin") => {
+	const handleRoleChange = async (
+		userId: string,
+		newRole: "visitor" | "adopter" | "shelter" | "admin"
+	) => {
 		setActiveDropdown(null);
 		const success = await updateUserRole(userId, newRole);
 		setActionMessage({
@@ -171,7 +178,7 @@ export default function UsersPage() {
 						/>
 					</div>
 					<div className="flex gap-2 overflow-x-auto">
-						{["All", "visitor", "admin"].map((r) => (
+						{["All", "visitor", "adopter", "shelter", "admin"].map((r) => (
 							<button
 								key={r}
 								onClick={() => handleFilterRoleChange(r)}
@@ -281,33 +288,39 @@ export default function UsersPage() {
 													</button>
 													{activeDropdown === u.id && (
 														<div className="absolute right-6 top-full mt-1 w-48 bg-card border border-border rounded-xl shadow-lg py-1 z-10">
-															<button
-																onClick={() =>
-																	handleRoleChange(
-																		u.id,
-																		u.role === "admin"
-																			? "visitor"
-																			: "admin"
-																	)
-																}
-																className="w-full px-3 py-2 text-left text-sm hover:bg-secondary flex items-center gap-2"
-															>
-																{u.role === "admin" ? (
-																	<>
+															<div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+																Change Role
+															</div>
+															{(
+																[
+																	"visitor",
+																	"adopter",
+																	"shelter",
+																	"admin",
+																] as const
+															).map((r) =>
+																r !== u.role ? (
+																	<button
+																		key={r}
+																		onClick={() =>
+																			handleRoleChange(
+																				u.id,
+																				r
+																			)
+																		}
+																		className="w-full px-3 py-2 text-left text-sm hover:bg-secondary flex items-center gap-2"
+																	>
 																		<Shield className="size-4" />
 																		<span>
-																			Demote to Visitor
+																			Make{" "}
+																			{r
+																				.charAt(0)
+																				.toUpperCase() +
+																				r.slice(1)}
 																		</span>
-																	</>
-																) : (
-																	<>
-																		<Shield className="size-4" />
-																		<span>
-																			Promote to Admin
-																		</span>
-																	</>
-																)}
-															</button>
+																	</button>
+																) : null
+															)}
 															<button
 																onClick={() =>
 																	handleStatusToggle(
@@ -382,21 +395,19 @@ export default function UsersPage() {
 							</div>
 							<div>
 								<label className="block text-sm font-medium mb-2">Role</label>
-								<div className="flex gap-3">
-									<button
-										type="button"
-										onClick={() => setInviteRole("visitor")}
-										className={`flex-1 h-11 rounded-2xl text-sm font-medium transition-colors ${inviteRole === "visitor" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
-									>
-										Visitor
-									</button>
-									<button
-										type="button"
-										onClick={() => setInviteRole("admin")}
-										className={`flex-1 h-11 rounded-2xl text-sm font-medium transition-colors ${inviteRole === "admin" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
-									>
-										Admin
-									</button>
+								<div className="flex flex-wrap gap-2">
+									{(["visitor", "adopter", "shelter", "admin"] as const).map(
+										(r) => (
+											<button
+												key={r}
+												type="button"
+												onClick={() => setInviteRole(r)}
+												className={`flex-1 min-w-[80px] h-11 rounded-2xl text-sm font-medium transition-colors ${inviteRole === r ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
+											>
+												{r.charAt(0).toUpperCase() + r.slice(1)}
+											</button>
+										)
+									)}
 								</div>
 							</div>
 							{inviteMessage && (

@@ -29,7 +29,13 @@ export const getAllApplications = async (req: AuthRequest, res: Response): Promi
 	const applications: AdoptionApplication[] = [];
 
 	snapshot.forEach((doc) => {
-		applications.push({ id: doc.id, ...doc.data() } as AdoptionApplication);
+		const data = doc.data();
+		applications.push({
+			id: doc.id,
+			...data,
+			appliedAt: data.appliedAt?.toDate ? data.appliedAt.toDate() : data.appliedAt,
+			reviewedAt: data.reviewedAt?.toDate ? data.reviewedAt.toDate() : data.reviewedAt,
+		} as AdoptionApplication);
 	});
 
 	const response: ApiResponse<AdoptionApplication[]> = {
@@ -48,9 +54,17 @@ export const getApplicationById = async (req: AuthRequest, res: Response): Promi
 		throw new AppError("Application not found", 404);
 	}
 
+	const data = doc.data();
+	const application = {
+		id: doc.id,
+		...data,
+		appliedAt: data?.appliedAt?.toDate ? data.appliedAt.toDate() : data?.appliedAt,
+		reviewedAt: data?.reviewedAt?.toDate ? data.reviewedAt.toDate() : data?.reviewedAt,
+	} as AdoptionApplication;
+
 	const response: ApiResponse<AdoptionApplication> = {
 		success: true,
-		data: { id: doc.id, ...doc.data() } as AdoptionApplication,
+		data: application,
 	};
 
 	res.status(200).json(response);
@@ -62,15 +76,33 @@ export const createApplication = async (req: AuthRequest, res: Response): Promis
 	}
 
 	const {
-		petId, message,
-		applicantFullName, applicantAddress, applicantApartment,
-		applicantCity, applicantState, applicantZipCode,
-		applicantPhone, applicantEmail, applicantDateOfBirth, applicantAge,
-		applicantIdLicense, spousePartnerName, employmentStatus,
-		housingType, landlordAllowsPets, landlordAllowsHowMany, landlordContact,
-		homeType, otherHomeType, lengthAtAddress, planningToMove,
-		householdAgreement, householdAllergies,
-		reasonForAdopting, petWillStay,
+		petId,
+		message,
+		applicantFullName,
+		applicantAddress,
+		applicantApartment,
+		applicantCity,
+		applicantState,
+		applicantZipCode,
+		applicantPhone,
+		applicantEmail,
+		applicantDateOfBirth,
+		applicantAge,
+		applicantIdLicense,
+		spousePartnerName,
+		employmentStatus,
+		housingType,
+		landlordAllowsPets,
+		landlordAllowsHowMany,
+		landlordContact,
+		homeType,
+		otherHomeType,
+		lengthAtAddress,
+		planningToMove,
+		householdAgreement,
+		householdAllergies,
+		reasonForAdopting,
+		petWillStay,
 	} = req.body;
 
 	const petDoc = await petsCollection.doc(petId).get();
@@ -84,6 +116,13 @@ export const createApplication = async (req: AuthRequest, res: Response): Promis
 	const userDoc = await usersCollection.doc(req.user.uid).get();
 	const userData = userDoc.data();
 
+	if (!userData || userData.role !== "adopter") {
+		throw new AppError(
+			"Only verified adopters can apply to adopt pets. Please complete eKYC verification first.",
+			403
+		);
+	}
+
 	const applicationData: Omit<AdoptionApplication, "id"> = {
 		petId,
 		name: petData?.name || "",
@@ -93,14 +132,31 @@ export const createApplication = async (req: AuthRequest, res: Response): Promis
 		status: "pending",
 		message,
 		appliedAt: new Date(),
-		applicantFullName, applicantAddress, applicantApartment,
-		applicantCity, applicantState, applicantZipCode,
-		applicantPhone, applicantEmail, applicantDateOfBirth, applicantAge,
-		applicantIdLicense, spousePartnerName, employmentStatus,
-		housingType, landlordAllowsPets, landlordAllowsHowMany, landlordContact,
-		homeType, otherHomeType, lengthAtAddress, planningToMove,
-		householdAgreement, householdAllergies,
-		reasonForAdopting, petWillStay,
+		applicantFullName,
+		applicantAddress,
+		applicantApartment,
+		applicantCity,
+		applicantState,
+		applicantZipCode,
+		applicantPhone,
+		applicantEmail,
+		applicantDateOfBirth,
+		applicantAge,
+		applicantIdLicense,
+		spousePartnerName,
+		employmentStatus,
+		housingType,
+		landlordAllowsPets,
+		landlordAllowsHowMany,
+		landlordContact,
+		homeType,
+		otherHomeType,
+		lengthAtAddress,
+		planningToMove,
+		householdAgreement,
+		householdAllergies,
+		reasonForAdopting,
+		petWillStay,
 	};
 
 	const docRef = await applicationsCollection.add(applicationData);

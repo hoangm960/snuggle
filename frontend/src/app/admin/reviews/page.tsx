@@ -1,9 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AdminLayout } from "../_components/AdminLayout";
 import { Star, Search, CheckCircle2, Flag, Trash2, X, Loader2, RefreshCw } from "lucide-react";
-import { useReviews, type Review } from "@/hooks/useReviews";
+import api from "@/lib/api";
+
+interface Review {
+	id?: string;
+	shelterId?: string;
+	reviewerId: string;
+	reviewerName?: string;
+	reviewerEmail?: string;
+	petName?: string;
+	shelter?: string;
+	rating: number;
+	comment?: string;
+	status: "pending" | "approved" | "flagged" | "removed";
+	createdAt: Date | string;
+}
 
 type StatusFilter = "all" | "pending" | "approved" | "flagged" | "removed";
 
@@ -52,7 +66,7 @@ function Initials({ name }: { name: string }) {
 }
 
 function formatDate(date: Date | string | undefined) {
-	if (!date) return "—";
+	if (!date) return "\u2014";
 	return new Date(date).toLocaleDateString("en-US", {
 		month: "short",
 		day: "numeric",
@@ -61,16 +75,37 @@ function formatDate(date: Date | string | undefined) {
 }
 
 export default function ReviewsPage() {
-	const { reviews, loading, error, fetchReviews, updateStatus } = useReviews();
+	const [reviews, setReviews] = useState<Review[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
 	const [tab, setTab] = useState<StatusFilter>("all");
 	const [selected, setSelected] = useState<Review | null>(null);
 	const [updating, setUpdating] = useState<string | null>(null);
 
+	const fetchReviews = useCallback(async () => {
+		setLoading(true);
+		setError(null);
+		try {
+			const res = await api.get("/admin/reviews");
+			setReviews(res.data.data || []);
+		} catch {
+			setError("Failed to load reviews");
+		} finally {
+			setLoading(false);
+		}
+	}, []);
+
+	useEffect(() => {
+		fetchReviews();
+	}, [fetchReviews]);
+
 	const filtered = reviews.filter((r) => {
+		const query = search.toLowerCase();
 		const matchSearch =
-			(r.reviewerName || "").toLowerCase().includes(search.toLowerCase()) ||
-			(r.comment || "").toLowerCase().includes(search.toLowerCase());
+			(r.reviewerName || "").toLowerCase().includes(query) ||
+			(r.comment || "").toLowerCase().includes(query) ||
+			(r.petName || "").toLowerCase().includes(query);
 		const matchStatus = tab === "all" || r.status === tab;
 		return matchSearch && matchStatus;
 	});
@@ -83,17 +118,24 @@ export default function ReviewsPage() {
 		removed: reviews.filter((r) => r.status === "removed").length,
 	};
 
-	const handleAction = async (review: Review, status: Review["status"]) => {
-		if (!review.id || !review.shelterId) return;
-		setUpdating(review.id);
-		await updateStatus(review.shelterId, review.id, status);
-		setUpdating(null);
-		setSelected(null);
+	const updateStatus = async (id: string, shelterId: string, status: Review["status"]) => {
+		setUpdating(id);
+		try {
+			await api.put(`/admin/reviews/${shelterId}/${id}/status`, { status });
+			setReviews((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+			setSelected(null);
+		} catch {
+			// silently fail
+		} finally {
+			setUpdating(null);
+		}
 	};
 
 	return (
-		<AdminLayout title="Reviews & Ratings" subtitle="Moderate adoption experience reviews from adopters.">
-			{/* Tabs */}
+		<AdminLayout
+			title="Reviews & Ratings"
+			subtitle="Moderate adoption experience reviews from adopters."
+		>
 			<div className="flex gap-2 mb-6 overflow-x-auto pb-1">
 				{TABS.map(({ key, label }) => (
 					<button
@@ -124,7 +166,6 @@ export default function ReviewsPage() {
 				</button>
 			</div>
 
-			{/* Search */}
 			<div className="relative mb-5">
 				<Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
 				<input
@@ -135,7 +176,6 @@ export default function ReviewsPage() {
 				/>
 			</div>
 
-			{/* States */}
 			{loading ? (
 				<div className="flex items-center justify-center py-20">
 					<Loader2 className="size-6 animate-spin text-muted-foreground" />
@@ -143,7 +183,10 @@ export default function ReviewsPage() {
 			) : error ? (
 				<div className="text-center py-20">
 					<p className="text-destructive text-sm mb-3">{error}</p>
-					<button onClick={fetchReviews} className="text-sm font-semibold text-primary-deep hover:underline">
+					<button
+						onClick={fetchReviews}
+						className="text-sm font-semibold text-primary-deep hover:underline"
+					>
 						Try again
 					</button>
 				</div>
@@ -170,50 +213,107 @@ export default function ReviewsPage() {
 										<div className="flex items-center gap-2 mb-1 flex-wrap">
 											<p className="text-sm font-semibold">{name}</p>
 											{review.reviewerEmail && (
-												<p className="text-xs text-muted-foreground">{review.reviewerEmail}</p>
+												<p className="text-xs text-muted-foreground">
+													{review.reviewerEmail}
+												</p>
 											)}
-											<span className={`ml-auto px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${cfg.badge}`}>
+											<span
+												className={`ml-auto px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${cfg.badge}`}
+											>
 												{cfg.label}
 											</span>
 										</div>
 										<div className="flex items-center gap-2 mb-2">
 											<StarRating rating={review.rating} />
-											<span className="text-xs text-muted-foreground">{review.rating}/5</span>
+											<span className="text-xs text-muted-foreground">
+												{review.rating}/5
+											</span>
 											<span className="text-xs text-muted-foreground">·</span>
-											<span className="text-xs text-muted-foreground">{formatDate(review.createdAt)}</span>
+											<span className="text-xs text-muted-foreground">
+												{formatDate(review.createdAt)}
+											</span>
 										</div>
 										{review.comment && (
-											<p className="text-sm text-foreground/70 leading-relaxed mb-3">{review.comment}</p>
+											<p className="text-sm text-foreground/70 leading-relaxed mb-3">
+												{review.comment}
+											</p>
 										)}
-										{/* Actions */}
+										{(review.petName || review.shelter) && (
+											<div className="flex items-center gap-2 text-[11px] text-muted-foreground mb-3">
+												{review.petName && (
+													<span>
+														Pet:{" "}
+														<span className="font-medium text-foreground/60">
+															{review.petName}
+														</span>
+													</span>
+												)}
+												{review.petName && review.shelter && <span>·</span>}
+												{review.shelter && (
+													<span>
+														Shelter:{" "}
+														<span className="font-medium text-foreground/60">
+															{review.shelter}
+														</span>
+													</span>
+												)}
+											</div>
+										)}
 										{review.status !== "removed" && (
 											<div className="flex items-center gap-2">
 												{review.status === "approved" && (
 													<button
-														onClick={() => handleAction(review, "flagged")}
+														onClick={() =>
+															updateStatus(
+																review.id!,
+																review.shelterId!,
+																"flagged"
+															)
+														}
 														disabled={isUpdating}
 														className="flex items-center gap-1.5 px-3 h-8 rounded-full bg-destructive/10 text-destructive text-xs font-semibold hover:bg-destructive hover:text-destructive-foreground transition-colors disabled:opacity-50"
 													>
-														{isUpdating ? <Loader2 className="size-3 animate-spin" /> : <Flag className="size-3" />}
+														{isUpdating ? (
+															<Loader2 className="size-3 animate-spin" />
+														) : (
+															<Flag className="size-3" />
+														)}
 														Flag
 													</button>
 												)}
-												{(review.status === "flagged" || review.status === "pending") && (
+												{(review.status === "flagged" ||
+													review.status === "pending") && (
 													<button
-														onClick={() => handleAction(review, "approved")}
+														onClick={() =>
+															updateStatus(
+																review.id!,
+																review.shelterId!,
+																"approved"
+															)
+														}
 														disabled={isUpdating}
 														className="flex items-center gap-1.5 px-3 h-8 rounded-full bg-success/10 text-success text-xs font-semibold hover:bg-success hover:text-primary-foreground transition-colors disabled:opacity-50"
 													>
-														{isUpdating ? <Loader2 className="size-3 animate-spin" /> : <CheckCircle2 className="size-3" />}
+														{isUpdating ? (
+															<Loader2 className="size-3 animate-spin" />
+														) : (
+															<CheckCircle2 className="size-3" />
+														)}
 														Approve
 													</button>
 												)}
 												<button
-													onClick={() => handleAction(review, "removed")}
+													onClick={() =>
+														updateStatus(
+															review.id!,
+															review.shelterId!,
+															"removed"
+														)
+													}
 													disabled={isUpdating}
 													className="flex items-center gap-1.5 px-3 h-8 rounded-full bg-muted text-muted-foreground text-xs font-semibold hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
 												>
-													{isUpdating ? <Loader2 className="size-3 animate-spin" /> : <Trash2 className="size-3" />}
+													<Trash2 className="size-3" />
 													Remove
 												</button>
 												<button
@@ -232,7 +332,6 @@ export default function ReviewsPage() {
 				</div>
 			)}
 
-			{/* Detail Modal */}
 			{selected && (
 				<div
 					className="fixed inset-0 flex items-center justify-center z-50 bg-black/40 backdrop-blur-sm"
@@ -256,29 +355,47 @@ export default function ReviewsPage() {
 							<div className="flex items-center gap-3 mb-3">
 								<Initials name={selected.reviewerName || "?"} />
 								<div className="flex-1 min-w-0">
-									<p className="text-sm font-semibold">{selected.reviewerName || "Unknown"}</p>
+									<p className="text-sm font-semibold">
+										{selected.reviewerName || "Unknown"}
+									</p>
 									{selected.reviewerEmail && (
-										<p className="text-xs text-muted-foreground">{selected.reviewerEmail}</p>
+										<p className="text-xs text-muted-foreground">
+											{selected.reviewerEmail}
+										</p>
 									)}
 								</div>
 								<div className="text-right">
 									<StarRating rating={selected.rating} />
-									<p className="text-[10px] text-muted-foreground mt-0.5">{selected.rating}/5</p>
+									<p className="text-[10px] text-muted-foreground mt-0.5">
+										{selected.rating}/5
+									</p>
 								</div>
 							</div>
 							{selected.comment && (
-								<p className="text-sm text-foreground/70 leading-relaxed">{selected.comment}</p>
+								<p className="text-sm text-foreground/70 leading-relaxed">
+									{selected.comment}
+								</p>
 							)}
 						</div>
 
 						<div className="grid grid-cols-2 gap-3 mb-5 text-xs">
 							<div className="p-3 rounded-xl bg-secondary/50">
-								<p className="text-muted-foreground uppercase tracking-widest text-[10px] mb-1">Shelter ID</p>
-								<p className="font-mono font-medium">{selected.shelterId?.slice(0, 12) || "—"}</p>
+								<p className="text-muted-foreground uppercase tracking-widest text-[10px] mb-1">
+									{selected.petName ? "Pet" : "Shelter ID"}
+								</p>
+								<p className="font-medium">
+									{selected.petName ||
+										selected.shelterId?.slice(0, 12) ||
+										"\u2014"}
+								</p>
 							</div>
 							<div className="p-3 rounded-xl bg-secondary/50">
-								<p className="text-muted-foreground uppercase tracking-widest text-[10px] mb-1">Submitted</p>
-								<p className="font-medium">{formatDate(selected.createdAt)}</p>
+								<p className="text-muted-foreground uppercase tracking-widest text-[10px] mb-1">
+									{selected.shelter ? "Shelter" : "Submitted"}
+								</p>
+								<p className="font-medium">
+									{selected.shelter || formatDate(selected.createdAt)}
+								</p>
 							</div>
 						</div>
 
@@ -286,7 +403,13 @@ export default function ReviewsPage() {
 							<div className="flex gap-3">
 								{selected.status === "approved" ? (
 									<button
-										onClick={() => handleAction(selected, "flagged")}
+										onClick={() =>
+											updateStatus(
+												selected.id!,
+												selected.shelterId!,
+												"flagged"
+											)
+										}
 										disabled={updating === selected.id}
 										className="flex-1 h-10 rounded-full bg-destructive/10 text-destructive font-semibold text-sm flex items-center justify-center gap-2 hover:bg-destructive hover:text-destructive-foreground transition-colors disabled:opacity-50"
 									>
@@ -294,7 +417,13 @@ export default function ReviewsPage() {
 									</button>
 								) : (
 									<button
-										onClick={() => handleAction(selected, "approved")}
+										onClick={() =>
+											updateStatus(
+												selected.id!,
+												selected.shelterId!,
+												"approved"
+											)
+										}
 										disabled={updating === selected.id}
 										className="flex-1 h-10 rounded-full bg-success/10 text-success font-semibold text-sm flex items-center justify-center gap-2 hover:bg-success hover:text-primary-foreground transition-colors disabled:opacity-50"
 									>
@@ -302,7 +431,9 @@ export default function ReviewsPage() {
 									</button>
 								)}
 								<button
-									onClick={() => handleAction(selected, "removed")}
+									onClick={() =>
+										updateStatus(selected.id!, selected.shelterId!, "removed")
+									}
 									disabled={updating === selected.id}
 									className="flex-1 h-10 rounded-full bg-muted text-muted-foreground font-semibold text-sm flex items-center justify-center gap-2 hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
 								>

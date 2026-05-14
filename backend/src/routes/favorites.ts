@@ -56,12 +56,7 @@ router.delete(
 	asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
 		if (!req.user) throw new AppError("Unauthorized", 401);
 		const { petId } = req.params;
-		await db
-			.collection("users")
-			.doc(req.user.uid)
-			.collection("favorites")
-			.doc(petId)
-			.delete();
+		await db.collection("users").doc(req.user.uid).collection("favorites").doc(petId).delete();
 		const response: ApiResponse = { success: true, message: "Removed from favorites" };
 		res.status(200).json(response);
 	})

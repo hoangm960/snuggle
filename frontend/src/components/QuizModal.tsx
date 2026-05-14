@@ -231,7 +231,10 @@ export function QuizModal({ open, onClose }: QuizModalProps) {
 							<PawProgress current={step + 1} total={total} />
 							<p
 								className="text-xs font-semibold uppercase tracking-widest mt-5 mb-2"
-								style={{ color: "#7AADA1", fontFamily: "'Space Grotesk', sans-serif" }}
+								style={{
+									color: "#7AADA1",
+									fontFamily: "'Space Grotesk', sans-serif",
+								}}
 							>
 								{current.category}
 							</p>
@@ -264,7 +267,9 @@ export function QuizModal({ open, onClose }: QuizModalProps) {
 					{matching && (
 						<div className="flex flex-col items-center justify-center py-16 gap-3">
 							<Loader2 className="size-8 animate-spin" style={{ color: "#7AADA1" }} />
-							<p style={{ color: "#888", fontSize: "14px" }}>Finding your perfect match…</p>
+							<p style={{ color: "#888", fontSize: "14px" }}>
+								Finding your perfect match…
+							</p>
 						</div>
 					)}
 
@@ -292,7 +297,8 @@ export function QuizModal({ open, onClose }: QuizModalProps) {
 							{matches.length === 0 ? (
 								<div className="text-center py-8">
 									<p style={{ fontSize: "13px", color: "#888" }}>
-										No available pets match your profile right now. Check back soon!
+										No available pets match your profile right now. Check back
+										soon!
 									</p>
 								</div>
 							) : (
@@ -302,20 +308,31 @@ export function QuizModal({ open, onClose }: QuizModalProps) {
 											key={m.pet.id}
 											className="flex items-center gap-4 rounded-2xl p-4"
 											style={{
-												border: i === 0 ? "1.5px solid #7AADA1" : "1px solid #F0F0F0",
+												border:
+													i === 0
+														? "1.5px solid #7AADA1"
+														: "1px solid #F0F0F0",
 												background: i === 0 ? "#E8F4F1" : "#FAFAFA",
 											}}
 										>
 											{/* Thumbnail */}
 											<div
 												className="shrink-0 rounded-xl overflow-hidden"
-												style={{ width: "60px", height: "60px", background: "#F0F0F0" }}
+												style={{
+													width: "60px",
+													height: "60px",
+													background: "#F0F0F0",
+												}}
 											>
 												{m.pet.thumbnail ? (
 													<img
 														src={m.pet.thumbnail}
 														alt={m.pet.name}
-														style={{ width: "100%", height: "100%", objectFit: "cover" }}
+														style={{
+															width: "100%",
+															height: "100%",
+															objectFit: "cover",
+														}}
 													/>
 												) : (
 													<div className="flex items-center justify-center h-full text-2xl">
@@ -329,7 +346,8 @@ export function QuizModal({ open, onClose }: QuizModalProps) {
 												<div className="flex items-center gap-2 mb-0.5">
 													<p
 														style={{
-															fontFamily: "'Space Grotesk', sans-serif",
+															fontFamily:
+																"'Space Grotesk', sans-serif",
 															fontSize: "15px",
 															fontWeight: 700,
 															color: "#1C1C1C",
@@ -340,14 +358,18 @@ export function QuizModal({ open, onClose }: QuizModalProps) {
 													{i === 0 && (
 														<span
 															className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-															style={{ background: "#7AADA1", color: "#fff" }}
+															style={{
+																background: "#7AADA1",
+																color: "#fff",
+															}}
 														>
 															Best match
 														</span>
 													)}
 												</div>
 												<p style={{ fontSize: "12px", color: "#888" }}>
-													{m.pet.breed} · {SIZE_LABEL[m.pet.size] || m.pet.size} ·{" "}
+													{m.pet.breed} ·{" "}
+													{SIZE_LABEL[m.pet.size] || m.pet.size} ·{" "}
 													{m.pet.ageMonths} mo
 												</p>
 											</div>

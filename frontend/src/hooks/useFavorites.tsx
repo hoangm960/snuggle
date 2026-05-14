@@ -24,8 +24,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 			return;
 		}
 		setLoading(true);
-		api
-			.get("/favorites")
+		api.get("/favorites")
 			.then((res) => {
 				const ids = (res.data.data as { petId: string }[]).map((f) => f.petId);
 				setFavoriteIds(new Set(ids));
@@ -66,10 +65,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 		[user, favoriteIds]
 	);
 
-	const isFavorited = useCallback(
-		(petId: string) => favoriteIds.has(petId),
-		[favoriteIds]
-	);
+	const isFavorited = useCallback((petId: string) => favoriteIds.has(petId), [favoriteIds]);
 
 	return (
 		<FavoritesContext.Provider value={{ favoriteIds, loading, toggleFavorite, isFavorited }}>
