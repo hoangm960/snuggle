@@ -16,17 +16,19 @@ export default function AboutUsSection() {
 					src="/images/decorate/bg1.svg"
 					alt=""
 					aria-hidden="true"
-					width={1200}
-					height={400}
+					sizes="100vw"
 					style={{
 						position: "absolute",
+						width: "100%",
+						height: "auto",
 						bottom: "-30vh",
 						left: "50%",
 						transform: "translateX(-50%)",
-						height: "auto",
 						maxWidth: "none",
 						pointerEvents: "none",
 					}}
+					width={0}
+					height={0}
 					unoptimized
 				/>
 
