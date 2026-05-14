@@ -4,7 +4,7 @@ A full-stack pet adoption platform where users can browse, list, and adopt pets.
 
 ## Description
 
-Snuggle is a pet adoption platform built with Next.js and Express.js. Users can browse available pets, create listings for pets they're rehoming, and manage their adoption profiles. The platform uses Firebase for authentication and Firestore for data storage.
+Snuggle is a pet adoption platform built with Next.js and Express.js. Users can browse available pets, apply for adoption with eKYC identity verification, sign digital adoption contracts, chat with shelters in real time, and manage their profiles. The platform uses Firebase for authentication and Firestore for data storage.
 
 For tech stack and folder structure, see [SPEC.md](./SPEC.md).
 
@@ -28,7 +28,7 @@ cd ../backend
 yarn install
 
 # Setup Git hooks (optional)
-cd ..
+cd backend
 yarn prepare
 ```
 
@@ -62,6 +62,12 @@ FIREBASE_PROJECT_ID=your-project-id
 FIREBASE_SERVICE_ACCOUNT_FILE=./firebase-service-key.json
 PORT=3001
 NODE_ENV=development
+
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+SMTP_FROM=Snuggles your-email@gmail.com
 ```
 
 > **Note:** Create a service account in Firebase Console and download the JSON key. Place it in the `backend/` directory and rename it to `firebase-service-key.json` (or update the path in `FIREBASE_SERVICE_ACCOUNT_FILE`).
@@ -85,19 +91,38 @@ yarn dev
 - Frontend: http://localhost:3000
 - Backend: http://localhost:3001
 
+## Lint & Format
+
+```bash
+# Frontend
+cd frontend
+yarn lint           # ESLint (zero warnings allowed)
+yarn format         # Prettier
+
+# Backend
+cd ../backend
+yarn lint           # ESLint on src/
+yarn format         # Prettier
+```
+
 ## Testing
+
+Firebase is fully mocked — no real Firebase project needed for tests.
 
 ### Test Commands
 
 ```bash
+# Frontend
 cd frontend
-yarn test           # Run tests
-yarn test:watch     # Run tests in watch mode
+yarn test               # Vitest
+yarn test -- file.test  # Single test file
 
+# Backend
 cd ../backend
-yarn test           # Run all tests
-yarn test:watch     # Run tests in watch mode
-yarn test:coverage  # Run tests with coverage
+yarn test               # Jest (30s timeout)
+yarn test -- file.test  # Single test file
+yarn test:watch         # Watch mode
+yarn test:coverage      # With coverage
 ```
 
 ## API Reference
