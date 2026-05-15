@@ -31,6 +31,7 @@ interface DashboardResponse {
 const petsCollection = db.collection("pets");
 const applicationsCollection = db.collection("adoptionApplications");
 const usersCollection = db.collection("users");
+const chatsCollection = db.collection("chats");
 
 export const getDashboardStats = async (): Promise<DashboardStats> => {
 	const now = new Date();
@@ -116,4 +117,38 @@ export const getDashboardData = async (): Promise<DashboardResponse> => {
 	]);
 
 	return { stats, recentRequests };
+};
+
+interface SidebarStats {
+	pendingRequests: number;
+	pendingReviews: number;
+	pendingChats: number;
+	petsAddedThisWeek: number;
+}
+
+export const getSidebarStats = async (): Promise<SidebarStats> => {
+	const now = new Date();
+	const weekAgo = new Date(now);
+	weekAgo.setDate(weekAgo.getDate() - 7);
+
+	const [pendingRequestsSnap, pendingReviewsSnap, pendingChatsSnap, petsSnap] = await Promise.all(
+		[
+			applicationsCollection.where("status", "==", "pending").get(),
+			db.collectionGroup("reviews").where("status", "==", "pending").get(),
+			chatsCollection.where("type", "==", "support").where("claimedBy", "==", null).get(),
+			petsCollection.get(),
+		]
+	);
+
+	const petsAddedThisWeek = petsSnap.docs.filter((doc) => {
+		const created = doc.data().createdAt;
+		return created && new Date(created.toDate()) >= weekAgo;
+	}).length;
+
+	return {
+		pendingRequests: pendingRequestsSnap.size,
+		pendingReviews: pendingReviewsSnap.size,
+		pendingChats: pendingChatsSnap.size,
+		petsAddedThisWeek,
+	};
 };

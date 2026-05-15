@@ -15,6 +15,24 @@ import {
 	Trash2,
 } from "lucide-react";
 
+function getInitials(name: string | null): string {
+	if (!name) return "U";
+	return name
+		.split(" ")
+		.slice(0, 2)
+		.map((n) => n[0])
+		.join("")
+		.toUpperCase();
+}
+
+function stringToColor(str: string): string {
+	let hash = 0;
+	for (let i = 0; i < str.length; i++) {
+		hash = str.charCodeAt(i) + ((hash << 5) - hash);
+	}
+	return `hsl(${hash % 360}, 60%, 45%)`;
+}
+
 const roleColor: Record<User["role"], string> = {
 	visitor: "bg-primary-soft text-primary-deep",
 	adopter: "bg-success/15 text-success",
@@ -241,16 +259,26 @@ export default function UsersPage() {
 											>
 												<td className="px-6 py-4">
 													<div className="flex items-center gap-3">
-														<Image
-															src={
-																u.photoURL ||
-																`https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName || "U")}&background=random`
-															}
-															alt={u.displayName || "User"}
-															width={40}
-															height={40}
-															className="size-10 rounded-full object-cover"
-														/>
+														{u.photoURL ? (
+															<Image
+																src={u.photoURL}
+																alt={u.displayName || "User"}
+																width={40}
+																height={40}
+																className="size-10 rounded-full object-cover"
+															/>
+														) : (
+															<div
+																className="size-10 rounded-full flex items-center justify-center text-xs font-semibold text-white shrink-0"
+																style={{
+																	backgroundColor: stringToColor(
+																		u.displayName || "U"
+																	),
+																}}
+															>
+																{getInitials(u.displayName)}
+															</div>
+														)}
 														<p className="font-medium text-sm">
 															{u.displayName || "No name"}
 														</p>

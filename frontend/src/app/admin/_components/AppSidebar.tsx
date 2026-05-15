@@ -1,8 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { clearAuthSession } from "@/lib/cookies";
+import api from "@/lib/api";
 import {
 	LayoutDashboard,
 	PawPrint,
@@ -19,28 +21,62 @@ import {
 	Wand2,
 } from "lucide-react";
 
-const navMain = [
+interface SidebarStats {
+	pendingRequests: number;
+	pendingReviews: number;
+	pendingChats: number;
+	petsAddedThisWeek: number;
+}
+
+interface NavItem {
+	href: string;
+	label: string;
+	icon: React.ElementType;
+	exact?: boolean;
+	badgeKey?: keyof SidebarStats;
+}
+
+const navMain: NavItem[] = [
 	{ href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
 	{ href: "/admin/pets", label: "Pets", icon: PawPrint },
-	{ href: "/admin/requests", label: "Adoption Requests", icon: ClipboardList, badge: 12 },
+	{
+		href: "/admin/requests",
+		label: "Adoption Requests",
+		icon: ClipboardList,
+		badgeKey: "pendingRequests",
+	},
 	{ href: "/admin/users", label: "Users", icon: Users },
 	{ href: "/admin/ekyc", label: "eKYC Management", icon: ShieldCheck },
 	{ href: "/admin/health-records", label: "Health Records", icon: HeartPulse },
 	{ href: "/admin/contracts", label: "Contracts", icon: FileSignature },
-	{ href: "/admin/reviews", label: "Reviews", icon: Star },
-	{ href: "/admin/chats", label: "Support Chats", icon: MessageCircle },
+	{ href: "/admin/reviews", label: "Reviews", icon: Star, badgeKey: "pendingReviews" },
+	{ href: "/admin/chats", label: "Support Chats", icon: MessageCircle, badgeKey: "pendingChats" },
 	{ href: "/admin/quiz", label: "Pet Quiz", icon: Wand2 },
 ];
 
 const navSecondary = [{ href: "/admin/settings", label: "Settings", icon: Settings }];
 
-function cn(...classes: (string | undefined | false)[]) {
-	return classes.filter(Boolean).join(" ");
-}
-
 export function AppSidebar() {
 	const pathname = usePathname();
 	const router = useRouter();
+	const [stats, setStats] = useState<SidebarStats>({
+		pendingRequests: 0,
+		pendingReviews: 0,
+		pendingChats: 0,
+		petsAddedThisWeek: 0,
+	});
+
+	useEffect(() => {
+		const fetchStats = async () => {
+			try {
+				const res = await api.get("/admin/sidebar");
+				setStats(res.data.data);
+			} catch {
+				// silently fail
+			}
+		};
+		fetchStats();
+	}, []);
 
 	function handleLogout() {
 		clearAuthSession();
@@ -122,12 +158,12 @@ export function AppSidebar() {
 						>
 							<item.icon className="size-[18px] shrink-0" />
 							<span className="flex-1">{item.label}</span>
-							{item.badge && (
+							{item.badgeKey && stats[item.badgeKey] > 0 && (
 								<span
 									className="text-[10px] font-semibold px-2 py-0.5 rounded-full text-white"
 									style={{ background: "#7AADA1" }}
 								>
-									{item.badge}
+									{stats[item.badgeKey]}
 								</span>
 							)}
 						</Link>
@@ -168,32 +204,34 @@ export function AppSidebar() {
 
 			{/* Footer */}
 			<div className="p-3">
-				<div
-					className="rounded-2xl p-4 relative overflow-hidden mb-2"
-					style={{
-						background: "linear-gradient(135deg, #7AADA1, #216959)",
-						color: "#fff",
-					}}
-				>
-					<Sparkles className="absolute -top-1 -right-1 size-12 opacity-20" />
-					<p
+				{stats.petsAddedThisWeek > 0 && (
+					<div
+						className="rounded-2xl p-4 relative overflow-hidden mb-2"
 						style={{
-							fontSize: "10px",
-							letterSpacing: "0.1em",
-							opacity: 0.75,
-							textTransform: "uppercase",
+							background: "linear-gradient(135deg, #7AADA1, #216959)",
+							color: "#fff",
 						}}
 					>
-						This week
-					</p>
-					<p
-						className="font-semibold"
-						style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "22px" }}
-					>
-						28 pets
-					</p>
-					<p style={{ fontSize: "11px", opacity: 0.85 }}>found loving homes 🐾</p>
-				</div>
+						<Sparkles className="absolute -top-1 -right-1 size-12 opacity-20" />
+						<p
+							style={{
+								fontSize: "10px",
+								letterSpacing: "0.1em",
+								opacity: 0.75,
+								textTransform: "uppercase",
+							}}
+						>
+							This week
+						</p>
+						<p
+							className="font-semibold"
+							style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "22px" }}
+						>
+							{stats.petsAddedThisWeek} pets
+						</p>
+						<p style={{ fontSize: "11px", opacity: 0.85 }}>found loving homes 🐾</p>
+					</div>
+				)}
 				<button
 					onClick={handleLogout}
 					className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors hover:bg-red-50"

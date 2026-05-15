@@ -9,7 +9,7 @@ import {
 	inviteUser,
 	deleteUser,
 } from "../controllers/adminController";
-import { getDashboardData } from "../controllers/dashboardController";
+import { getDashboardData, getSidebarStats } from "../controllers/dashboardController";
 import {
 	getAllChats,
 	getChatMessages,
@@ -42,6 +42,18 @@ router.get(
 	"/dashboard",
 	asyncHandler(async (req: AuthRequest, res: Response) => {
 		const data = await getDashboardData();
+
+		res.status(200).json({
+			success: true,
+			data,
+		});
+	})
+);
+
+router.get(
+	"/sidebar",
+	asyncHandler(async (_req: AuthRequest, res: Response) => {
+		const data = await getSidebarStats();
 
 		res.status(200).json({
 			success: true,
