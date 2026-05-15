@@ -3,20 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { AdminLayout } from "../_components/AdminLayout";
-import {
-	User,
-	Bell,
-	Shield,
-	Palette,
-	Camera,
-	ChevronRight,
-	Check,
-	Loader2,
-	AlertCircle,
-	X,
-} from "lucide-react";
+import { User, Bell, Shield, Camera, Check, Loader2, AlertCircle, X } from "lucide-react";
 import api from "@/lib/api";
-import { User as UserType, NotificationPrefs, AppearancePrefs } from "@/types";
+import { User as UserType, NotificationPrefs } from "@/types";
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
 	return (
@@ -106,14 +95,6 @@ const DEFAULT_NOTIFICATIONS: NotificationPrefs = {
 	systemAlerts: true,
 };
 
-const ACCENT_COLORS = [
-	{ color: "hsl(170 22% 58%)", active: true },
-	{ color: "hsl(24 50% 58%)", active: false },
-	{ color: "hsl(230 50% 60%)", active: false },
-	{ color: "hsl(280 40% 60%)", active: false },
-	{ color: "hsl(340 55% 60%)", active: false },
-];
-
 export default function SettingsPage() {
 	const [profile, setProfile] = useState({
 		displayName: "",
@@ -124,9 +105,6 @@ export default function SettingsPage() {
 		photoURL: "",
 	});
 	const [notifications, setNotifications] = useState<NotificationPrefs>(DEFAULT_NOTIFICATIONS);
-	const [darkMode, setDarkMode] = useState(false);
-	const [compactView, setCompactView] = useState(false);
-	const [accentColor, setAccentColor] = useState(ACCENT_COLORS[0].color);
 	const [avatarFile, setAvatarFile] = useState<File | null>(null);
 	const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
@@ -161,17 +139,6 @@ export default function SettingsPage() {
 			if (user.notificationPrefs) {
 				setNotifications(user.notificationPrefs);
 			}
-			if (user.appearance) {
-				setDarkMode(user.appearance.darkMode);
-				setCompactView(user.appearance.compactView);
-				setAccentColor(user.appearance.accentColor);
-			}
-			const savedDark = localStorage.getItem("snuggles-dark-mode");
-			const savedCompact = localStorage.getItem("snuggles-compact-view");
-			const savedAccent = localStorage.getItem("snuggles-accent-color");
-			if (savedDark) setDarkMode(savedDark === "true");
-			if (savedCompact) setCompactView(savedCompact === "true");
-			if (savedAccent) setAccentColor(savedAccent);
 		} catch {
 			setError("Failed to load profile");
 		} finally {
@@ -182,18 +149,6 @@ export default function SettingsPage() {
 	useEffect(() => {
 		fetchProfile();
 	}, [fetchProfile]);
-
-	useEffect(() => {
-		localStorage.setItem("snuggles-dark-mode", String(darkMode));
-	}, [darkMode]);
-
-	useEffect(() => {
-		localStorage.setItem("snuggles-compact-view", String(compactView));
-	}, [compactView]);
-
-	useEffect(() => {
-		localStorage.setItem("snuggles-accent-color", accentColor);
-	}, [accentColor]);
 
 	function markDirty() {
 		setIsDirty(true);
@@ -251,12 +206,6 @@ export default function SettingsPage() {
 			});
 
 			await api.put("/auth/notifications", notifications);
-
-			await api.put("/auth/appearance", {
-				darkMode,
-				compactView,
-				accentColor,
-			});
 
 			if (passwords.current && passwords.new && passwords.confirm) {
 				if (passwords.new !== passwords.confirm) {
@@ -329,273 +278,186 @@ export default function SettingsPage() {
 				</div>
 			)}
 
-			<div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-				{/* Left column */}
-				<div className="xl:col-span-2 space-y-6">
-					{/* Profile */}
-					<SectionCard title="Profile" icon={User}>
-						<div className="flex items-center gap-5 mb-6 pb-6 border-b border-border">
-							<div className="relative shrink-0">
-								{avatarUploading ? (
-									<div className="size-20 rounded-3xl bg-muted flex items-center justify-center">
-										<Loader2 className="size-5 animate-spin text-muted-foreground" />
-									</div>
-								) : avatarPreview || profile.photoURL ? (
-									<Image
-										src={avatarPreview || profile.photoURL}
-										alt={profile.displayName}
-										width={80}
-										height={80}
-										className="size-20 rounded-3xl object-cover"
-									/>
-								) : (
-									<div
-										className="size-20 rounded-3xl bg-primary flex items-center justify-center text-primary-foreground font-display font-semibold text-xl"
-										style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-									>
-										{profile.displayName
-											? profile.displayName
-													.split(" ")
-													.slice(0, 2)
-													.map((n) => n[0])
-													.join("")
-													.toUpperCase()
-											: "?"}
-									</div>
-								)}
-								<input
-									ref={fileInputRef}
-									type="file"
-									accept="image/jpeg,image/png,image/webp"
-									className="hidden"
-									onChange={handleAvatarChange}
-								/>
-								<button
-									onClick={() => fileInputRef.current?.click()}
-									disabled={avatarUploading}
-									className="absolute -bottom-1 -right-1 size-7 rounded-full bg-primary flex items-center justify-center shadow-glow disabled:opacity-50"
-								>
-									<Camera className="size-3.5 text-primary-foreground" />
-								</button>
-							</div>
-							<div>
-								<p className="font-display font-semibold text-lg">
-									{profile.displayName || "—"}
-								</p>
-								<p className="text-sm text-muted-foreground">{profile.email}</p>
-								<span className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-success bg-success/15 px-2.5 py-0.5 rounded-full">
-									<div className="size-1.5 rounded-full bg-success" /> Active
-								</span>
-							</div>
-						</div>
-
-						<FieldRow label="Full name">
-							<TextInput
-								value={profile.displayName}
-								onChange={(v) => {
-									setProfile((p) => ({ ...p, displayName: v }));
-									markDirty();
-								}}
-							/>
-						</FieldRow>
-						<FieldRow label="Email address">
-							<TextInput value={profile.email} onChange={() => {}} disabled />
-						</FieldRow>
-						<FieldRow label="Phone" hint="Used for urgent alerts">
-							<TextInput
-								value={profile.phone}
-								onChange={(v) => {
-									setProfile((p) => ({ ...p, phone: v }));
-									markDirty();
-								}}
-								type="tel"
-							/>
-						</FieldRow>
-						<FieldRow label="Role" hint="Contact support to change">
-							<div className="h-10 rounded-2xl border border-input bg-secondary/40 px-3 flex items-center text-sm text-muted-foreground">
-								{roleLabel}
-							</div>
-						</FieldRow>
-						<FieldRow label="Bio" hint="Shown on your public profile">
-							<textarea
-								value={profile.bio}
-								onChange={(e) => {
-									setProfile((p) => ({ ...p, bio: e.target.value }));
-									markDirty();
-								}}
-								rows={3}
-								maxLength={500}
-								placeholder="Tell us about yourself..."
-								className="w-full rounded-2xl border border-input bg-secondary/40 px-3 py-2.5 text-sm resize-none outline-none focus:ring-2 focus:ring-ring focus:bg-card transition-colors"
-							/>
-						</FieldRow>
-					</SectionCard>
-
-					{/* Notifications */}
-					<SectionCard title="Notifications" icon={Bell}>
-						{(
-							[
-								{
-									key: "newRequest",
-									label: "New adoption request",
-									hint: "Notify when a user submits a new request",
-								},
-								{
-									key: "requestApproved",
-									label: "Request status update",
-									hint: "When a request is approved or rejected",
-								},
-								{
-									key: "newMessage",
-									label: "New message",
-									hint: "Inbox messages from adopters or fosters",
-								},
-								{
-									key: "weeklyReport",
-									label: "Weekly summary report",
-									hint: "Digest of weekly activity every Monday",
-								},
-								{
-									key: "systemAlerts",
-									label: "System alerts",
-									hint: "Critical issues or maintenance windows",
-								},
-							] as const
-						).map(({ key, label, hint }) => (
-							<FieldRow key={key} label={label} hint={hint}>
-								<div className="flex justify-end">
-									<Toggle
-										checked={notifications[key]}
-										onChange={() => toggleNotification(key)}
-									/>
+			<div className="space-y-6">
+				{/* Profile */}
+				<SectionCard title="Profile" icon={User}>
+					<div className="flex items-center gap-5 mb-6 pb-6 border-b border-border">
+						<div className="relative shrink-0">
+							{avatarUploading ? (
+								<div className="size-20 rounded-3xl bg-muted flex items-center justify-center">
+									<Loader2 className="size-5 animate-spin text-muted-foreground" />
 								</div>
-							</FieldRow>
-						))}
-					</SectionCard>
-
-					{/* Security */}
-					<SectionCard title="Security" icon={Shield}>
-						{passwordError && (
-							<div className="flex items-center gap-2 bg-destructive/10 border border-destructive/20 rounded-xl px-3 py-2 mb-4">
-								<AlertCircle className="size-4 text-destructive shrink-0" />
-								<p className="text-sm text-destructive">{passwordError}</p>
-							</div>
-						)}
-						<FieldRow label="Current password">
-							<TextInput
-								value={passwords.current}
-								onChange={(v) => setPasswords((p) => ({ ...p, current: v }))}
-								type="password"
-								placeholder="••••••••"
-							/>
-						</FieldRow>
-						<FieldRow label="New password" hint="Min 6 characters">
-							<TextInput
-								value={passwords.new}
-								onChange={(v) => setPasswords((p) => ({ ...p, new: v }))}
-								type="password"
-								placeholder="••••••••"
-							/>
-						</FieldRow>
-						<FieldRow label="Confirm password">
-							<TextInput
-								value={passwords.confirm}
-								onChange={(v) => setPasswords((p) => ({ ...p, confirm: v }))}
-								type="password"
-								placeholder="••••••••"
-							/>
-						</FieldRow>
-						<div className="pt-4">
-							<button className="text-xs font-semibold text-destructive hover:underline">
-								Sign out of all devices
-							</button>
-						</div>
-					</SectionCard>
-				</div>
-
-				{/* Right column */}
-				<div className="space-y-6">
-					{/* Appearance */}
-					<SectionCard title="Appearance" icon={Palette}>
-						<FieldRow label="Dark mode" hint="Switch to dark theme">
-							<div className="flex justify-end">
-								<Toggle
-									checked={darkMode}
-									onChange={() => {
-										setDarkMode(!darkMode);
-										markDirty();
-									}}
+							) : avatarPreview || profile.photoURL ? (
+								<Image
+									src={avatarPreview || profile.photoURL}
+									alt={profile.displayName}
+									width={80}
+									height={80}
+									className="size-20 rounded-3xl object-cover"
 								/>
-							</div>
-						</FieldRow>
-						<FieldRow label="Compact view" hint="Reduce table row spacing">
-							<div className="flex justify-end">
-								<Toggle
-									checked={compactView}
-									onChange={() => {
-										setCompactView(!compactView);
-										markDirty();
-									}}
-								/>
-							</div>
-						</FieldRow>
-						<div className="pt-2">
-							<p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">
-								Accent colour
-							</p>
-							<div className="flex gap-2.5">
-								{ACCENT_COLORS.map(({ color, active }) => (
-									<button
-										key={color}
-										onClick={() => {
-											setAccentColor(color);
-											markDirty();
-										}}
-										className="size-8 rounded-full flex items-center justify-center border-2 transition-all"
-										style={{
-											background: color,
-											borderColor:
-												accentColor === color ? color : "transparent",
-											outline:
-												accentColor === color
-													? `2px solid ${color}`
-													: "none",
-											outlineOffset: "2px",
-										}}
-									>
-										{accentColor === color && (
-											<Check
-												className="size-3.5 text-white"
-												strokeWidth={3}
-											/>
-										)}
-									</button>
-								))}
-							</div>
-						</div>
-					</SectionCard>
-
-					{/* Quick links */}
-					<div className="bg-card border border-border rounded-3xl shadow-card overflow-hidden">
-						<div className="px-6 py-5 border-b border-border">
-							<p className="font-display text-base font-semibold">Quick Links</p>
-						</div>
-						{[
-							"Privacy Policy",
-							"Terms of Service",
-							"Support Center",
-							"Export All Data",
-						].map((label) => (
+							) : (
+								<div
+									className="size-20 rounded-3xl bg-primary flex items-center justify-center text-primary-foreground font-display font-semibold text-xl"
+									style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+								>
+									{profile.displayName
+										? profile.displayName
+												.split(" ")
+												.slice(0, 2)
+												.map((n) => n[0])
+												.join("")
+												.toUpperCase()
+										: "?"}
+								</div>
+							)}
+							<input
+								ref={fileInputRef}
+								type="file"
+								accept="image/jpeg,image/png,image/webp"
+								className="hidden"
+								onChange={handleAvatarChange}
+							/>
 							<button
-								key={label}
-								className="w-full flex items-center justify-between px-6 py-3.5 hover:bg-secondary/40 transition-colors border-b border-border last:border-0 text-sm text-muted-foreground hover:text-foreground"
+								onClick={() => fileInputRef.current?.click()}
+								disabled={avatarUploading}
+								className="absolute -bottom-1 -right-1 size-7 rounded-full bg-primary flex items-center justify-center shadow-glow disabled:opacity-50"
 							>
-								{label}
-								<ChevronRight className="size-4" />
+								<Camera className="size-3.5 text-primary-foreground" />
 							</button>
-						))}
+						</div>
+						<div>
+							<p className="font-display font-semibold text-lg">
+								{profile.displayName || "—"}
+							</p>
+							<p className="text-sm text-muted-foreground">{profile.email}</p>
+							<span className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-success bg-success/15 px-2.5 py-0.5 rounded-full">
+								<div className="size-1.5 rounded-full bg-success" /> Active
+							</span>
+						</div>
 					</div>
-				</div>
+
+					<FieldRow label="Full name">
+						<TextInput
+							value={profile.displayName}
+							onChange={(v) => {
+								setProfile((p) => ({ ...p, displayName: v }));
+								markDirty();
+							}}
+						/>
+					</FieldRow>
+					<FieldRow label="Email address">
+						<TextInput value={profile.email} onChange={() => {}} disabled />
+					</FieldRow>
+					<FieldRow label="Phone" hint="Used for urgent alerts">
+						<TextInput
+							value={profile.phone}
+							onChange={(v) => {
+								setProfile((p) => ({ ...p, phone: v }));
+								markDirty();
+							}}
+							type="tel"
+						/>
+					</FieldRow>
+					<FieldRow label="Role" hint="Contact support to change">
+						<div className="h-10 rounded-2xl border border-input bg-secondary/40 px-3 flex items-center text-sm text-muted-foreground">
+							{roleLabel}
+						</div>
+					</FieldRow>
+					<FieldRow label="Bio" hint="Shown on your public profile">
+						<textarea
+							value={profile.bio}
+							onChange={(e) => {
+								setProfile((p) => ({ ...p, bio: e.target.value }));
+								markDirty();
+							}}
+							rows={3}
+							maxLength={500}
+							placeholder="Tell us about yourself..."
+							className="w-full rounded-2xl border border-input bg-secondary/40 px-3 py-2.5 text-sm resize-none outline-none focus:ring-2 focus:ring-ring focus:bg-card transition-colors"
+						/>
+					</FieldRow>
+				</SectionCard>
+
+				{/* Notifications */}
+				<SectionCard title="Notifications" icon={Bell}>
+					{(
+						[
+							{
+								key: "newRequest",
+								label: "New adoption request",
+								hint: "Notify when a user submits a new request",
+							},
+							{
+								key: "requestApproved",
+								label: "Request status update",
+								hint: "When a request is approved or rejected",
+							},
+							{
+								key: "newMessage",
+								label: "New message",
+								hint: "Inbox messages from adopters or fosters",
+							},
+							{
+								key: "weeklyReport",
+								label: "Weekly summary report",
+								hint: "Digest of weekly activity every Monday",
+							},
+							{
+								key: "systemAlerts",
+								label: "System alerts",
+								hint: "Critical issues or maintenance windows",
+							},
+						] as const
+					).map(({ key, label, hint }) => (
+						<FieldRow key={key} label={label} hint={hint}>
+							<div className="flex justify-end">
+								<Toggle
+									checked={notifications[key]}
+									onChange={() => toggleNotification(key)}
+								/>
+							</div>
+						</FieldRow>
+					))}
+				</SectionCard>
+
+				{/* Security */}
+				<SectionCard title="Security" icon={Shield}>
+					{passwordError && (
+						<div className="flex items-center gap-2 bg-destructive/10 border border-destructive/20 rounded-xl px-3 py-2 mb-4">
+							<AlertCircle className="size-4 text-destructive shrink-0" />
+							<p className="text-sm text-destructive">{passwordError}</p>
+						</div>
+					)}
+					<FieldRow label="Current password">
+						<TextInput
+							value={passwords.current}
+							onChange={(v) => setPasswords((p) => ({ ...p, current: v }))}
+							type="password"
+							placeholder="••••••••"
+						/>
+					</FieldRow>
+					<FieldRow label="New password" hint="Min 6 characters">
+						<TextInput
+							value={passwords.new}
+							onChange={(v) => setPasswords((p) => ({ ...p, new: v }))}
+							type="password"
+							placeholder="••••••••"
+						/>
+					</FieldRow>
+					<FieldRow label="Confirm password">
+						<TextInput
+							value={passwords.confirm}
+							onChange={(v) => setPasswords((p) => ({ ...p, confirm: v }))}
+							type="password"
+							placeholder="••••••••"
+						/>
+					</FieldRow>
+					<div className="pt-4">
+						<button className="text-xs font-semibold text-destructive hover:underline">
+							Sign out of all devices
+						</button>
+					</div>
+				</SectionCard>
 			</div>
 
 			{/* Save bar */}
