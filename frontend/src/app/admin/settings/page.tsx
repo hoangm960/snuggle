@@ -268,221 +268,223 @@ export default function SettingsPage() {
 			title="Settings"
 			subtitle="Manage your account, preferences and shelter information."
 		>
-			{error && (
-				<div className="flex items-center gap-2 bg-destructive/10 border border-destructive/20 rounded-2xl px-4 py-3 mb-4">
-					<AlertCircle className="size-4 text-destructive shrink-0" />
-					<p className="text-sm text-destructive flex-1">{error}</p>
-					<button onClick={() => setError(null)} className="shrink-0">
-						<X className="size-4 text-destructive" />
-					</button>
-				</div>
-			)}
-
-			<div className="space-y-6">
-				{/* Profile */}
-				<SectionCard title="Profile" icon={User}>
-					<div className="flex items-center gap-5 mb-6 pb-6 border-b border-border">
-						<div className="relative shrink-0">
-							{avatarUploading ? (
-								<div className="size-20 rounded-3xl bg-muted flex items-center justify-center">
-									<Loader2 className="size-5 animate-spin text-muted-foreground" />
-								</div>
-							) : avatarPreview || profile.photoURL ? (
-								<Image
-									src={avatarPreview || profile.photoURL}
-									alt={profile.displayName}
-									width={80}
-									height={80}
-									className="size-20 rounded-3xl object-cover"
-								/>
-							) : (
-								<div
-									className="size-20 rounded-3xl bg-primary flex items-center justify-center text-primary-foreground font-display font-semibold text-xl"
-									style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-								>
-									{profile.displayName
-										? profile.displayName
-												.split(" ")
-												.slice(0, 2)
-												.map((n) => n[0])
-												.join("")
-												.toUpperCase()
-										: "?"}
-								</div>
-							)}
-							<input
-								ref={fileInputRef}
-								type="file"
-								accept="image/jpeg,image/png,image/webp"
-								className="hidden"
-								onChange={handleAvatarChange}
-							/>
-							<button
-								onClick={() => fileInputRef.current?.click()}
-								disabled={avatarUploading}
-								className="absolute -bottom-1 -right-1 size-7 rounded-full bg-primary flex items-center justify-center shadow-glow disabled:opacity-50"
-							>
-								<Camera className="size-3.5 text-primary-foreground" />
-							</button>
-						</div>
-						<div>
-							<p className="font-display font-semibold text-lg">
-								{profile.displayName || "—"}
-							</p>
-							<p className="text-sm text-muted-foreground">{profile.email}</p>
-							<span className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-success bg-success/15 px-2.5 py-0.5 rounded-full">
-								<div className="size-1.5 rounded-full bg-success" /> Active
-							</span>
-						</div>
-					</div>
-
-					<FieldRow label="Full name">
-						<TextInput
-							value={profile.displayName}
-							onChange={(v) => {
-								setProfile((p) => ({ ...p, displayName: v }));
-								markDirty();
-							}}
-						/>
-					</FieldRow>
-					<FieldRow label="Email address">
-						<TextInput value={profile.email} onChange={() => {}} disabled />
-					</FieldRow>
-					<FieldRow label="Phone" hint="Used for urgent alerts">
-						<TextInput
-							value={profile.phone}
-							onChange={(v) => {
-								setProfile((p) => ({ ...p, phone: v }));
-								markDirty();
-							}}
-							type="tel"
-						/>
-					</FieldRow>
-					<FieldRow label="Role" hint="Contact support to change">
-						<div className="h-10 rounded-2xl border border-input bg-secondary/40 px-3 flex items-center text-sm text-muted-foreground">
-							{roleLabel}
-						</div>
-					</FieldRow>
-					<FieldRow label="Bio" hint="Shown on your public profile">
-						<textarea
-							value={profile.bio}
-							onChange={(e) => {
-								setProfile((p) => ({ ...p, bio: e.target.value }));
-								markDirty();
-							}}
-							rows={3}
-							maxLength={500}
-							placeholder="Tell us about yourself..."
-							className="w-full rounded-2xl border border-input bg-secondary/40 px-3 py-2.5 text-sm resize-none outline-none focus:ring-2 focus:ring-ring focus:bg-card transition-colors"
-						/>
-					</FieldRow>
-				</SectionCard>
-
-				{/* Notifications */}
-				<SectionCard title="Notifications" icon={Bell}>
-					{(
-						[
-							{
-								key: "newRequest",
-								label: "New adoption request",
-								hint: "Notify when a user submits a new request",
-							},
-							{
-								key: "requestApproved",
-								label: "Request status update",
-								hint: "When a request is approved or rejected",
-							},
-							{
-								key: "newMessage",
-								label: "New message",
-								hint: "Inbox messages from adopters or fosters",
-							},
-							{
-								key: "weeklyReport",
-								label: "Weekly summary report",
-								hint: "Digest of weekly activity every Monday",
-							},
-							{
-								key: "systemAlerts",
-								label: "System alerts",
-								hint: "Critical issues or maintenance windows",
-							},
-						] as const
-					).map(({ key, label, hint }) => (
-						<FieldRow key={key} label={label} hint={hint}>
-							<div className="flex justify-end">
-								<Toggle
-									checked={notifications[key]}
-									onChange={() => toggleNotification(key)}
-								/>
-							</div>
-						</FieldRow>
-					))}
-				</SectionCard>
-
-				{/* Security */}
-				<SectionCard title="Security" icon={Shield}>
-					{passwordError && (
-						<div className="flex items-center gap-2 bg-destructive/10 border border-destructive/20 rounded-xl px-3 py-2 mb-4">
-							<AlertCircle className="size-4 text-destructive shrink-0" />
-							<p className="text-sm text-destructive">{passwordError}</p>
-						</div>
-					)}
-					<FieldRow label="Current password">
-						<TextInput
-							value={passwords.current}
-							onChange={(v) => setPasswords((p) => ({ ...p, current: v }))}
-							type="password"
-							placeholder="••••••••"
-						/>
-					</FieldRow>
-					<FieldRow label="New password" hint="Min 6 characters">
-						<TextInput
-							value={passwords.new}
-							onChange={(v) => setPasswords((p) => ({ ...p, new: v }))}
-							type="password"
-							placeholder="••••••••"
-						/>
-					</FieldRow>
-					<FieldRow label="Confirm password">
-						<TextInput
-							value={passwords.confirm}
-							onChange={(v) => setPasswords((p) => ({ ...p, confirm: v }))}
-							type="password"
-							placeholder="••••••••"
-						/>
-					</FieldRow>
-					<div className="pt-4">
-						<button className="text-xs font-semibold text-destructive hover:underline">
-							Sign out of all devices
+			<div className="p-8">
+				{error && (
+					<div className="flex items-center gap-2 bg-destructive/10 border border-destructive/20 rounded-2xl px-4 py-3 mb-4">
+						<AlertCircle className="size-4 text-destructive shrink-0" />
+						<p className="text-sm text-destructive flex-1">{error}</p>
+						<button onClick={() => setError(null)} className="shrink-0">
+							<X className="size-4 text-destructive" />
 						</button>
 					</div>
-				</SectionCard>
-			</div>
+				)}
 
-			{/* Save bar */}
-			{isDirty && (
-				<div className="fixed bottom-6 right-6 z-40 flex items-center gap-3 bg-card border border-border rounded-full px-5 py-3 shadow-soft">
-					<p className="text-sm text-muted-foreground">Unsaved changes</p>
-					<button
-						onClick={handleSave}
-						disabled={saving}
-						className={`h-9 px-5 rounded-full font-semibold text-sm transition-all flex items-center gap-2 disabled:opacity-50 ${saved ? "bg-success text-primary-foreground" : "bg-gradient-primary text-primary-foreground shadow-glow"}`}
-					>
-						{saving ? (
-							<>
-								<Loader2 className="size-3.5 animate-spin" /> Saving...
-							</>
-						) : saved ? (
-							<>
-								<Check className="size-3.5" /> Saved!
-							</>
-						) : (
-							"Save changes"
+				<div className="space-y-6">
+					{/* Profile */}
+					<SectionCard title="Profile" icon={User}>
+						<div className="flex items-center gap-5 mb-6 pb-6 border-b border-border">
+							<div className="relative shrink-0">
+								{avatarUploading ? (
+									<div className="size-20 rounded-3xl bg-muted flex items-center justify-center">
+										<Loader2 className="size-5 animate-spin text-muted-foreground" />
+									</div>
+								) : avatarPreview || profile.photoURL ? (
+									<Image
+										src={avatarPreview || profile.photoURL}
+										alt={profile.displayName}
+										width={80}
+										height={80}
+										className="size-20 rounded-3xl object-cover"
+									/>
+								) : (
+									<div
+										className="size-20 rounded-3xl bg-primary flex items-center justify-center text-primary-foreground font-display font-semibold text-xl"
+										style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+									>
+										{profile.displayName
+											? profile.displayName
+													.split(" ")
+													.slice(0, 2)
+													.map((n) => n[0])
+													.join("")
+													.toUpperCase()
+											: "?"}
+									</div>
+								)}
+								<input
+									ref={fileInputRef}
+									type="file"
+									accept="image/jpeg,image/png,image/webp"
+									className="hidden"
+									onChange={handleAvatarChange}
+								/>
+								<button
+									onClick={() => fileInputRef.current?.click()}
+									disabled={avatarUploading}
+									className="absolute -bottom-1 -right-1 size-7 rounded-full bg-primary flex items-center justify-center shadow-glow disabled:opacity-50"
+								>
+									<Camera className="size-3.5 text-primary-foreground" />
+								</button>
+							</div>
+							<div>
+								<p className="font-display font-semibold text-lg">
+									{profile.displayName || "—"}
+								</p>
+								<p className="text-sm text-muted-foreground">{profile.email}</p>
+								<span className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-success bg-success/15 px-2.5 py-0.5 rounded-full">
+									<div className="size-1.5 rounded-full bg-success" /> Active
+								</span>
+							</div>
+						</div>
+
+						<FieldRow label="Full name">
+							<TextInput
+								value={profile.displayName}
+								onChange={(v) => {
+									setProfile((p) => ({ ...p, displayName: v }));
+									markDirty();
+								}}
+							/>
+						</FieldRow>
+						<FieldRow label="Email address">
+							<TextInput value={profile.email} onChange={() => {}} disabled />
+						</FieldRow>
+						<FieldRow label="Phone" hint="Used for urgent alerts">
+							<TextInput
+								value={profile.phone}
+								onChange={(v) => {
+									setProfile((p) => ({ ...p, phone: v }));
+									markDirty();
+								}}
+								type="tel"
+							/>
+						</FieldRow>
+						<FieldRow label="Role" hint="Contact support to change">
+							<div className="h-10 rounded-2xl border border-input bg-secondary/40 px-3 flex items-center text-sm text-muted-foreground">
+								{roleLabel}
+							</div>
+						</FieldRow>
+						<FieldRow label="Bio" hint="Shown on your public profile">
+							<textarea
+								value={profile.bio}
+								onChange={(e) => {
+									setProfile((p) => ({ ...p, bio: e.target.value }));
+									markDirty();
+								}}
+								rows={3}
+								maxLength={500}
+								placeholder="Tell us about yourself..."
+								className="w-full rounded-2xl border border-input bg-secondary/40 px-3 py-2.5 text-sm resize-none outline-none focus:ring-2 focus:ring-ring focus:bg-card transition-colors"
+							/>
+						</FieldRow>
+					</SectionCard>
+
+					{/* Notifications */}
+					<SectionCard title="Notifications" icon={Bell}>
+						{(
+							[
+								{
+									key: "newRequest",
+									label: "New adoption request",
+									hint: "Notify when a user submits a new request",
+								},
+								{
+									key: "requestApproved",
+									label: "Request status update",
+									hint: "When a request is approved or rejected",
+								},
+								{
+									key: "newMessage",
+									label: "New message",
+									hint: "Inbox messages from adopters or fosters",
+								},
+								{
+									key: "weeklyReport",
+									label: "Weekly summary report",
+									hint: "Digest of weekly activity every Monday",
+								},
+								{
+									key: "systemAlerts",
+									label: "System alerts",
+									hint: "Critical issues or maintenance windows",
+								},
+							] as const
+						).map(({ key, label, hint }) => (
+							<FieldRow key={key} label={label} hint={hint}>
+								<div className="flex justify-end">
+									<Toggle
+										checked={notifications[key]}
+										onChange={() => toggleNotification(key)}
+									/>
+								</div>
+							</FieldRow>
+						))}
+					</SectionCard>
+
+					{/* Security */}
+					<SectionCard title="Security" icon={Shield}>
+						{passwordError && (
+							<div className="flex items-center gap-2 bg-destructive/10 border border-destructive/20 rounded-xl px-3 py-2 mb-4">
+								<AlertCircle className="size-4 text-destructive shrink-0" />
+								<p className="text-sm text-destructive">{passwordError}</p>
+							</div>
 						)}
-					</button>
+						<FieldRow label="Current password">
+							<TextInput
+								value={passwords.current}
+								onChange={(v) => setPasswords((p) => ({ ...p, current: v }))}
+								type="password"
+								placeholder="••••••••"
+							/>
+						</FieldRow>
+						<FieldRow label="New password" hint="Min 6 characters">
+							<TextInput
+								value={passwords.new}
+								onChange={(v) => setPasswords((p) => ({ ...p, new: v }))}
+								type="password"
+								placeholder="••••••••"
+							/>
+						</FieldRow>
+						<FieldRow label="Confirm password">
+							<TextInput
+								value={passwords.confirm}
+								onChange={(v) => setPasswords((p) => ({ ...p, confirm: v }))}
+								type="password"
+								placeholder="••••••••"
+							/>
+						</FieldRow>
+						<div className="pt-4">
+							<button className="text-xs font-semibold text-destructive hover:underline">
+								Sign out of all devices
+							</button>
+						</div>
+					</SectionCard>
 				</div>
-			)}
+
+				{/* Save bar */}
+				{isDirty && (
+					<div className="fixed bottom-6 right-6 z-40 flex items-center gap-3 bg-card border border-border rounded-full px-5 py-3 shadow-soft">
+						<p className="text-sm text-muted-foreground">Unsaved changes</p>
+						<button
+							onClick={handleSave}
+							disabled={saving}
+							className={`h-9 px-5 rounded-full font-semibold text-sm transition-all flex items-center gap-2 disabled:opacity-50 ${saved ? "bg-success text-primary-foreground" : "bg-gradient-primary text-primary-foreground shadow-glow"}`}
+						>
+							{saving ? (
+								<>
+									<Loader2 className="size-3.5 animate-spin" /> Saving...
+								</>
+							) : saved ? (
+								<>
+									<Check className="size-3.5" /> Saved!
+								</>
+							) : (
+								"Save changes"
+							)}
+						</button>
+					</div>
+				)}
+			</div>
 		</AdminLayout>
 	);
 }

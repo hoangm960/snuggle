@@ -219,207 +219,214 @@ export default function UsersPage() {
 	return (
 		<>
 			<AdminLayout title="Users" subtitle="Manage visitors and administrators.">
-				<div className="flex flex-col lg:flex-row gap-3 mb-6">
-					<div className="relative flex-1">
-						<Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-						<input
-							value={search}
-							onChange={(e) => setSearch(e.target.value)}
-							placeholder="Search by name or email..."
-							className="w-full pl-10 h-11 rounded-full bg-card border border-border shadow-card text-sm px-4 outline-none focus:ring-2 focus:ring-ring"
-						/>
+				<div className="p-8">
+					<div className="flex flex-col lg:flex-row gap-3 mb-6">
+						<div className="relative flex-1">
+							<Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+							<input
+								value={search}
+								onChange={(e) => setSearch(e.target.value)}
+								placeholder="Search by name or email..."
+								className="w-full pl-10 h-11 rounded-full bg-card border border-border shadow-card text-sm px-4 outline-none focus:ring-2 focus:ring-ring"
+							/>
+						</div>
+						<div className="flex gap-2 overflow-x-auto">
+							{["All", "visitor", "adopter", "shelter", "admin"].map((r) => (
+								<button
+									key={r}
+									onClick={() => handleFilterRoleChange(r)}
+									className={`px-4 h-11 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${roleFilter === r ? "bg-primary text-primary-foreground shadow-glow" : "bg-card border border-border text-muted-foreground hover:text-foreground"}`}
+								>
+									{r === "All" ? "All" : r.charAt(0).toUpperCase() + r.slice(1)}
+								</button>
+							))}
+						</div>
+						<button
+							onClick={() => setShowInviteModal(true)}
+							className="h-11 px-5 rounded-full bg-gradient-primary text-primary-foreground font-semibold text-sm shadow-glow flex items-center gap-2 whitespace-nowrap"
+						>
+							<UserPlus className="size-4" /> Invite User
+						</button>
 					</div>
-					<div className="flex gap-2 overflow-x-auto">
-						{["All", "visitor", "adopter", "shelter", "admin"].map((r) => (
-							<button
-								key={r}
-								onClick={() => handleFilterRoleChange(r)}
-								className={`px-4 h-11 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${roleFilter === r ? "bg-primary text-primary-foreground shadow-glow" : "bg-card border border-border text-muted-foreground hover:text-foreground"}`}
-							>
-								{r === "All" ? "All" : r.charAt(0).toUpperCase() + r.slice(1)}
-							</button>
-						))}
-					</div>
-					<button
-						onClick={() => setShowInviteModal(true)}
-						className="h-11 px-5 rounded-full bg-gradient-primary text-primary-foreground font-semibold text-sm shadow-glow flex items-center gap-2 whitespace-nowrap"
-					>
-						<UserPlus className="size-4" /> Invite User
-					</button>
-				</div>
 
-				{loading && (
-					<div className="flex items-center justify-center py-20">
-						<Loader2 className="size-8 animate-spin text-primary" />
-					</div>
-				)}
+					{loading && (
+						<div className="flex items-center justify-center py-20">
+							<Loader2 className="size-8 animate-spin text-primary" />
+						</div>
+					)}
 
-				{error && (
-					<div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg mb-4">
-						{error}
-					</div>
-				)}
+					{error && (
+						<div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg mb-4">
+							{error}
+						</div>
+					)}
 
-				{!loading && !error && (
-					<div className="bg-card border border-border rounded-3xl shadow-card overflow-hidden">
-						<div className="overflow-x-auto">
-							<table className="w-full text-left">
-								<thead className="bg-secondary/40">
-									<tr className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-										<th className="px-6 py-3.5">User</th>
-										<th className="px-6 py-3.5">Role</th>
-										<th className="px-6 py-3.5">Joined</th>
-										<th className="px-6 py-3.5">Email</th>
-										<th className="px-6 py-3.5">Status</th>
-										<th className="px-6 py-3.5"></th>
-									</tr>
-								</thead>
-								<tbody className="divide-y divide-border">
-									{users.length === 0 ? (
-										<tr>
-											<td
-												colSpan={6}
-												className="px-6 py-12 text-center text-muted-foreground"
-											>
-												No users found
-											</td>
+					{!loading && !error && (
+						<div className="bg-card border border-border rounded-3xl shadow-card overflow-hidden">
+							<div className="overflow-x-auto">
+								<table className="w-full text-left">
+									<thead className="bg-secondary/40">
+										<tr className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+											<th className="px-6 py-3.5">User</th>
+											<th className="px-6 py-3.5">Role</th>
+											<th className="px-6 py-3.5">Joined</th>
+											<th className="px-6 py-3.5">Email</th>
+											<th className="px-6 py-3.5">Status</th>
+											<th className="px-6 py-3.5"></th>
 										</tr>
-									) : (
-										users.map((u) => (
-											<tr
-												key={u.id}
-												className="hover:bg-secondary/30 transition-colors"
-											>
-												<td className="px-6 py-4">
-													<div className="flex items-center gap-3">
-														{u.photoURL ? (
-															<Image
-																src={u.photoURL}
-																alt={u.displayName || "User"}
-																width={40}
-																height={40}
-																className="size-10 rounded-full object-cover"
-															/>
-														) : (
-															<div
-																className="size-10 rounded-full flex items-center justify-center text-xs font-semibold text-white shrink-0"
-																style={{
-																	backgroundColor: stringToColor(
-																		u.displayName || "U"
-																	),
-																}}
-															>
-																{getInitials(u.displayName)}
-															</div>
-														)}
-														<p className="font-medium text-sm">
-															{u.displayName || "No name"}
-														</p>
-													</div>
-												</td>
-												<td className="px-6 py-4">
-													<span
-														className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${roleColor[u.role]}`}
-													>
-														{u.role.charAt(0).toUpperCase() +
-															u.role.slice(1)}
-													</span>
-												</td>
-												<td className="px-6 py-4 text-sm text-muted-foreground tabular-nums">
-													{u.createdAt
-														? new Date(u.createdAt).toLocaleDateString()
-														: "-"}
-												</td>
-												<td className="px-6 py-4 text-sm text-muted-foreground">
-													{u.email}
-												</td>
-												<td className="px-6 py-4">
-													<div className="flex items-center gap-2">
-														<div
-															className={`size-2 rounded-full ${statusColor[u.accountStatus]}`}
-														/>
-														<span className="text-xs capitalize">
-															{u.accountStatus}
-														</span>
-													</div>
-												</td>
-												<td className="px-6 py-4 text-right">
-													<button
-														onClick={(e) =>
-															handleToggleDropdown(u.id, e)
-														}
-														className="size-8 rounded-full hover:bg-secondary flex items-center justify-center text-muted-foreground"
-													>
-														<MoreHorizontal className="size-4" />
-													</button>
+									</thead>
+									<tbody className="divide-y divide-border">
+										{users.length === 0 ? (
+											<tr>
+												<td
+													colSpan={6}
+													className="px-6 py-12 text-center text-muted-foreground"
+												>
+													No users found
 												</td>
 											</tr>
-										))
-									)}
-								</tbody>
-							</table>
-						</div>
-					</div>
-				)}
-				{activeDropdown &&
-					(() => {
-						const u = users.find((x) => x.id === activeDropdown.userId);
-						if (!u) return null;
-						return (
-							<div
-								ref={dropdownRef}
-								style={{
-									position: "fixed",
-									top: activeDropdown.top,
-									right: activeDropdown.right,
-									zIndex: 50,
-								}}
-								className="w-48 bg-card border border-border rounded-xl shadow-lg py-1"
-								onClick={(e) => e.stopPropagation()}
-							>
-								<div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-									Change Role
-								</div>
-								{(["visitor", "adopter", "shelter", "admin"] as const).map((r) =>
-									r !== u.role ? (
-										<button
-											key={r}
-											onClick={() => handleRoleChange(u.id, r)}
-											className="w-full px-3 py-2 text-left text-sm hover:bg-secondary flex items-center gap-2"
-										>
-											<Shield className="size-4" />
-											<span>
-												Make {r.charAt(0).toUpperCase() + r.slice(1)}
-											</span>
-										</button>
-									) : null
-								)}
-								<button
-									onClick={() => handleStatusToggle(u.id, u.accountStatus)}
-									className="w-full px-3 py-2 text-left text-sm hover:bg-secondary flex items-center gap-2"
-								>
-									{u.accountStatus === "active" ? (
-										<>
-											<ShieldOff className="size-4" />
-											<span>Suspend User</span>
-										</>
-									) : (
-										<>
-											<Shield className="size-4" />
-											<span>Activate User</span>
-										</>
-									)}
-								</button>
-								<button
-									onClick={() => handleDeleteClick(u)}
-									className="w-full px-3 py-2 text-left text-sm hover:bg-secondary flex items-center gap-2 text-destructive"
-								>
-									<Trash2 className="size-4" />
-									<span>Delete User</span>
-								</button>
+										) : (
+											users.map((u) => (
+												<tr
+													key={u.id}
+													className="hover:bg-secondary/30 transition-colors"
+												>
+													<td className="px-6 py-4">
+														<div className="flex items-center gap-3">
+															{u.photoURL ? (
+																<Image
+																	src={u.photoURL}
+																	alt={u.displayName || "User"}
+																	width={40}
+																	height={40}
+																	className="size-10 rounded-full object-cover"
+																/>
+															) : (
+																<div
+																	className="size-10 rounded-full flex items-center justify-center text-xs font-semibold text-white shrink-0"
+																	style={{
+																		backgroundColor:
+																			stringToColor(
+																				u.displayName || "U"
+																			),
+																	}}
+																>
+																	{getInitials(u.displayName)}
+																</div>
+															)}
+															<p className="font-medium text-sm">
+																{u.displayName || "No name"}
+															</p>
+														</div>
+													</td>
+													<td className="px-6 py-4">
+														<span
+															className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${roleColor[u.role]}`}
+														>
+															{u.role.charAt(0).toUpperCase() +
+																u.role.slice(1)}
+														</span>
+													</td>
+													<td className="px-6 py-4 text-sm text-muted-foreground tabular-nums">
+														{u.createdAt
+															? new Date(
+																	u.createdAt
+																).toLocaleDateString()
+															: "-"}
+													</td>
+													<td className="px-6 py-4 text-sm text-muted-foreground">
+														{u.email}
+													</td>
+													<td className="px-6 py-4">
+														<div className="flex items-center gap-2">
+															<div
+																className={`size-2 rounded-full ${statusColor[u.accountStatus]}`}
+															/>
+															<span className="text-xs capitalize">
+																{u.accountStatus}
+															</span>
+														</div>
+													</td>
+													<td className="px-6 py-4 text-right">
+														<button
+															onClick={(e) =>
+																handleToggleDropdown(u.id, e)
+															}
+															className="size-8 rounded-full hover:bg-secondary flex items-center justify-center text-muted-foreground"
+														>
+															<MoreHorizontal className="size-4" />
+														</button>
+													</td>
+												</tr>
+											))
+										)}
+									</tbody>
+								</table>
 							</div>
-						);
-					})()}
+						</div>
+					)}
+					{activeDropdown &&
+						(() => {
+							const u = users.find((x) => x.id === activeDropdown.userId);
+							if (!u) return null;
+							return (
+								<div
+									ref={dropdownRef}
+									style={{
+										position: "fixed",
+										top: activeDropdown.top,
+										right: activeDropdown.right,
+										zIndex: 50,
+									}}
+									className="w-48 bg-card border border-border rounded-xl shadow-lg py-1"
+									onClick={(e) => e.stopPropagation()}
+								>
+									<div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+										Change Role
+									</div>
+									{(["visitor", "adopter", "shelter", "admin"] as const).map(
+										(r) =>
+											r !== u.role ? (
+												<button
+													key={r}
+													onClick={() => handleRoleChange(u.id, r)}
+													className="w-full px-3 py-2 text-left text-sm hover:bg-secondary flex items-center gap-2"
+												>
+													<Shield className="size-4" />
+													<span>
+														Make{" "}
+														{r.charAt(0).toUpperCase() + r.slice(1)}
+													</span>
+												</button>
+											) : null
+									)}
+									<button
+										onClick={() => handleStatusToggle(u.id, u.accountStatus)}
+										className="w-full px-3 py-2 text-left text-sm hover:bg-secondary flex items-center gap-2"
+									>
+										{u.accountStatus === "active" ? (
+											<>
+												<ShieldOff className="size-4" />
+												<span>Suspend User</span>
+											</>
+										) : (
+											<>
+												<Shield className="size-4" />
+												<span>Activate User</span>
+											</>
+										)}
+									</button>
+									<button
+										onClick={() => handleDeleteClick(u)}
+										className="w-full px-3 py-2 text-left text-sm hover:bg-secondary flex items-center gap-2 text-destructive"
+									>
+										<Trash2 className="size-4" />
+										<span>Delete User</span>
+									</button>
+								</div>
+							);
+						})()}
+				</div>
 			</AdminLayout>
 
 			{showInviteModal && (
