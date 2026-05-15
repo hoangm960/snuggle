@@ -25,7 +25,7 @@ interface SidebarStats {
 	pendingRequests: number;
 	pendingReviews: number;
 	pendingChats: number;
-	petsAddedThisWeek: number;
+	petsAdoptedThisWeek: number;
 }
 
 interface NavItem {
@@ -63,7 +63,7 @@ export function AppSidebar() {
 		pendingRequests: 0,
 		pendingReviews: 0,
 		pendingChats: 0,
-		petsAddedThisWeek: 0,
+		petsAdoptedThisWeek: 0,
 	});
 
 	useEffect(() => {
@@ -204,7 +204,7 @@ export function AppSidebar() {
 
 			{/* Footer */}
 			<div className="p-3">
-				{stats.petsAddedThisWeek > 0 && (
+				{stats.petsAdoptedThisWeek > 0 && (
 					<div
 						className="rounded-2xl p-4 relative overflow-hidden mb-2"
 						style={{
@@ -227,7 +227,7 @@ export function AppSidebar() {
 							className="font-semibold"
 							style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "22px" }}
 						>
-							{stats.petsAddedThisWeek} pets
+							{stats.petsAdoptedThisWeek} pets
 						</p>
 						<p style={{ fontSize: "11px", opacity: 0.85 }}>found loving homes 🐾</p>
 					</div>

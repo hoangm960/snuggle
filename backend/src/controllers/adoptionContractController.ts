@@ -291,7 +291,9 @@ export const signContract = async (req: AuthRequest, res: Response): Promise<voi
 	if (fullySigned) {
 		updateData.status = "signed";
 		if (contractData.petId) {
-			await petsCollection.doc(contractData.petId).update({ status: "adopted" });
+			await petsCollection
+				.doc(contractData.petId)
+				.update({ status: "adopted", adoptedAt: new Date() });
 		}
 	}
 

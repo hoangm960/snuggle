@@ -183,7 +183,7 @@ export default function ContactSection() {
 
 					{/* Pets image side — hidden on mobile */}
 					<div
-						className="hidden lg:flex flex-1 items-end justify-center"
+						className="hidden lg:flex flex-1 items-end justify-center relative"
 						style={{ minHeight: "420px" }}
 					>
 						<Image

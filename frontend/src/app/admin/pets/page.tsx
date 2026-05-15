@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AdminLayout } from "../_components/AdminLayout";
 import Image from "next/image";
-import { Plus, Upload, Search, MoreVertical, X, FileEdit, MapPin } from "lucide-react";
+import { Plus, Upload, Search, MoreVertical, X, FileEdit, MapPin, Trash2 } from "lucide-react";
 import { usePets } from "@/hooks/usePets";
 import type { Pet } from "@/types";
 
@@ -62,6 +62,15 @@ export default function PetsPage() {
 	const [form, setForm] = useState(defaultForm);
 	const [editId, setEditId] = useState<string | null>(null);
 	const [saving, setSaving] = useState(false);
+	const [activeDropdown, setActiveDropdown] = useState<{
+		petId: string;
+		top: number;
+		right: number;
+	} | null>(null);
+	const dropdownRef = useRef<HTMLDivElement>(null);
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [deleteTarget, setDeleteTarget] = useState<Pet | null>(null);
+	const [deleteLoading, setDeleteLoading] = useState(false);
 
 	const filtered = (pets || []).filter((p) => {
 		const matchSearch =
@@ -129,6 +138,40 @@ export default function PetsPage() {
 		}
 	};
 
+	const handleToggleDropdown = (petId: string, e: React.MouseEvent) => {
+		e.stopPropagation();
+		if (activeDropdown?.petId === petId) {
+			setActiveDropdown(null);
+			return;
+		}
+		const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+		setActiveDropdown({
+			petId,
+			top: rect.bottom + 4,
+			right: window.innerWidth - rect.right,
+		});
+	};
+
+	const handleDeleteClick = (pet: Pet) => {
+		setActiveDropdown(null);
+		setDeleteTarget(pet);
+		setShowDeleteModal(true);
+	};
+
+	const handleConfirmDelete = async () => {
+		if (!deleteTarget?.id) return;
+		setDeleteLoading(true);
+		await deletePet(deleteTarget.id);
+		setDeleteLoading(false);
+		setShowDeleteModal(false);
+		setDeleteTarget(null);
+	};
+
+	const handleCloseDeleteModal = () => {
+		setShowDeleteModal(false);
+		setDeleteTarget(null);
+	};
+
 	const handleEdit = (pet: Pet) => {
 		setForm({
 			name: pet.name,
@@ -148,6 +191,13 @@ export default function PetsPage() {
 		setEditId(pet.id!);
 		setShowUpload(true);
 	};
+
+	useEffect(() => {
+		if (!activeDropdown) return;
+		const handleClickOutside = () => setActiveDropdown(null);
+		document.addEventListener("click", handleClickOutside);
+		return () => document.removeEventListener("click", handleClickOutside);
+	}, [activeDropdown]);
 
 	const handleClose = () => {
 		setShowUpload(false);
@@ -219,7 +269,7 @@ export default function PetsPage() {
 									{pet.status.charAt(0).toUpperCase() + pet.status.slice(1)}
 								</span>
 								<button
-									onClick={() => pet.id && deletePet(pet.id)}
+									onClick={(e) => pet.id && handleToggleDropdown(pet.id, e)}
 									className="absolute top-3 right-3 size-8 rounded-full bg-card/80 backdrop-blur-md flex items-center justify-center hover:bg-card"
 								>
 									<MoreVertical className="size-4" />
@@ -263,6 +313,33 @@ export default function PetsPage() {
 					))}
 				</div>
 			)}
+
+			{activeDropdown &&
+				(() => {
+					const pet = filtered.find((p) => p.id === activeDropdown.petId);
+					if (!pet) return null;
+					return (
+						<div
+							ref={dropdownRef}
+							style={{
+								position: "fixed",
+								top: activeDropdown.top,
+								right: activeDropdown.right,
+								zIndex: 50,
+							}}
+							className="w-48 bg-card border border-border rounded-xl shadow-lg py-1"
+							onClick={(e) => e.stopPropagation()}
+						>
+							<button
+								onClick={() => handleDeleteClick(pet)}
+								className="w-full px-3 py-2 text-left text-sm hover:bg-secondary flex items-center gap-2 text-destructive"
+							>
+								<Trash2 className="size-4" />
+								<span>Delete</span>
+							</button>
+						</div>
+					);
+				})()}
 
 			{/* Add / Edit Pet Modal */}
 			{showUpload && (
@@ -331,91 +408,116 @@ export default function PetsPage() {
 								/>
 							</label>
 							<div className="grid grid-cols-2 gap-3">
-								<input
-									value={form.name}
-									onChange={(e) => setForm({ ...form, name: e.target.value })}
-									placeholder="Name"
-									className="h-11 rounded-2xl border border-input bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-								/>
-								<select
-									value={form.species}
-									onChange={(e) =>
-										setForm({
-											...form,
-											species: e.target.value as "cat" | "dog" | "other",
-										})
-									}
-									className="h-11 rounded-2xl border border-input bg-card px-3 text-sm"
-								>
-									<option value="cat">Cat</option>
-									<option value="dog">Dog</option>
-									<option value="other">Other</option>
-								</select>
-								<input
-									value={form.breed}
-									onChange={(e) => setForm({ ...form, breed: e.target.value })}
-									placeholder="Breed"
-									className="h-11 rounded-2xl border border-input bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-								/>
-								<input
-									value={form.ageMonths}
-									onChange={(e) =>
-										setForm({
-											...form,
-											ageMonths: parseInt(e.target.value) || 0,
-										})
-									}
-									placeholder="Age (months)"
-									type="number"
-									className="h-11 rounded-2xl border border-input bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-								/>
-								<select
-									value={form.gender}
-									onChange={(e) =>
-										setForm({
-											...form,
-											gender: e.target.value as "male" | "female",
-										})
-									}
-									className="h-11 rounded-2xl border border-input bg-card px-3 text-sm"
-								>
-									<option value="male">Male</option>
-									<option value="female">Female</option>
-								</select>
-								<select
-									value={form.status}
-									onChange={(e) =>
-										setForm({
-											...form,
-											status: e.target.value as
-												| "available"
-												| "pending"
-												| "adopted",
-										})
-									}
-									className="h-11 rounded-2xl border border-input bg-card px-3 text-sm"
-								>
-									<option value="available">Available</option>
-									<option value="pending">Pending</option>
-									<option value="adopted">Adopted</option>
-								</select>
+								<label className="flex flex-col gap-1">
+									<span className="text-sm font-medium">Name</span>
+									<input
+										value={form.name}
+										onChange={(e) => setForm({ ...form, name: e.target.value })}
+										className="h-11 rounded-2xl border border-input bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+									/>
+								</label>
+								<label className="flex flex-col gap-1">
+									<span className="text-sm font-medium">Species</span>
+									<select
+										value={form.species}
+										onChange={(e) =>
+											setForm({
+												...form,
+												species: e.target.value as "cat" | "dog" | "other",
+											})
+										}
+										className="h-11 rounded-2xl border border-input bg-card px-3 text-sm"
+									>
+										<option value="cat">Cat</option>
+										<option value="dog">Dog</option>
+										<option value="other">Other</option>
+									</select>
+								</label>
+								<label className="flex flex-col gap-1">
+									<span className="text-sm font-medium">Breed</span>
+									<input
+										value={form.breed}
+										onChange={(e) =>
+											setForm({ ...form, breed: e.target.value })
+										}
+										className="h-11 rounded-2xl border border-input bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+									/>
+								</label>
+								<label className="flex flex-col gap-1">
+									<span className="text-sm font-medium">Age (months)</span>
+									<input
+										value={form.ageMonths || ""}
+										onChange={(e) =>
+											setForm({
+												...form,
+												ageMonths: parseInt(e.target.value) || 0,
+											})
+										}
+										type="number"
+										className="h-11 rounded-2xl border border-input bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+									/>
+								</label>
+								<label className="flex flex-col gap-1">
+									<span className="text-sm font-medium">Gender</span>
+									<select
+										value={form.gender}
+										onChange={(e) =>
+											setForm({
+												...form,
+												gender: e.target.value as "male" | "female",
+											})
+										}
+										className="h-11 rounded-2xl border border-input bg-card px-3 text-sm"
+									>
+										<option value="male">Male</option>
+										<option value="female">Female</option>
+									</select>
+								</label>
+								<label className="flex flex-col gap-1">
+									<span className="text-sm font-medium">Status</span>
+									<select
+										value={form.status}
+										onChange={(e) =>
+											setForm({
+												...form,
+												status: e.target.value as
+													| "available"
+													| "pending"
+													| "adopted",
+											})
+										}
+										className="h-11 rounded-2xl border border-input bg-card px-3 text-sm"
+									>
+										<option value="available">Available</option>
+										<option value="pending">Pending</option>
+										<option value="adopted">Adopted</option>
+									</select>
+								</label>
 							</div>
-							<div className="relative">
-								<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-								<input
-									value={form.location}
-									onChange={(e) => setForm({ ...form, location: e.target.value })}
-									placeholder="Location (e.g. Shelter A, Hanoi)"
-									className="w-full h-11 rounded-2xl border border-input bg-card pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+							<label className="flex flex-col gap-1">
+								<span className="text-sm font-medium">Location</span>
+								<div className="relative">
+									<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+									<input
+										value={form.location}
+										onChange={(e) =>
+											setForm({ ...form, location: e.target.value })
+										}
+										className="w-full h-11 rounded-2xl border border-input bg-card pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+									/>
+								</div>
+							</label>
+							<label className="flex flex-col gap-1">
+								<span className="text-sm font-medium">Description</span>
+								<textarea
+									value={form.description}
+									onChange={(e) =>
+										setForm({ ...form, description: e.target.value })
+									}
+									rows={3}
+									className="w-full rounded-2xl border border-input bg-card p-3 text-sm resize-none outline-none focus:ring-2 focus:ring-ring"
 								/>
-							</div>
-							<textarea
-								value={form.description}
-								onChange={(e) => setForm({ ...form, description: e.target.value })}
-								placeholder="Description..."
-								rows={3}
-								className="w-full rounded-2xl border border-input bg-card p-3 text-sm resize-none outline-none focus:ring-2 focus:ring-ring"
-							/>
+							</label>
 							<div className="grid grid-cols-2 gap-3">
 								<TogglePill
 									label="Vaccinated"
@@ -459,6 +561,51 @@ export default function PetsPage() {
 									{saving ? "Saving..." : editId ? "Update Pet" : "Save Pet"}
 								</button>
 							</div>
+						</div>
+					</div>
+				</div>
+			)}
+			{showDeleteModal && deleteTarget && (
+				<div
+					className="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-sm flex items-center justify-center p-4"
+					onClick={handleCloseDeleteModal}
+				>
+					<div
+						onClick={(e) => e.stopPropagation()}
+						className="w-full max-w-md bg-card rounded-3xl shadow-soft p-7"
+					>
+						<div className="flex items-center gap-4 mb-6">
+							<div className="size-12 rounded-full bg-destructive/10 flex items-center justify-center">
+								<Trash2 className="size-6 text-destructive" />
+							</div>
+							<div>
+								<h2 className="font-display text-xl font-semibold">Delete Pet</h2>
+								<p className="text-sm text-muted-foreground">
+									This action cannot be undone.
+								</p>
+							</div>
+						</div>
+						<div className="bg-secondary/40 rounded-2xl p-4 mb-6">
+							<p className="text-sm">
+								Are you sure you want to delete{" "}
+								<strong className="font-semibold">{deleteTarget.name}</strong>? All
+								associated data will be permanently removed.
+							</p>
+						</div>
+						<div className="flex gap-3">
+							<button
+								onClick={handleCloseDeleteModal}
+								className="flex-1 h-11 rounded-2xl border border-border text-sm font-medium hover:bg-secondary"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={handleConfirmDelete}
+								disabled={deleteLoading}
+								className="flex-1 h-11 rounded-2xl bg-destructive text-destructive-foreground text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+							>
+								{deleteLoading ? "Deleting..." : "Delete Pet"}
+							</button>
 						</div>
 					</div>
 				</div>

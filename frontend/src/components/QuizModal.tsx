@@ -319,7 +319,7 @@ export function QuizModal({ open, onClose }: QuizModalProps) {
 										>
 											{/* Thumbnail */}
 											<div
-												className="shrink-0 rounded-xl overflow-hidden"
+												className="relative shrink-0 rounded-xl overflow-hidden"
 												style={{
 													width: "60px",
 													height: "60px",

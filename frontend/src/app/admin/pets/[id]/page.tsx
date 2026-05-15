@@ -153,7 +153,7 @@ export default function PetDetailEditPage() {
 									Primary photo (edit in basic info)
 								</p>
 								<div
-									className="rounded-2xl overflow-hidden bg-muted"
+									className="relative rounded-2xl overflow-hidden bg-muted"
 									style={{ width: "100%", aspectRatio: "1" }}
 								>
 									{pet.thumbnail ? (

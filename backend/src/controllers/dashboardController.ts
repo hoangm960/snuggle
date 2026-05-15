@@ -123,7 +123,7 @@ interface SidebarStats {
 	pendingRequests: number;
 	pendingReviews: number;
 	pendingChats: number;
-	petsAddedThisWeek: number;
+	petsAdoptedThisWeek: number;
 }
 
 export const getSidebarStats = async (): Promise<SidebarStats> => {
@@ -136,19 +136,19 @@ export const getSidebarStats = async (): Promise<SidebarStats> => {
 			applicationsCollection.where("status", "==", "pending").get(),
 			db.collectionGroup("reviews").where("status", "==", "pending").get(),
 			chatsCollection.where("type", "==", "support").where("claimedBy", "==", null).get(),
-			petsCollection.get(),
+			petsCollection.where("status", "==", "adopted").get(),
 		]
 	);
 
-	const petsAddedThisWeek = petsSnap.docs.filter((doc) => {
-		const created = doc.data().createdAt;
-		return created && new Date(created.toDate()) >= weekAgo;
+	const petsAdoptedThisWeek = petsSnap.docs.filter((doc) => {
+		const adoptedAt = doc.data().adoptedAt;
+		return adoptedAt && new Date(adoptedAt.toDate()) >= weekAgo;
 	}).length;
 
 	return {
 		pendingRequests: pendingRequestsSnap.size,
 		pendingReviews: pendingReviewsSnap.size,
 		pendingChats: pendingChatsSnap.size,
-		petsAddedThisWeek,
+		petsAdoptedThisWeek,
 	};
 };

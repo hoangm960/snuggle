@@ -542,7 +542,7 @@ export default function ApplicationsPage() {
 								>
 									<div className="flex items-center gap-4 px-5 py-4">
 										<div
-											className="rounded-xl overflow-hidden shrink-0"
+											className="relative rounded-xl overflow-hidden shrink-0"
 											style={{
 												width: "64px",
 												height: "64px",

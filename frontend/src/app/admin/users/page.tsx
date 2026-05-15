@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import Image from "next/image";
 import { AdminLayout } from "../_components/AdminLayout";
 import { useUsers, User } from "@/hooks/useUsers";
@@ -59,7 +59,13 @@ export default function UsersPage() {
 		type: "success" | "error";
 		text: string;
 	} | null>(null);
-	const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+	const [activeDropdown, setActiveDropdown] = useState<{
+		userId: string;
+		top: number;
+		right: number;
+		triggerTop: number;
+	} | null>(null);
+	const dropdownRef = useRef<HTMLDivElement>(null);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
 	const [deleteLoading, setDeleteLoading] = useState(false);
@@ -93,6 +99,22 @@ export default function UsersPage() {
 		});
 	}, [debouncedSearch, roleFilter, fetchUsers]);
 
+	useEffect(() => {
+		if (!activeDropdown) return;
+		const handleClickOutside = () => setActiveDropdown(null);
+		document.addEventListener("click", handleClickOutside);
+		return () => document.removeEventListener("click", handleClickOutside);
+	}, [activeDropdown]);
+
+	useLayoutEffect(() => {
+		if (!activeDropdown || !dropdownRef.current) return;
+		if (activeDropdown.top <= activeDropdown.triggerTop) return;
+		const h = dropdownRef.current.offsetHeight;
+		if (activeDropdown.top + h > window.innerHeight) {
+			setActiveDropdown((prev) => (prev ? { ...prev, top: prev.triggerTop - h } : null));
+		}
+	}, [activeDropdown]);
+
 	const handleFilterRoleChange = (role: string) => {
 		setRoleFilter(role);
 	};
@@ -124,8 +146,19 @@ export default function UsersPage() {
 		setInviteMessage(null);
 	};
 
-	const handleToggleDropdown = (userId: string) => {
-		setActiveDropdown(activeDropdown === userId ? null : userId);
+	const handleToggleDropdown = (userId: string, e: React.MouseEvent) => {
+		e.stopPropagation();
+		if (activeDropdown?.userId === userId) {
+			setActiveDropdown(null);
+			return;
+		}
+		const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+		setActiveDropdown({
+			userId,
+			top: rect.bottom + 4,
+			right: window.innerWidth - rect.right,
+			triggerTop: rect.top,
+		});
 	};
 
 	const handleRoleChange = async (
@@ -310,78 +343,15 @@ export default function UsersPage() {
 														</span>
 													</div>
 												</td>
-												<td className="px-6 py-4 text-right relative">
+												<td className="px-6 py-4 text-right">
 													<button
-														onClick={() => handleToggleDropdown(u.id)}
+														onClick={(e) =>
+															handleToggleDropdown(u.id, e)
+														}
 														className="size-8 rounded-full hover:bg-secondary flex items-center justify-center text-muted-foreground"
 													>
 														<MoreHorizontal className="size-4" />
 													</button>
-													{activeDropdown === u.id && (
-														<div className="absolute right-6 top-full mt-1 w-48 bg-card border border-border rounded-xl shadow-lg py-1 z-10">
-															<div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-																Change Role
-															</div>
-															{(
-																[
-																	"visitor",
-																	"adopter",
-																	"shelter",
-																	"admin",
-																] as const
-															).map((r) =>
-																r !== u.role ? (
-																	<button
-																		key={r}
-																		onClick={() =>
-																			handleRoleChange(
-																				u.id,
-																				r
-																			)
-																		}
-																		className="w-full px-3 py-2 text-left text-sm hover:bg-secondary flex items-center gap-2"
-																	>
-																		<Shield className="size-4" />
-																		<span>
-																			Make{" "}
-																			{r
-																				.charAt(0)
-																				.toUpperCase() +
-																				r.slice(1)}
-																		</span>
-																	</button>
-																) : null
-															)}
-															<button
-																onClick={() =>
-																	handleStatusToggle(
-																		u.id,
-																		u.accountStatus
-																	)
-																}
-																className="w-full px-3 py-2 text-left text-sm hover:bg-secondary flex items-center gap-2"
-															>
-																{u.accountStatus === "active" ? (
-																	<>
-																		<ShieldOff className="size-4" />
-																		<span>Suspend User</span>
-																	</>
-																) : (
-																	<>
-																		<Shield className="size-4" />
-																		<span>Activate User</span>
-																	</>
-																)}
-															</button>
-															<button
-																onClick={() => handleDeleteClick(u)}
-																className="w-full px-3 py-2 text-left text-sm hover:bg-secondary flex items-center gap-2 text-destructive"
-															>
-																<Trash2 className="size-4" />
-																<span>Delete User</span>
-															</button>
-														</div>
-													)}
 												</td>
 											</tr>
 										))
@@ -391,6 +361,65 @@ export default function UsersPage() {
 						</div>
 					</div>
 				)}
+				{activeDropdown &&
+					(() => {
+						const u = users.find((x) => x.id === activeDropdown.userId);
+						if (!u) return null;
+						return (
+							<div
+								ref={dropdownRef}
+								style={{
+									position: "fixed",
+									top: activeDropdown.top,
+									right: activeDropdown.right,
+									zIndex: 50,
+								}}
+								className="w-48 bg-card border border-border rounded-xl shadow-lg py-1"
+								onClick={(e) => e.stopPropagation()}
+							>
+								<div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+									Change Role
+								</div>
+								{(["visitor", "adopter", "shelter", "admin"] as const).map((r) =>
+									r !== u.role ? (
+										<button
+											key={r}
+											onClick={() => handleRoleChange(u.id, r)}
+											className="w-full px-3 py-2 text-left text-sm hover:bg-secondary flex items-center gap-2"
+										>
+											<Shield className="size-4" />
+											<span>
+												Make {r.charAt(0).toUpperCase() + r.slice(1)}
+											</span>
+										</button>
+									) : null
+								)}
+								<button
+									onClick={() => handleStatusToggle(u.id, u.accountStatus)}
+									className="w-full px-3 py-2 text-left text-sm hover:bg-secondary flex items-center gap-2"
+								>
+									{u.accountStatus === "active" ? (
+										<>
+											<ShieldOff className="size-4" />
+											<span>Suspend User</span>
+										</>
+									) : (
+										<>
+											<Shield className="size-4" />
+											<span>Activate User</span>
+										</>
+									)}
+								</button>
+								<button
+									onClick={() => handleDeleteClick(u)}
+									className="w-full px-3 py-2 text-left text-sm hover:bg-secondary flex items-center gap-2 text-destructive"
+								>
+									<Trash2 className="size-4" />
+									<span>Delete User</span>
+								</button>
+							</div>
+						);
+					})()}
 			</AdminLayout>
 
 			{showInviteModal && (

@@ -301,7 +301,7 @@ export default function PetDetailPage() {
 					{/* Photo gallery */}
 					<div className="flex flex-col gap-3" style={{ flexShrink: 0, width: "340px" }}>
 						<div
-							className="rounded-2xl overflow-hidden"
+							className="relative rounded-2xl overflow-hidden"
 							style={{ width: "340px", height: "340px", background: "#E8E8E8" }}
 						>
 							{photos.length > 0 ? (
@@ -326,7 +326,7 @@ export default function PetDetailPage() {
 									<button
 										key={idx}
 										onClick={() => setSelectedPhoto(idx)}
-										className="rounded-xl overflow-hidden transition-all"
+										className="relative rounded-xl overflow-hidden transition-all"
 										style={{
 											width: "72px",
 											height: "72px",

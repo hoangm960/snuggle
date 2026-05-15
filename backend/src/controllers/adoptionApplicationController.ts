@@ -194,7 +194,9 @@ export const updateApplicationStatus = async (req: AuthRequest, res: Response): 
 	if (status === "approved") {
 		await petsCollection.doc(applicationData.petId).update({ status: "pending" });
 	} else if (status === "completed") {
-		await petsCollection.doc(applicationData.petId).update({ status: "adopted" });
+		await petsCollection
+			.doc(applicationData.petId)
+			.update({ status: "adopted", adoptedAt: new Date() });
 	}
 
 	const updateData: Partial<AdoptionApplication> = {
