@@ -23,7 +23,6 @@ export interface ApiResponse<T = unknown> {
 export interface NotificationPrefs {
 	newRequest: boolean;
 	requestApproved: boolean;
-	newDonation: boolean;
 	newMessage: boolean;
 	weeklyReport: boolean;
 	systemAlerts: boolean;

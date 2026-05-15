@@ -7,6 +7,7 @@ import {
 	sendContractSignedEmail,
 	sendContractCompletedEmail,
 } from "../services/emailService";
+import { shouldSendEmail } from "../services/notificationPrefService";
 import { generateContractPdf } from "../services/contractPdfService";
 
 const contractsCollection = db.collection("adoptionContracts");
@@ -226,12 +227,15 @@ export const createContract = async (req: AuthRequest, res: Response): Promise<v
 	const adopterDoc = await usersCollection.doc(contractData.adopterId).get();
 	const adopterData = adopterDoc.data();
 
-	await sendContractCreatedEmail({
-		to: adopterData?.email || "",
-		displayName: adopterData?.displayName || "",
-		petName: petData?.name || "Unknown",
-		contractId: docRef.id,
-	});
+	const sendCreated = await shouldSendEmail(contractData.adopterId, "requestApproved");
+	if (sendCreated) {
+		await sendContractCreatedEmail({
+			to: adopterData?.email || "",
+			displayName: adopterData?.displayName || "",
+			petName: petData?.name || "Unknown",
+			contractId: docRef.id,
+		});
+	}
 
 	const response: ApiResponse<AdoptionContract> = {
 		success: true,
@@ -304,13 +308,16 @@ export const signContract = async (req: AuthRequest, res: Response): Promise<voi
 	const petDoc = contractData.petId ? await petsCollection.doc(contractData.petId).get() : null;
 	const petData = petDoc?.data();
 
-	await sendContractSignedEmail({
-		to: adopterData?.email || "",
-		displayName: adopterData?.displayName || "",
-		petName: petData?.name || "Unknown",
-		contractId: id,
-		signedBy: role === "adopter" ? "you" : "the shelter",
-	});
+	const sendSigned = await shouldSendEmail(contractData.adopterId, "requestApproved");
+	if (sendSigned) {
+		await sendContractSignedEmail({
+			to: adopterData?.email || "",
+			displayName: adopterData?.displayName || "",
+			petName: petData?.name || "Unknown",
+			contractId: id,
+			signedBy: role === "adopter" ? "you" : "the shelter",
+		});
+	}
 
 	const adopterSignedAtVal = updateData.adopterSignedAt || contractData.adopterSignedAt;
 	const shelterSignedAtVal = updateData.shelterSignedAt || contractData.shelterSignedAt;
@@ -341,13 +348,16 @@ export const signContract = async (req: AuthRequest, res: Response): Promise<voi
 		await contractsCollection.doc(id).update({ contractFileURL: pdfUrl });
 
 		if (fullySigned) {
-			await sendContractCompletedEmail({
-				to: adopterData?.email || "",
-				displayName: adopterData?.displayName || "",
-				petName: petData?.name || "Unknown",
-				contractId: id,
-				pdfUrl,
-			});
+			const sendCompleted = await shouldSendEmail(contractData.adopterId, "requestApproved");
+			if (sendCompleted) {
+				await sendContractCompletedEmail({
+					to: adopterData?.email || "",
+					displayName: adopterData?.displayName || "",
+					petName: petData?.name || "Unknown",
+					contractId: id,
+					pdfUrl,
+				});
+			}
 		}
 	}
 

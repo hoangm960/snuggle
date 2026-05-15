@@ -101,7 +101,6 @@ function TextInput({
 const DEFAULT_NOTIFICATIONS: NotificationPrefs = {
 	newRequest: true,
 	requestApproved: true,
-	newDonation: true,
 	newMessage: false,
 	weeklyReport: true,
 	systemAlerts: true,
@@ -162,6 +161,11 @@ export default function SettingsPage() {
 			if (user.notificationPrefs) {
 				setNotifications(user.notificationPrefs);
 			}
+			if (user.appearance) {
+				setDarkMode(user.appearance.darkMode);
+				setCompactView(user.appearance.compactView);
+				setAccentColor(user.appearance.accentColor);
+			}
 			const savedDark = localStorage.getItem("snuggles-dark-mode");
 			const savedCompact = localStorage.getItem("snuggles-compact-view");
 			const savedAccent = localStorage.getItem("snuggles-accent-color");
@@ -181,17 +185,14 @@ export default function SettingsPage() {
 
 	useEffect(() => {
 		localStorage.setItem("snuggles-dark-mode", String(darkMode));
-		setIsDirty(true);
 	}, [darkMode]);
 
 	useEffect(() => {
 		localStorage.setItem("snuggles-compact-view", String(compactView));
-		setIsDirty(true);
 	}, [compactView]);
 
 	useEffect(() => {
 		localStorage.setItem("snuggles-accent-color", accentColor);
-		setIsDirty(true);
 	}, [accentColor]);
 
 	function markDirty() {
@@ -250,6 +251,12 @@ export default function SettingsPage() {
 			});
 
 			await api.put("/auth/notifications", notifications);
+
+			await api.put("/auth/appearance", {
+				darkMode,
+				compactView,
+				accentColor,
+			});
 
 			if (passwords.current && passwords.new && passwords.confirm) {
 				if (passwords.new !== passwords.confirm) {
@@ -385,7 +392,10 @@ export default function SettingsPage() {
 						<FieldRow label="Full name">
 							<TextInput
 								value={profile.displayName}
-								onChange={(v) => setProfile((p) => ({ ...p, displayName: v }))}
+								onChange={(v) => {
+									setProfile((p) => ({ ...p, displayName: v }));
+									markDirty();
+								}}
 							/>
 						</FieldRow>
 						<FieldRow label="Email address">
@@ -394,7 +404,10 @@ export default function SettingsPage() {
 						<FieldRow label="Phone" hint="Used for urgent alerts">
 							<TextInput
 								value={profile.phone}
-								onChange={(v) => setProfile((p) => ({ ...p, phone: v }))}
+								onChange={(v) => {
+									setProfile((p) => ({ ...p, phone: v }));
+									markDirty();
+								}}
 								type="tel"
 							/>
 						</FieldRow>
@@ -406,7 +419,10 @@ export default function SettingsPage() {
 						<FieldRow label="Bio" hint="Shown on your public profile">
 							<textarea
 								value={profile.bio}
-								onChange={(e) => setProfile((p) => ({ ...p, bio: e.target.value }))}
+								onChange={(e) => {
+									setProfile((p) => ({ ...p, bio: e.target.value }));
+									markDirty();
+								}}
 								rows={3}
 								maxLength={500}
 								placeholder="Tell us about yourself..."
@@ -505,7 +521,10 @@ export default function SettingsPage() {
 							<div className="flex justify-end">
 								<Toggle
 									checked={darkMode}
-									onChange={() => setDarkMode(!darkMode)}
+									onChange={() => {
+										setDarkMode(!darkMode);
+										markDirty();
+									}}
 								/>
 							</div>
 						</FieldRow>
@@ -513,7 +532,10 @@ export default function SettingsPage() {
 							<div className="flex justify-end">
 								<Toggle
 									checked={compactView}
-									onChange={() => setCompactView(!compactView)}
+									onChange={() => {
+										setCompactView(!compactView);
+										markDirty();
+									}}
 								/>
 							</div>
 						</FieldRow>
@@ -525,7 +547,10 @@ export default function SettingsPage() {
 								{ACCENT_COLORS.map(({ color, active }) => (
 									<button
 										key={color}
-										onClick={() => setAccentColor(color)}
+										onClick={() => {
+											setAccentColor(color);
+											markDirty();
+										}}
 										className="size-8 rounded-full flex items-center justify-center border-2 transition-all"
 										style={{
 											background: color,
