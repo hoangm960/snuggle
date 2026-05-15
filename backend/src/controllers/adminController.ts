@@ -1,6 +1,6 @@
 import { auth, db } from "../config/firebase";
 import { User, AdoptionApplication, SavedSearch } from "../types";
-import { sendInviteEmail } from "../services/emailService";
+import { sendInviteEmail, sendSystemAlertEmail } from "../services/emailService";
 import { randomBytes } from "crypto";
 
 const usersCollection = db.collection("users");
@@ -381,4 +381,32 @@ export const deleteUser = async (
 		success: true,
 		message: `User ${userEmail || targetUserId} has been deleted successfully`,
 	};
+};
+
+export const sendSystemAlert = async (
+	subject: string,
+	message: string
+): Promise<{ sent: number }> => {
+	const snap = await db
+		.collection("users")
+		.where("notificationPrefs.systemAlerts", "==", true)
+		.get();
+
+	let sent = 0;
+	for (const doc of snap.docs) {
+		const data = doc.data();
+		if (!data.email) continue;
+		try {
+			await sendSystemAlertEmail({
+				to: data.email,
+				displayName: data.displayName || "User",
+				subject,
+				message,
+			});
+			sent++;
+		} catch (err) {
+			console.error(`Failed to send alert to ${data.email}:`, err);
+		}
+	}
+	return { sent };
 };

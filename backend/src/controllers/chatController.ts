@@ -2,11 +2,17 @@ import { Response } from "express";
 import { db } from "../config/firebase";
 import { Chat, Message, AuthRequest, ApiResponse } from "../types";
 import { AppError } from "../middleware/errorHandler";
+import { sendNewMessageEmail } from "../services/emailService";
+import { shouldSendEmail } from "../services/notificationPrefService";
 import { getIO } from "../socket";
 
 const chatsCollection = db.collection("chats");
 const messagesCollection = db.collection("messages");
 const applicationsCollection = db.collection("adoptionApplications");
+const usersCollection = db.collection("users");
+
+const messageEmailCooldowns = new Map<string, number>();
+const MESSAGE_COOLDOWN_MS = 5 * 60 * 1000;
 
 export const getUserChats = async (req: AuthRequest, res: Response): Promise<void> => {
 	if (!req.user) {
@@ -382,6 +388,28 @@ export const sendMessage = async (req: AuthRequest, res: Response): Promise<void
 		getIO().to(`chat:${id}`).emit("new_message", message);
 	} catch {
 		// socket not initialized
+	}
+
+	for (const participantId of chatData.participantIds) {
+		if (participantId === req.user.uid) continue;
+		const cooldownKey = `${participantId}:${id}`;
+		const lastSent = messageEmailCooldowns.get(cooldownKey);
+		if (lastSent && Date.now() - lastSent < MESSAGE_COOLDOWN_MS) continue;
+		const send = await shouldSendEmail(participantId, "newMessage");
+		if (send) {
+			const participantDoc = await usersCollection.doc(participantId).get();
+			const participantData = participantDoc.data();
+			if (participantData?.email) {
+				messageEmailCooldowns.set(cooldownKey, Date.now());
+				await sendNewMessageEmail({
+					to: participantData.email,
+					displayName: participantData.displayName || "User",
+					senderName: req.user.displayName || "Someone",
+					preview: content.trim().slice(0, 120),
+					chatId: id,
+				});
+			}
+		}
 	}
 
 	const response: ApiResponse<Message> = {

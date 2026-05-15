@@ -2,10 +2,13 @@ import { Response } from "express";
 import { db } from "../config/firebase";
 import { AdoptionApplication, AuthRequest, ApiResponse } from "../types";
 import { AppError } from "../middleware/errorHandler";
+import { sendNewRequestEmail } from "../services/emailService";
+import { shouldSendEmail } from "../services/notificationPrefService";
 
 const applicationsCollection = db.collection("adoptionApplications");
 const petsCollection = db.collection("pets");
 const usersCollection = db.collection("users");
+const sheltersCollection = db.collection("shelters");
 
 export const getAllApplications = async (req: AuthRequest, res: Response): Promise<void> => {
 	if (!req.user) {
@@ -161,6 +164,30 @@ export const createApplication = async (req: AuthRequest, res: Response): Promis
 
 	const docRef = await applicationsCollection.add(applicationData);
 	const application: AdoptionApplication = { id: docRef.id, ...applicationData };
+
+	if (shelterId) {
+		const shelterDoc = await sheltersCollection.doc(shelterId).get();
+		if (shelterDoc.exists) {
+			const shelterData = shelterDoc.data();
+			const adminUserId = shelterData?.adminUserId;
+			if (adminUserId) {
+				const send = await shouldSendEmail(adminUserId, "newRequest");
+				if (send) {
+					const adminDoc = await usersCollection.doc(adminUserId).get();
+					const adminData = adminDoc.data();
+					if (adminData?.email) {
+						await sendNewRequestEmail({
+							to: adminData.email,
+							shelterName: adminData.displayName || "Shelter Admin",
+							applicantName: userData?.displayName || "A user",
+							petName: petData?.name || "Unknown Pet",
+							applicationId: docRef.id,
+						});
+					}
+				}
+			}
+		}
+	}
 
 	const response: ApiResponse<AdoptionApplication> = {
 		success: true,

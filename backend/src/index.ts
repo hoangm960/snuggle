@@ -5,6 +5,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import { createServer } from "http";
+import cron from "node-cron";
 
 import { logger } from "./utils/logger";
 import { errorHandler, notFound } from "./middleware/errorHandler";
@@ -58,8 +59,15 @@ app.use(errorHandler);
 const httpServer = createServer(app);
 initializeSocket(httpServer);
 
+import { sendWeeklyReports } from "./services/weeklyReportService";
+
 httpServer.listen(PORT, () => {
 	console.log(`Server running on port ${PORT}`);
+});
+
+cron.schedule("0 8 * * 1", () => {
+	console.log("Running weekly report cron...");
+	sendWeeklyReports().catch((err) => console.error("Weekly report cron failed:", err));
 });
 
 export default app;
