@@ -5,12 +5,10 @@ interface DashboardStats {
 	totalPets: number;
 	pendingRequests: number;
 	activeUsers: number;
-	totalDonations: number;
 	adoptionRate: number;
 	petsAddedThisWeek: number;
 	requestsAddedToday: number;
 	usersAddedThisMonth: number;
-	donationsThisWeek: number;
 }
 
 interface RecentRequest {
@@ -73,12 +71,10 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
 		totalPets: petsSnapshot.size,
 		pendingRequests: pendingSnapshot.size,
 		activeUsers: usersSnapshot.size,
-		totalDonations: 0,
 		adoptionRate,
 		petsAddedThisWeek: petsThisWeek,
 		requestsAddedToday: requestsToday,
 		usersAddedThisMonth: _usersThisMonth,
-		donationsThisWeek: 0,
 	};
 };
 
