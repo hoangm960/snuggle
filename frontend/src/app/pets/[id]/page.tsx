@@ -414,10 +414,11 @@ export default function PetDetailPage() {
 										router.push("/login");
 									} else if (user.role === "visitor") {
 										router.push("/ekyc");
-									} else {
+									} else if (user.role !== "admin") {
 										setAdoptOpen(true);
 									}
 								}}
+								disabled={user?.role === "admin"}
 								className="flex-1 font-semibold rounded-[40px] transition-all hover:opacity-90"
 								style={{
 									background: "#7AADA1",
@@ -437,6 +438,7 @@ export default function PetDetailPage() {
 									}
 									toggleFavorite(pet.id!);
 								}}
+								disabled={user?.role === "admin"}
 								className="flex items-center justify-center rounded-[40px] transition-all hover:opacity-80"
 								style={{
 									width: "48px",
@@ -472,6 +474,7 @@ export default function PetDetailPage() {
 								setQuestionSent(false);
 								setAskError("");
 							}}
+							disabled={user?.role === "admin"}
 							className="w-full font-semibold rounded-[40px] transition-all hover:bg-gray-50 flex items-center justify-center gap-2"
 							style={{
 								border: "1.5px solid #7AADA1",
