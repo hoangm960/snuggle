@@ -12,6 +12,7 @@ export const createPetSchema = z.object({
 	shelterId: z.string().optional(),
 	isVaccinated: z.boolean().default(false),
 	isNeutered: z.boolean().default(false),
+	location: z.string().max(200).optional(),
 });
 
 export const updatePetSchema = createPetSchema.partial().extend({
@@ -21,6 +22,7 @@ export const updatePetSchema = createPetSchema.partial().extend({
 export const petQuerySchema = z.object({
 	species: z.enum(["dog", "cat", "bird", "rabbit", "other"]).optional(),
 	status: z.enum(["available", "pending", "adopted"]).optional(),
+	location: z.string().optional(),
 	shelterId: z.string().optional(),
 	search: z.string().optional(),
 });

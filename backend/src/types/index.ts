@@ -147,6 +147,7 @@ export interface Pet {
 	thumbnail?: string;
 	isVaccinated: boolean;
 	isNeutered: boolean;
+	location: string;
 	geoPoint?: GeoPoint;
 	contractId?: string;
 	createdAt: Date;

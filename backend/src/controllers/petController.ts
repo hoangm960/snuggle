@@ -88,6 +88,7 @@ export const createPet = async (req: AuthRequest, res: Response): Promise<void> 
 		photoURLs: req.body.photoURLs,
 		shelterId: req.body.shelterId || req.user.uid,
 		status: "available",
+		location: req.body.location || "",
 		isVaccinated: req.body.isVaccinated || false,
 		isNeutered: req.body.isNeutered || false,
 		createdAt: new Date(),
