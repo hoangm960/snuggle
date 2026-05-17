@@ -267,8 +267,7 @@ function ContractModal({
 								className="flex items-start gap-2"
 								style={{ fontSize: "12px", color: "#555" }}
 							>
-								<span style={{ color: "#7AADA1", fontWeight: 700 }}>\u00B7</span>{" "}
-								{term}
+								<span style={{ color: "#7AADA1", fontWeight: 700 }}>·</span> {term}
 							</li>
 						))}
 					</ul>

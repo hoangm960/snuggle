@@ -7,6 +7,7 @@ import {
 	Search,
 	Eye,
 	Download,
+	Upload,
 	X,
 	CheckCircle2,
 	Clock,
@@ -30,6 +31,10 @@ export default function ContractsPage() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [downloadingId, setDownloadingId] = useState<string | null>(null);
+	const [uploadFile, setUploadFile] = useState<File | null>(null);
+	const [uploadShelterName, setUploadShelterName] = useState("");
+	const [uploading, setUploading] = useState(false);
+	const [uploadError, setUploadError] = useState<string | null>(null);
 
 	useEffect(() => {
 		const fetchContracts = async () => {
@@ -70,6 +75,32 @@ export default function ContractsPage() {
 			console.error("Failed to generate PDF", err);
 		} finally {
 			setDownloadingId(null);
+		}
+	};
+
+	const handleUpload = async () => {
+		if (!selected || !uploadFile || !uploadShelterName.trim()) return;
+
+		setUploading(true);
+		setUploadError(null);
+		try {
+			const formData = new FormData();
+			formData.append("contractPdf", uploadFile);
+			formData.append("shelterSignedName", uploadShelterName.trim());
+			await contractsApi.uploadSigned(selected.id, formData);
+			setUploadFile(null);
+			setUploadShelterName("");
+			const response = await contractsApi.getAll();
+			if (response.data.success) {
+				setContracts(response.data.data);
+			}
+			setSelected(null);
+		} catch (err: any) {
+			const msg =
+				err?.response?.data?.error || err?.message || "Failed to upload signed contract";
+			setUploadError(msg);
+		} finally {
+			setUploading(false);
 		}
 	};
 
@@ -471,6 +502,90 @@ export default function ContractsPage() {
 							</ul>
 						</div>
 
+						{selected.status === "pending_signature" && selected.adopterSignedAt ? (
+							<div
+								className="rounded-xl p-4 mb-5"
+								style={{ border: "2px dashed #7AADA1", background: "#F6FAF8" }}
+							>
+								<p
+									style={{
+										fontSize: "13px",
+										fontWeight: 600,
+										color: "#216959",
+										marginBottom: "4px",
+									}}
+								>
+									Upload Signed Contract
+								</p>
+								<p
+									style={{
+										fontSize: "11px",
+										color: "#666",
+										marginBottom: "12px",
+									}}
+								>
+									Adopter has signed digitally. Upload the PDF signed by the
+									shelter to complete this contract.
+								</p>
+								<input
+									type="file"
+									id="contractPdf"
+									accept=".pdf,application/pdf"
+									onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+									className="hidden"
+								/>
+								<label
+									htmlFor="contractPdf"
+									className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium cursor-pointer mb-3"
+									style={{
+										border: "1px solid #D4E8E1",
+										color: "#216959",
+										background: "#fff",
+									}}
+								>
+									<Upload className="size-3.5" />
+									{uploadFile ? uploadFile.name : "Choose PDF file"}
+								</label>
+								<input
+									value={uploadShelterName}
+									onChange={(e) => setUploadShelterName(e.target.value)}
+									placeholder="Shelter representative name"
+									className="w-full px-3 py-2 rounded-lg text-xs outline-none mb-3"
+									style={{
+										border: "1px solid #D4E8E1",
+										color: "#333",
+										background: "#fff",
+									}}
+								/>
+								{uploadError && (
+									<p
+										style={{
+											fontSize: "11px",
+											color: "#C4857A",
+											marginBottom: "8px",
+										}}
+									>
+										{uploadError}
+									</p>
+								)}
+								<button
+									onClick={handleUpload}
+									disabled={uploading || !uploadFile || !uploadShelterName.trim()}
+									className="w-full inline-flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium text-white disabled:opacity-50"
+									style={{
+										background: "linear-gradient(135deg, #7AADA1, #216959)",
+									}}
+								>
+									{uploading ? (
+										<Loader2 className="size-3.5 animate-spin" />
+									) : (
+										<CheckCircle2 className="size-3.5" />
+									)}
+									{uploading ? "Uploading..." : "Complete Contract"}
+								</button>
+							</div>
+						) : null}
+
 						<div className="flex gap-3">
 							<button
 								onClick={() => handleDownload(selected)}
@@ -486,7 +601,12 @@ export default function ContractsPage() {
 								Download PDF
 							</button>
 							<button
-								onClick={() => setSelected(null)}
+								onClick={() => {
+									setSelected(null);
+									setUploadFile(null);
+									setUploadShelterName("");
+									setUploadError(null);
+								}}
 								className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white"
 								style={{ background: "linear-gradient(135deg, #7AADA1, #216959)" }}
 							>
