@@ -54,6 +54,7 @@ export interface HealthRecordWithPet {
 	vetName?: string;
 	recordDate: Date;
 	createdAt: Date;
+	updatedAt: Date;
 }
 
 export interface CreateHealthRecordDto {
@@ -73,6 +74,9 @@ export const healthRecordsApi = {
 
 	create: (data: CreateHealthRecordDto) =>
 		api.post<{ success: boolean; data: HealthRecordWithPet }>("/admin/health-records", data),
+
+	edit: (petId: string, recordId: string, data: Partial<CreateHealthRecordDto>) =>
+		api.put<{ success: boolean; data: HealthRecordWithPet }>(`/admin/health-records/${petId}/${recordId}`, data),
 
 	delete: (petId: string, recordId: string) =>
 		api.delete<{ success: boolean }>(`/admin/health-records/${petId}/${recordId}`),

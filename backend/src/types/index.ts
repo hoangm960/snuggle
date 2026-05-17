@@ -166,6 +166,7 @@ export interface HealthRecord {
 	addedBy?: string;
 	recordDate: Date;
 	createdAt: Date;
+	updatedAt?: Date;
 }
 
 export interface AdoptionApplication {

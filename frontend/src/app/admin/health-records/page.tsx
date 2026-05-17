@@ -88,13 +88,24 @@ export default function HealthRecordsPage() {
 
 	function openEdit(r: HealthRecordWithPet) {
 		setEditRecord(r);
+
+		// handle Firestore Timestamp, JS Date, or string
+		let recordDateStr = "";
+		if (r.recordDate) {
+			const d = (r.recordDate as any)?.toDate?.()
+				? (r.recordDate as any).toDate()
+				: new Date(r.recordDate);
+			if (!isNaN(d.getTime())) {
+				recordDateStr = d.toISOString().split("T")[0];
+			}
+		}
 		setForm({
 			petId: r.petId,
 			type: r.type,
 			title: r.title || "",
 			description: r.description || "",
 			vetName: r.vetName || "",
-			recordDate: r.recordDate ? new Date(r.recordDate).toISOString().split("T")[0] : "",
+			recordDate: recordDateStr,
 		});
 		setShowModal(true);
 	}
@@ -103,7 +114,29 @@ export default function HealthRecordsPage() {
 		setSaving(true);
 		try {
 			if (editRecord) {
-				console.log("Edit not supported via this API yet");
+				// real edit call
+				const res = await healthRecordsApi.edit(editRecord.petId, editRecord.id, {
+					type: form.type,
+					title: form.title || undefined,
+					description: form.description || undefined,
+					vetName: form.vetName || undefined,
+					recordDate: form.recordDate || undefined,
+				});
+				const updated = res.data.data;
+				setRecords((prev) =>
+					prev.map((r) =>
+						r.id === editRecord.id
+							? {
+								...r,
+								...updated,
+								recordDate: updated.recordDate ? new Date(updated.recordDate) : r.recordDate,
+								createdAt: updated.createdAt ? new Date(updated.createdAt) : r.createdAt,
+								petName: r.petName,
+								petSpecies: r.petSpecies,
+							}
+							: r
+					)
+				);
 			} else {
 				const res = await healthRecordsApi.create({
 					petId: form.petId,
@@ -394,6 +427,7 @@ export default function HealthRecordsPage() {
 								<select
 									value={form.petId}
 									onChange={(e) => setForm({ ...form, petId: e.target.value })}
+									disabled={!!editRecord} // pet cannot be changed when editing
 									className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
 									style={{ border: "1px solid #E8E8E8" }}
 								>
@@ -515,6 +549,8 @@ export default function HealthRecordsPage() {
 							>
 								{saving ? (
 									<Loader2 className="size-4 animate-spin mx-auto" />
+								) : editRecord ? (
+									"Save Changes"
 								) : (
 									"Add Record"
 								)}

@@ -21,6 +21,7 @@ import {
 	getAllHealthRecords,
 	createHealthRecord,
 	deleteHealthRecord,
+	editHealthRecord,
 } from "../controllers/adminHealthRecordController";
 import { authenticate } from "../middleware/auth";
 import { requireAdmin } from "../middleware/admin";
@@ -423,6 +424,8 @@ router.get("/health-records", asyncHandler(getAllHealthRecords));
 router.post("/health-records", asyncHandler(createHealthRecord));
 
 router.delete("/health-records/:petId/:id", asyncHandler(deleteHealthRecord));
+
+router.put("/health-records/:petId/:id", asyncHandler(editHealthRecord)); // reuse edit handler for admin since it has consistency check logic
 
 // GET /admin/notifications
 router.get("/notifications", authenticate, asyncHandler(async (req, res) => {
