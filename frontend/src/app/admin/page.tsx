@@ -20,6 +20,7 @@ import {
 interface DashboardStats {
 	totalPets: number;
 	pendingRequests: number;
+	pendingKyc: number;
 	activeUsers: number;
 	adoptionRate: number;
 	petsAddedThisWeek: number;
@@ -148,6 +149,27 @@ export default function AdminDashboard() {
 			color: "#216959",
 			bg: "#E8F4F1",
 			href: "/admin/users",
+		},
+	];
+
+	const quickActions = [
+		{
+			label: "Review eKYC Submissions",
+			href: "/admin/ekyc",
+			icon: ShieldCheck,
+			count: stats.pendingKyc,
+		},
+		{
+			label: "Pending Requests",
+			href: "/admin/requests",
+			icon: ClipboardList,
+			count: stats.pendingRequests,
+		},
+		{
+			label: "Total Pets",
+			href: "/admin/pets",
+			icon: PawPrint,
+			count: stats.totalPets,
 		},
 	];
 
@@ -355,26 +377,7 @@ export default function AdminDashboard() {
 							Quick Actions
 						</h2>
 						<div className="space-y-3">
-							{[
-								{
-									label: "Review eKYC Submissions",
-									href: "/admin/kyc",
-									icon: ShieldCheck,
-									count: stats.pendingRequests,
-								},
-								{
-									label: "Pending Requests",
-									href: "/admin/requests",
-									icon: ClipboardList,
-									count: stats.pendingRequests,
-								},
-								{
-									label: "Total Pets",
-									href: "/admin/pets",
-									icon: PawPrint,
-									count: stats.totalPets,
-								},
-							].map((item) => (
+							{quickActions.map((item) => (
 								<a
 									key={item.href}
 									href={item.href}

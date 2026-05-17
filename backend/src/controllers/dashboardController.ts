@@ -4,6 +4,7 @@ import { AdoptionApplication } from "../types";
 interface DashboardStats {
 	totalPets: number;
 	pendingRequests: number;
+	pendingKyc: number;
 	activeUsers: number;
 	adoptionRate: number;
 	petsAddedThisWeek: number;
@@ -30,6 +31,7 @@ const petsCollection = db.collection("pets");
 const applicationsCollection = db.collection("adoptionApplications");
 const usersCollection = db.collection("users");
 const chatsCollection = db.collection("chats");
+const kycCollection = db.collection("kycVerifications");
 
 export const getDashboardStats = async (): Promise<DashboardStats> => {
 	const now = new Date();
@@ -38,12 +40,14 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
 	const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 	const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-	const [petsSnapshot, pendingSnapshot, usersSnapshot, allApplications] = await Promise.all([
-		petsCollection.get(),
-		applicationsCollection.where("status", "==", "pending").get(),
-		usersCollection.where("accountStatus", "==", "active").get(),
-		applicationsCollection.get(),
-	]);
+	const [petsSnapshot, pendingSnapshot, usersSnapshot, allApplications, pendingKycSnapshot] =
+		await Promise.all([
+			petsCollection.get(),
+			applicationsCollection.where("status", "==", "pending").get(),
+			usersCollection.where("accountStatus", "==", "active").get(),
+			applicationsCollection.get(),
+			kycCollection.where("status", "==", "pending").get(),
+		]);
 
 	const petsThisWeek = petsSnapshot.docs.filter((doc) => {
 		const created = doc.data().createdAt;
@@ -70,6 +74,7 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
 	return {
 		totalPets: petsSnapshot.size,
 		pendingRequests: pendingSnapshot.size,
+		pendingKyc: pendingKycSnapshot.size,
 		activeUsers: usersSnapshot.size,
 		adoptionRate,
 		petsAddedThisWeek: petsThisWeek,
