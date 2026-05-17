@@ -166,6 +166,7 @@ export default function PetsPage() {
 		setDeleteLoading(false);
 		setShowDeleteModal(false);
 		setDeleteTarget(null);
+		window.dispatchEvent(new Event("notification-refresh"));
 	};
 
 	const handleCloseDeleteModal = () => {
