@@ -4,13 +4,12 @@ import { AdoptionApplication } from "../types";
 interface DashboardStats {
 	totalPets: number;
 	pendingRequests: number;
+	pendingKyc: number;
 	activeUsers: number;
-	totalDonations: number;
 	adoptionRate: number;
 	petsAddedThisWeek: number;
 	requestsAddedToday: number;
 	usersAddedThisMonth: number;
-	donationsThisWeek: number;
 }
 
 interface RecentRequest {
@@ -31,6 +30,8 @@ interface DashboardResponse {
 const petsCollection = db.collection("pets");
 const applicationsCollection = db.collection("adoptionApplications");
 const usersCollection = db.collection("users");
+const chatsCollection = db.collection("chats");
+const kycCollection = db.collection("kycVerifications");
 
 export const getDashboardStats = async (): Promise<DashboardStats> => {
 	const now = new Date();
@@ -39,12 +40,14 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
 	const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 	const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-	const [petsSnapshot, pendingSnapshot, usersSnapshot, allApplications] = await Promise.all([
-		petsCollection.get(),
-		applicationsCollection.where("status", "==", "pending").get(),
-		usersCollection.where("accountStatus", "==", "active").get(),
-		applicationsCollection.get(),
-	]);
+	const [petsSnapshot, pendingSnapshot, usersSnapshot, allApplications, pendingKycSnapshot] =
+		await Promise.all([
+			petsCollection.get(),
+			applicationsCollection.where("status", "==", "pending").get(),
+			usersCollection.where("accountStatus", "==", "active").get(),
+			applicationsCollection.get(),
+			kycCollection.where("status", "==", "pending").get(),
+		]);
 
 	const petsThisWeek = petsSnapshot.docs.filter((doc) => {
 		const created = doc.data().createdAt;
@@ -71,13 +74,12 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
 	return {
 		totalPets: petsSnapshot.size,
 		pendingRequests: pendingSnapshot.size,
+		pendingKyc: pendingKycSnapshot.size,
 		activeUsers: usersSnapshot.size,
-		totalDonations: 0,
 		adoptionRate,
 		petsAddedThisWeek: petsThisWeek,
 		requestsAddedToday: requestsToday,
 		usersAddedThisMonth: _usersThisMonth,
-		donationsThisWeek: 0,
 	};
 };
 
@@ -116,4 +118,38 @@ export const getDashboardData = async (): Promise<DashboardResponse> => {
 	]);
 
 	return { stats, recentRequests };
+};
+
+interface SidebarStats {
+	pendingRequests: number;
+	pendingReviews: number;
+	pendingChats: number;
+	petsAdoptedThisWeek: number;
+}
+
+export const getSidebarStats = async (): Promise<SidebarStats> => {
+	const now = new Date();
+	const weekAgo = new Date(now);
+	weekAgo.setDate(weekAgo.getDate() - 7);
+
+	const [pendingRequestsSnap, pendingReviewsSnap, pendingChatsSnap, petsSnap] = await Promise.all(
+		[
+			applicationsCollection.where("status", "==", "pending").get(),
+			db.collectionGroup("reviews").where("status", "==", "pending").get(),
+			chatsCollection.where("type", "==", "support").where("claimedBy", "==", null).get(),
+			petsCollection.where("status", "==", "adopted").get(),
+		]
+	);
+
+	const petsAdoptedThisWeek = petsSnap.docs.filter((doc) => {
+		const adoptedAt = doc.data().adoptedAt;
+		return adoptedAt && new Date(adoptedAt.toDate()) >= weekAgo;
+	}).length;
+
+	return {
+		pendingRequests: pendingRequestsSnap.size,
+		pendingReviews: pendingReviewsSnap.size,
+		pendingChats: pendingChatsSnap.size,
+		petsAdoptedThisWeek,
+	};
 };

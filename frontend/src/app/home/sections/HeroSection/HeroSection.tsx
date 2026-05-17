@@ -36,7 +36,7 @@ export default function HeroSection({ onFindPet }: HeroSectionProps) {
 							lineHeight: 1.1,
 						}}
 					>
-						LET'S FIND YOUR
+						LET{"'"}S FIND YOUR
 						<br />
 						PAWFECT MATCH!
 					</h1>

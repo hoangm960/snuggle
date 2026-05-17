@@ -23,7 +23,6 @@ export interface ApiResponse<T = unknown> {
 export interface NotificationPrefs {
 	newRequest: boolean;
 	requestApproved: boolean;
-	newDonation: boolean;
 	newMessage: boolean;
 	weeklyReport: boolean;
 	systemAlerts: boolean;
@@ -47,8 +46,6 @@ export interface User {
 	authProvider: "email" | "google" | "apple" | "facebook";
 	emailVerified: boolean;
 	isKycVerified: boolean;
-	phone?: string;
-	bio?: string;
 	shelterId?: string;
 	fcmTokens?: string[];
 	notificationPrefs?: NotificationPrefs;

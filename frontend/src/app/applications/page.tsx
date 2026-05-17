@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
 	ChevronDown,
 	ChevronUp,
@@ -266,8 +267,7 @@ function ContractModal({
 								className="flex items-start gap-2"
 								style={{ fontSize: "12px", color: "#555" }}
 							>
-								<span style={{ color: "#7AADA1", fontWeight: 700 }}>\u00B7</span>{" "}
-								{term}
+								<span style={{ color: "#7AADA1", fontWeight: 700 }}>·</span> {term}
 							</li>
 						))}
 					</ul>
@@ -541,7 +541,7 @@ export default function ApplicationsPage() {
 								>
 									<div className="flex items-center gap-4 px-5 py-4">
 										<div
-											className="rounded-xl overflow-hidden shrink-0"
+											className="relative rounded-xl overflow-hidden shrink-0"
 											style={{
 												width: "64px",
 												height: "64px",
@@ -549,10 +549,11 @@ export default function ApplicationsPage() {
 											}}
 										>
 											{pet?.thumbnail ? (
-												<img
+												<Image
 													src={pet.thumbnail}
 													alt={app.name}
-													className="w-full h-full object-cover"
+													fill
+													className="object-cover"
 												/>
 											) : (
 												<div className="w-full h-full flex items-center justify-center text-2xl">

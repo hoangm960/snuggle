@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import api from "@/lib/api";
 import { auth } from "@/lib/firebase";
 import {
@@ -158,11 +159,7 @@ export default function RegisterPage() {
 			<div className="flex flex-1">
 				{/* Left column — image */}
 				<div className="hidden lg:flex lg:w-[45%] xl:w-1/2 relative flex-shrink-0">
-					<img
-						src="/images/hero1.png"
-						alt="Pets"
-						className="absolute inset-0 w-full h-full object-cover"
-					/>
+					<Image src="/images/hero1.png" alt="Pets" fill className="object-cover" />
 					<div className="absolute inset-0 bg-[#7AACA1]/10" />
 				</div>
 
@@ -194,7 +191,8 @@ export default function RegisterPage() {
 										Check your email
 									</h1>
 									<p className="text-sm text-[#666666] mb-8">
-										We've sent a verification link to <strong>{email}</strong>.
+										We{"'"}ve sent a verification link to{" "}
+										<strong>{email}</strong>.
 										<br />
 										Please check your inbox and click the link to verify your
 										account.

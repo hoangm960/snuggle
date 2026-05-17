@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePets } from "@/hooks/usePets";
 import { useAuth } from "@/hooks/useAuth";
 import { PetCardSkeletonCarousel } from "@/components/PetCardSkeleton";
@@ -41,12 +42,15 @@ export default function PetsSection() {
 			className="relative overflow-hidden px-6 md:px-10 lg:px-20 py-20 md:py-28 bg-white"
 		>
 			{/* ✅ Stable blob */}
-			<img
+			<Image
 				src="/images/decorate/bg2.svg"
 				alt=""
 				aria-hidden="true"
+				width={1100}
+				height={300}
 				className="absolute left-1/2 bottom-0 -translate-x-1/2 
 				           w-full max-w-[1100px] z-0 pointer-events-none"
+				unoptimized
 			/>
 
 			<div className="relative z-10 max-w-6xl mx-auto">
@@ -89,14 +93,15 @@ export default function PetsSection() {
 								className="rounded-3xl overflow-hidden bg-white shadow-lg"
 							>
 								<div className="relative w-full pt-[75%] overflow-hidden">
-									<img
+									<Image
 										src={
 											pet.thumbnail ||
 											pet.photoUrls?.[0] ||
 											"/images/pets/placeholder.png"
 										}
 										alt={pet.name}
-										className="absolute inset-0 w-full h-full object-cover"
+										fill
+										className="object-cover"
 									/>
 
 									<div className="absolute top-4 right-4 bg-white rounded-full px-3 py-1 text-[11px] font-semibold text-[#7AADA1]">

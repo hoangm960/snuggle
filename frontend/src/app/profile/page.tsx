@@ -64,7 +64,7 @@ export default function ProfilePage() {
 		if (!loading && !user) {
 			router.push("/login");
 		}
-	}, [user, loading]);
+	}, [user, loading, router]);
 
 	useEffect(() => {
 		if (user) {

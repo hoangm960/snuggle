@@ -6,10 +6,13 @@ import {
 	signContract,
 	archiveContract,
 	generateContractPdfEndpoint,
+	adminUploadSignedContract,
 } from "../controllers/adoptionContractController";
 import { authenticate } from "../middleware/auth";
+import { requireAdmin } from "../middleware/admin";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { validate } from "../middleware/validate";
+import { upload } from "../middleware/upload";
 import { createContractSchema, updateContractSchema } from "../utils/validators/otherValidator";
 
 const router = Router();
@@ -25,5 +28,12 @@ router.put(
 	asyncHandler(archiveContract)
 );
 router.post("/:id/pdf", authenticate, asyncHandler(generateContractPdfEndpoint));
+router.put(
+	"/:id/upload-signed",
+	authenticate,
+	requireAdmin,
+	upload.single("contractPdf"),
+	asyncHandler(adminUploadSignedContract)
+);
 
 export default router;

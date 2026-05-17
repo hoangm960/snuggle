@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "./_components/AdminLayout";
 import api from "@/lib/api";
+import Image from "next/image";
 import {
 	PawPrint,
 	ClipboardList,
@@ -13,20 +14,18 @@ import {
 	CheckCircle2,
 	XCircle,
 	ShieldCheck,
-	HeartHandshake,
 	Loader2,
 } from "lucide-react";
 
 interface DashboardStats {
 	totalPets: number;
 	pendingRequests: number;
+	pendingKyc: number;
 	activeUsers: number;
-	totalDonations: number;
 	adoptionRate: number;
 	petsAddedThisWeek: number;
 	requestsAddedToday: number;
 	usersAddedThisMonth: number;
-	donationsThisWeek: number;
 }
 
 interface RecentRequest {
@@ -125,6 +124,7 @@ export default function AdminDashboard() {
 			icon: PawPrint,
 			color: "#7AADA1",
 			bg: "#E8F4F1",
+			href: "/admin/pets",
 		},
 		{
 			label: "Pending Requests",
@@ -136,6 +136,7 @@ export default function AdminDashboard() {
 			icon: ClipboardList,
 			color: "#C4857A",
 			bg: "#FAF0EE",
+			href: "/admin/requests",
 		},
 		{
 			label: "Active Users",
@@ -147,23 +148,34 @@ export default function AdminDashboard() {
 			icon: Users,
 			color: "#216959",
 			bg: "#E8F4F1",
+			href: "/admin/users",
+		},
+	];
+
+	const quickActions = [
+		{
+			label: "Review eKYC Submissions",
+			href: "/admin/ekyc",
+			icon: ShieldCheck,
+			count: stats.pendingKyc,
 		},
 		{
-			label: "Total Donations",
-			value: stats.totalDonations > 0 ? `$${formatCount(stats.totalDonations)}` : "$0",
-			change:
-				stats.donationsThisWeek > 0
-					? `+$${stats.donationsThisWeek} this week`
-					: "No donations this week",
-			icon: HeartHandshake,
-			color: "#9A7768",
-			bg: "#F5EFEB",
+			label: "Pending Requests",
+			href: "/admin/requests",
+			icon: ClipboardList,
+			count: stats.pendingRequests,
+		},
+		{
+			label: "Total Pets",
+			href: "/admin/pets",
+			icon: PawPrint,
+			count: stats.totalPets,
 		},
 	];
 
 	return (
 		<AdminLayout>
-			<div className="p-8">
+			<div className="p-8 min-h-full flex flex-col">
 				<div className="mb-8">
 					<h1
 						style={{
@@ -176,15 +188,16 @@ export default function AdminDashboard() {
 						Dashboard
 					</h1>
 					<p style={{ color: "#888", fontSize: "14px", marginTop: "4px" }}>
-						Welcome back! Here's what's happening at Snuggle.
+						Welcome back! Here{"'"}s what{"'"}s happening at Snuggle.
 					</p>
 				</div>
 
-				<div className="grid grid-cols-4 gap-5 mb-8">
+				<div className="grid grid-cols-3 gap-5 mb-8">
 					{statCards.map((s) => (
-						<div
+						<a
 							key={s.label}
-							className="rounded-2xl p-5"
+							href={s.href}
+							className="rounded-2xl p-5 block cursor-pointer transition-shadow hover:shadow-md"
 							style={{ background: "#fff", border: "1px solid #F0F0F0" }}
 						>
 							<div className="flex items-start justify-between mb-4">
@@ -219,11 +232,11 @@ export default function AdminDashboard() {
 							>
 								{s.change}
 							</p>
-						</div>
+						</a>
 					))}
 				</div>
 
-				<div className="grid grid-cols-3 gap-5">
+				<div className="grid grid-cols-3 gap-5 flex-1 auto-rows-fr">
 					<div
 						className="col-span-2 rounded-2xl p-6"
 						style={{ background: "#fff", border: "1px solid #F0F0F0" }}
@@ -295,9 +308,11 @@ export default function AdminDashboard() {
 												<td className="py-3">
 													<div className="flex items-center gap-2">
 														{r.petThumbnail ? (
-															<img
+															<Image
 																src={r.petThumbnail}
 																alt={r.petName}
+																width={32}
+																height={32}
 																className="size-8 rounded-lg object-cover"
 															/>
 														) : null}
@@ -362,26 +377,7 @@ export default function AdminDashboard() {
 							Quick Actions
 						</h2>
 						<div className="space-y-3">
-							{[
-								{
-									label: "Review eKYC Submissions",
-									href: "/admin/kyc",
-									icon: ShieldCheck,
-									count: stats.pendingRequests,
-								},
-								{
-									label: "Pending Requests",
-									href: "/admin/requests",
-									icon: ClipboardList,
-									count: stats.pendingRequests,
-								},
-								{
-									label: "Total Pets",
-									href: "/admin/pets",
-									icon: PawPrint,
-									count: stats.totalPets,
-								},
-							].map((item) => (
+							{quickActions.map((item) => (
 								<a
 									key={item.href}
 									href={item.href}
@@ -413,32 +409,38 @@ export default function AdminDashboard() {
 							))}
 						</div>
 
-						<div
-							className="mt-6 rounded-xl p-4"
-							style={{ background: "linear-gradient(135deg, #E8F4F1, #D0EBE5)" }}
-						>
-							<div className="flex items-center gap-2 mb-1">
-								<TrendingUp className="size-4" style={{ color: "#216959" }} />
-								<span
-									style={{ fontSize: "12px", fontWeight: 600, color: "#216959" }}
-								>
-									Adoption Rate
-								</span>
-							</div>
-							<p
-								style={{
-									fontSize: "28px",
-									fontWeight: 700,
-									fontFamily: "'Space Grotesk', sans-serif",
-									color: "#216959",
-								}}
+						{stats.adoptionRate > 0 && (
+							<div
+								className="mt-6 rounded-xl p-4"
+								style={{ background: "linear-gradient(135deg, #E8F4F1, #D0EBE5)" }}
 							>
-								{stats.adoptionRate}%
-							</p>
-							<p style={{ fontSize: "11px", color: "#7AADA1", marginTop: "2px" }}>
-								Based on total applications
-							</p>
-						</div>
+								<div className="flex items-center gap-2 mb-1">
+									<TrendingUp className="size-4" style={{ color: "#216959" }} />
+									<span
+										style={{
+											fontSize: "12px",
+											fontWeight: 600,
+											color: "#216959",
+										}}
+									>
+										Adoption Rate
+									</span>
+								</div>
+								<p
+									style={{
+										fontSize: "28px",
+										fontWeight: 700,
+										fontFamily: "'Space Grotesk', sans-serif",
+										color: "#216959",
+									}}
+								>
+									{stats.adoptionRate}%
+								</p>
+								<p style={{ fontSize: "11px", color: "#7AADA1", marginTop: "2px" }}>
+									Based on total applications
+								</p>
+							</div>
+						)}
 					</div>
 				</div>
 			</div>

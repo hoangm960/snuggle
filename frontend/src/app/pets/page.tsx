@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { usePets } from "@/hooks/usePets";
@@ -260,16 +261,15 @@ export default function PetsPage() {
 							}}
 						/>
 						<div style={{ position: "relative", zIndex: 1 }}>
-							<img
+							<Image
 								src="/images/pets_cute.png"
 								alt="Happy pet and owner"
+								width={360}
+								height={360}
 								style={{
 									width: "min(360px, 90vw)",
 									height: "auto",
 									borderRadius: "28px",
-									objectFit: "cover",
-									boxShadow: "0 20px 60px rgba(61,44,30,0.18)",
-									display: "block",
 								}}
 							/>
 							{/* Floating badge */}
@@ -651,18 +651,16 @@ function PetCard({ pet, onAdopt }: { pet: Pet; onAdopt: (id: string) => void }) 
 				className="relative w-full overflow-hidden"
 				style={{ paddingTop: "72%", background: "#F9F6F2" }}
 			>
-				<img
+				<Image
 					src={pet.thumbnail || pet.photoUrls?.[0] || "/images/pets/placeholder.png"}
 					alt={pet.name}
+					fill
+					className="object-cover"
 					style={{
 						position: "absolute",
 						inset: 0,
-						width: "100%",
-						height: "100%",
-						objectFit: "cover",
-						transition: "transform 0.4s",
-						transform: hovered ? "scale(1.05)" : "scale(1)",
 					}}
+					sizes="(max-width: 768px) 50vw, 33vw"
 				/>
 				{/* Top-right: status badge + heart */}
 				<div className="absolute top-4 right-4 flex items-center gap-2">

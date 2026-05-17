@@ -42,7 +42,6 @@ export const changePasswordSchema = z.object({
 export const updateNotificationPrefsSchema = z.object({
 	newRequest: z.boolean(),
 	requestApproved: z.boolean(),
-	newDonation: z.boolean(),
 	newMessage: z.boolean(),
 	weeklyReport: z.boolean(),
 	systemAlerts: z.boolean(),

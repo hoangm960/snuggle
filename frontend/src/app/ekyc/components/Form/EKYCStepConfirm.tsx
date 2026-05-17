@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { VerifiedBadge } from "@/assets/icons/ekyc-icons";
 
 interface FormData {
@@ -44,10 +45,12 @@ export function EKYCStepConfirm({
 					margin: "0 auto",
 				}}
 			>
-				<img
+				<Image
 					src="/images/ekyc/Hand.svg"
 					alt="Complete"
-					style={{ width: "48px", height: "48px" }}
+					width={48}
+					height={48}
+					unoptimized
 				/>
 			</div>
 			<h3

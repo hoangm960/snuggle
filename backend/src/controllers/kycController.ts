@@ -1,6 +1,7 @@
 import { db } from "../config/firebase";
 import { User, KycVerification } from "../types";
 import { sendKYCApprovedEmail, sendKYCRejectedEmail } from "../services/emailService";
+import { shouldSendEmail } from "../services/notificationPrefService";
 import { logAdminAction } from "./adminController";
 
 const kycCollection = db.collection("kycVerifications");
@@ -127,14 +128,17 @@ export const approveKYC = async (kycId: string, adminId: string): Promise<KycVer
 	const userDoc = kyc.userId ? await usersCollection.doc(kyc.userId).get() : null;
 	const userData = userDoc?.data();
 
-	if (userData?.email) {
-		try {
-			await sendKYCApprovedEmail({
-				to: userData.email,
-				displayName: userData.displayName || "User",
-			});
-		} catch (error) {
-			console.error(`Failed to send KYC approval email:`, error);
+	if (userData?.email && kyc.userId) {
+		const send = await shouldSendEmail(kyc.userId, "requestApproved");
+		if (send) {
+			try {
+				await sendKYCApprovedEmail({
+					to: userData.email,
+					displayName: userData.displayName || "User",
+				});
+			} catch (error) {
+				console.error(`Failed to send KYC approval email:`, error);
+			}
 		}
 	}
 
@@ -176,15 +180,18 @@ export const rejectKYC = async (
 	const userDoc = kyc.userId ? await usersCollection.doc(kyc.userId).get() : null;
 	const userData = userDoc?.data();
 
-	if (userData?.email) {
-		try {
-			await sendKYCRejectedEmail({
-				to: userData.email,
-				displayName: userData.displayName || "User",
-				reason: rejectionReason,
-			});
-		} catch (error) {
-			console.error(`Failed to send KYC rejection email:`, error);
+	if (userData?.email && kyc.userId) {
+		const send = await shouldSendEmail(kyc.userId, "requestApproved");
+		if (send) {
+			try {
+				await sendKYCRejectedEmail({
+					to: userData.email,
+					displayName: userData.displayName || "User",
+					reason: rejectionReason,
+				});
+			} catch (error) {
+				console.error(`Failed to send KYC rejection email:`, error);
+			}
 		}
 	}
 

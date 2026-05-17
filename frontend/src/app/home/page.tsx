@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Navbar } from "@/components/Navbar";
 import { QuizModal } from "@/components/QuizModal";
 import HeroSection from "./sections/HeroSection";
@@ -49,18 +50,15 @@ export default function HomePage() {
 
 			{/* Hero + About Us share the same header.png background */}
 			<div style={{ position: "relative" }}>
-				<img
+				<Image
 					src="/images/header.png"
 					alt=""
 					aria-hidden="true"
+					fill
+					className="object-cover"
 					style={{
 						position: "absolute",
 						inset: 0,
-						width: "100%",
-						height: "100%",
-						objectFit: "cover",
-						objectPosition: "center",
-						zIndex: 0,
 					}}
 				/>
 				<Navbar variant="overlay" />

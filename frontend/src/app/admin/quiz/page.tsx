@@ -702,588 +702,604 @@ export default function AdminQuizPage() {
 
 	return (
 		<AdminLayout title="Pet Quiz" subtitle="Build and manage the pet compatibility quiz.">
-			{/* ── Top bar ── */}
-			<div className="flex items-center justify-between mb-6">
-				<p className="text-xs text-muted-foreground">
-					{questions.length} question{questions.length !== 1 ? "s" : ""}
-				</p>
-				{selectMode ? (
-					<div className="flex items-center gap-2">
-						<button
-							onClick={toggleSelectAll}
-							className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
-						>
-							{selected.size === questions.length ? "Deselect all" : "Select all"}
-						</button>
-						{selected.size > 0 && (
+			<div className="p-8">
+				{/* ── Top bar ── */}
+				<div className="flex items-center justify-between mb-6">
+					<p className="text-xs text-muted-foreground">
+						{questions.length} question{questions.length !== 1 ? "s" : ""}
+					</p>
+					{selectMode ? (
+						<div className="flex items-center gap-2">
 							<button
-								onClick={handleBulkDelete}
-								disabled={bulkDeleting}
-								className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-destructive text-destructive-foreground text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+								onClick={toggleSelectAll}
+								className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
 							>
-								{bulkDeleting ? (
-									<Loader2 className="size-3 animate-spin" />
-								) : (
-									<Trash2 className="size-3" />
-								)}
-								Delete {selected.size}
+								{selected.size === questions.length ? "Deselect all" : "Select all"}
 							</button>
-						)}
+							{selected.size > 0 && (
+								<button
+									onClick={handleBulkDelete}
+									disabled={bulkDeleting}
+									className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-destructive text-destructive-foreground text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+								>
+									{bulkDeleting ? (
+										<Loader2 className="size-3 animate-spin" />
+									) : (
+										<Trash2 className="size-3" />
+									)}
+									Delete {selected.size}
+								</button>
+							)}
+							<button
+								onClick={toggleSelectMode}
+								className="h-9 px-4 rounded-full border border-border text-xs font-semibold text-muted-foreground hover:bg-secondary transition-colors"
+							>
+								Cancel
+							</button>
+						</div>
+					) : (
 						<button
 							onClick={toggleSelectMode}
-							className="h-9 px-4 rounded-full border border-border text-xs font-semibold text-muted-foreground hover:bg-secondary transition-colors"
+							className="flex items-center gap-1.5 h-9 px-4 rounded-full border border-border text-xs font-semibold text-muted-foreground hover:bg-secondary transition-colors"
 						>
-							Cancel
+							<CheckSquare className="size-3.5" />
+							Select
+						</button>
+					)}
+				</div>
+
+				{/* Error banner */}
+				{error && (
+					<div className="mb-4 px-4 py-3 rounded-2xl bg-destructive/10 text-destructive text-sm flex items-center justify-between">
+						<span>{error}</span>
+						<button onClick={() => setError(null)}>
+							<X className="size-4" />
 						</button>
 					</div>
-				) : (
-					<button
-						onClick={toggleSelectMode}
-						className="flex items-center gap-1.5 h-9 px-4 rounded-full border border-border text-xs font-semibold text-muted-foreground hover:bg-secondary transition-colors"
-					>
-						<CheckSquare className="size-3.5" />
-						Select
-					</button>
 				)}
-			</div>
 
-			{/* Error banner */}
-			{error && (
-				<div className="mb-4 px-4 py-3 rounded-2xl bg-destructive/10 text-destructive text-sm flex items-center justify-between">
-					<span>{error}</span>
-					<button onClick={() => setError(null)}>
-						<X className="size-4" />
-					</button>
-				</div>
-			)}
-
-			{/* ── Question list ── */}
-			{loading ? (
-				<div className="flex items-center justify-center py-20">
-					<Loader2 className="size-6 animate-spin text-muted-foreground" />
-				</div>
-			) : (
-				<>
-					<div className="space-y-3">
-						{questions.map((q, idx) => {
-							const isSelected = selected.has(q.id!);
-							return (
-								<div
-									key={q.id}
-									onClick={() => selectMode && toggleSelected(q.id!)}
-									className="bg-card border rounded-2xl p-5 flex items-start gap-4 shadow-card transition-colors"
-									style={{
-										borderColor: isSelected
-											? "hsl(var(--primary))"
-											: "hsl(var(--border))",
-										background: isSelected
-											? "hsl(var(--primary) / 0.04)"
-											: undefined,
-										cursor: selectMode ? "pointer" : "default",
-									}}
-								>
-									{/* Checkbox (select mode) or order controls */}
-									{selectMode ? (
-										<div className="pt-0.5 shrink-0">
-											{isSelected ? (
-												<CheckSquare className="size-5 text-primary" />
-											) : (
-												<Square className="size-5 text-muted-foreground" />
-											)}
-										</div>
-									) : (
-										<div className="flex flex-col items-center gap-1 pt-0.5 shrink-0">
-											<button
-												onClick={() => moveQuestion(q.id!, -1)}
-												disabled={idx === 0}
-												className="size-7 rounded-lg flex items-center justify-center bg-secondary hover:bg-muted transition-colors disabled:opacity-30"
-											>
-												<ChevronUp className="size-3.5" />
-											</button>
-											<span className="text-xs font-mono text-muted-foreground">
-												{idx + 1}
-											</span>
-											<button
-												onClick={() => moveQuestion(q.id!, 1)}
-												disabled={idx === questions.length - 1}
-												className="size-7 rounded-lg flex items-center justify-center bg-secondary hover:bg-muted transition-colors disabled:opacity-30"
-											>
-												<ChevronDown className="size-3.5" />
-											</button>
-										</div>
-									)}
-
-									{/* Content */}
-									<div className="flex-1 min-w-0">
-										<div className="flex items-center gap-2 mb-1">
-											<span className="text-[10px] font-bold uppercase tracking-widest text-primary">
-												{q.category}
-											</span>
-											<span
-												className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${q.isActive ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}`}
-											>
-												{q.isActive ? "Active" : "Inactive"}
-											</span>
-										</div>
-										<p className="text-sm font-semibold text-foreground mb-3">
-											{q.question}
-										</p>
-										<div className="flex flex-wrap gap-2">
-											{q.options.map((opt) => (
-												<span
-													key={opt.value}
-													className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary text-xs font-medium"
-												>
-													{opt.icon} {opt.label}
-												</span>
-											))}
-										</div>
-									</div>
-
-									{/* Row actions (hidden in select mode) */}
-									{!selectMode && (
-										<div className="flex items-center gap-1 shrink-0">
-											<button
-												onClick={() => handleToggleActive(q)}
-												className="size-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors"
-												title={q.isActive ? "Deactivate" : "Activate"}
-											>
-												{q.isActive ? (
-													<ToggleRight className="size-4 text-success" />
-												) : (
-													<ToggleLeft className="size-4 text-muted-foreground" />
-												)}
-											</button>
-											<button
-												onClick={() => openEdit(q)}
-												className="size-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors"
-											>
-												<Pencil className="size-3.5 text-muted-foreground" />
-											</button>
-											<button
-												onClick={() => setDeleteConfirm(q.id!)}
-												className="size-8 rounded-lg flex items-center justify-center hover:bg-destructive/10 transition-colors"
-											>
-												<Trash2 className="size-3.5 text-destructive" />
-											</button>
-										</div>
-									)}
-								</div>
-							);
-						})}
+				{/* ── Question list ── */}
+				{loading ? (
+					<div className="flex items-center justify-center py-20">
+						<Loader2 className="size-6 animate-spin text-muted-foreground" />
 					</div>
-
-					{/* ── Create Question card ── */}
-					{!selectMode && (
-						<>
-							<button
-								onClick={openCreate}
-								className="w-full mt-4 rounded-2xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground hover:border-primary hover:text-primary transition-colors group"
-							>
-								<div className="size-10 rounded-full border-2 border-current flex items-center justify-center group-hover:bg-primary/5 transition-colors">
-									<Plus className="size-5" />
-								</div>
-								<span className="text-sm font-semibold">Create Question</span>
-								<span className="text-xs opacity-70">
-									Add a custom question to the quiz
-								</span>
-							</button>
-							<div className="mt-3 flex justify-center">
-								<button
-									onClick={() => setLibraryOpen(true)}
-									className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors"
-								>
-									<Library className="size-3.5" />
-									Or import from library
-								</button>
-							</div>
-						</>
-					)}
-				</>
-			)}
-
-			{/* ════════════ Create Modal ════════════ */}
-			{createOpen && (
-				<div
-					className="fixed inset-0 z-50 flex items-center justify-center p-4"
-					style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
-					onClick={(e) => e.target === e.currentTarget && setCreateOpen(false)}
-				>
-					<div
-						className="w-full max-w-2xl bg-card rounded-3xl border border-border shadow-xl overflow-hidden"
-						style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}
-					>
-						<div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border">
-							<h3 className="font-display text-base font-semibold">
-								Create Question
-							</h3>
-							<button
-								onClick={() => setCreateOpen(false)}
-								className="size-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
-							>
-								<X className="size-4" />
-							</button>
-						</div>
-
-						<div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-							<div className="grid grid-cols-2 gap-3">
-								<div>
-									<label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-										Category
-									</label>
-									<input
-										value={createForm.category}
-										onChange={(e) =>
-											setCreateForm((p) => ({
-												...p,
-												category: e.target.value,
-											}))
-										}
-										placeholder="e.g. Lifestyle"
-										className="w-full h-10 rounded-xl border border-input bg-secondary/40 px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-									/>
-								</div>
-								<div className="flex items-end pb-0.5">
-									<label className="flex items-center gap-2 cursor-pointer">
-										<span className="text-xs font-semibold text-muted-foreground">
-											Active
-										</span>
-										<button
-											onClick={() =>
-												setCreateForm((p) => ({
-													...p,
-													isActive: !p.isActive,
-												}))
-											}
-										>
-											{createForm.isActive ? (
-												<ToggleRight className="size-6 text-success" />
-											) : (
-												<ToggleLeft className="size-6 text-muted-foreground" />
-											)}
-										</button>
-									</label>
-								</div>
-							</div>
-							<div>
-								<label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-									Question
-								</label>
-								<input
-									value={createForm.question}
-									onChange={(e) =>
-										setCreateForm((p) => ({ ...p, question: e.target.value }))
-									}
-									placeholder="e.g. How busy is your daily routine?"
-									className="w-full h-10 rounded-xl border border-input bg-secondary/40 px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-								/>
-							</div>
-
-							<div>
-								<div className="flex items-center justify-between mb-3">
-									<label className="text-xs font-semibold text-muted-foreground">
-										Options ({createForm.options.length})
-									</label>
-									<button
-										onClick={addCreateOption}
-										className="text-xs font-semibold text-primary flex items-center gap-1 hover:underline"
-									>
-										<Plus className="size-3" /> Add option
-									</button>
-								</div>
-								<div className="space-y-3">
-									{createForm.options.map((opt, i) => (
-										<OptionEditor
-											key={i}
-											opt={opt}
-											i={i}
-											canRemove={createForm.options.length > 2}
-											onChange={updateCreateOption}
-											onWeight={updateCreateWeight}
-											onRemove={removeCreateOption}
-										/>
-									))}
-								</div>
-							</div>
-						</div>
-
-						<div className="px-6 py-4 border-t border-border flex justify-end gap-3">
-							<button
-								onClick={() => setCreateOpen(false)}
-								className="h-10 px-5 rounded-full border border-border text-sm font-semibold text-muted-foreground hover:bg-secondary"
-							>
-								Cancel
-							</button>
-							<button
-								onClick={handleCreate}
-								disabled={
-									creating ||
-									!createForm.category.trim() ||
-									!createForm.question.trim()
-								}
-								className="h-10 px-5 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex items-center gap-2 hover:opacity-90 disabled:opacity-50"
-							>
-								{creating ? (
-									<Loader2 className="size-4 animate-spin" />
-								) : (
-									<Save className="size-4" />
-								)}
-								Create
-							</button>
-						</div>
-					</div>
-				</div>
-			)}
-
-			{/* ════════════ Edit Modal ════════════ */}
-			{editForm && (
-				<div
-					className="fixed inset-0 z-50 flex items-center justify-center p-4"
-					style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
-					onClick={(e) => e.target === e.currentTarget && setEditForm(null)}
-				>
-					<div
-						className="w-full max-w-2xl bg-card rounded-3xl border border-border shadow-xl overflow-hidden"
-						style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}
-					>
-						<div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border">
-							<div>
-								<h3 className="font-display text-base font-semibold">
-									Edit Question
-								</h3>
-								<p className="text-xs text-muted-foreground mt-0.5">
-									{editForm.category}
-								</p>
-							</div>
-							<div className="flex items-center gap-3">
-								<label className="flex items-center gap-1.5 cursor-pointer">
-									<span className="text-xs text-muted-foreground">Active</span>
-									<button
-										onClick={() =>
-											setEditForm((p) =>
-												p ? { ...p, isActive: !p.isActive } : p
-											)
-										}
-									>
-										{editForm.isActive ? (
-											<ToggleRight className="size-5 text-success" />
-										) : (
-											<ToggleLeft className="size-5 text-muted-foreground" />
-										)}
-									</button>
-								</label>
-								<button
-									onClick={() => setEditForm(null)}
-									className="size-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
-								>
-									<X className="size-4" />
-								</button>
-							</div>
-						</div>
-
-						<div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-							<div>
-								<label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-									Question
-								</label>
-								<input
-									value={editForm.question}
-									onChange={(e) =>
-										setEditForm((p) =>
-											p ? { ...p, question: e.target.value } : p
-										)
-									}
-									className="w-full h-10 rounded-xl border border-input bg-secondary/40 px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-								/>
-							</div>
-							<div>
-								<p className="text-xs font-semibold text-muted-foreground mb-3">
-									Options & Weights{" "}
-									<span className="font-normal opacity-70">
-										(0 = avoid · 3 = strongly prefer)
-									</span>
-								</p>
-								<div className="space-y-3">
-									{editForm.options.map((opt, i) => (
-										<OptionEditor
-											key={i}
-											opt={opt}
-											i={i}
-											canRemove={editForm.options.length > 2}
-											onChange={updateEditOption}
-											onWeight={updateEditWeight}
-											onRemove={(idx) =>
-												setEditForm((p) =>
-													p
-														? {
-																...p,
-																options: p.options.filter(
-																	(_, j) => j !== idx
-																),
-															}
-														: p
-												)
-											}
-										/>
-									))}
-								</div>
-								<button
-									onClick={() =>
-										setEditForm((p) =>
-											p ? { ...p, options: [...p.options, emptyOption()] } : p
-										)
-									}
-									className="mt-3 text-xs font-semibold text-primary flex items-center gap-1 hover:underline"
-								>
-									<Plus className="size-3" /> Add option
-								</button>
-							</div>
-						</div>
-
-						<div className="px-6 py-4 border-t border-border flex justify-end gap-3">
-							<button
-								onClick={() => setEditForm(null)}
-								className="h-10 px-5 rounded-full border border-border text-sm font-semibold text-muted-foreground hover:bg-secondary"
-							>
-								Cancel
-							</button>
-							<button
-								onClick={handleSaveEdit}
-								disabled={saving}
-								className="h-10 px-5 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex items-center gap-2 hover:opacity-90 disabled:opacity-50"
-							>
-								{saving ? (
-									<Loader2 className="size-4 animate-spin" />
-								) : (
-									<Save className="size-4" />
-								)}
-								Save
-							</button>
-						</div>
-					</div>
-				</div>
-			)}
-
-			{/* ════════════ Library Modal ════════════ */}
-			{libraryOpen && (
-				<div
-					className="fixed inset-0 z-50 flex items-center justify-center p-4"
-					style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
-					onClick={(e) => e.target === e.currentTarget && setLibraryOpen(false)}
-				>
-					<div
-						className="w-full max-w-2xl bg-card rounded-3xl border border-border shadow-xl overflow-hidden"
-						style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}
-					>
-						<div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border">
-							<div>
-								<h3 className="font-display text-base font-semibold">
-									Question Library
-								</h3>
-								<p className="text-xs text-muted-foreground mt-0.5">
-									Add predefined questions to your quiz
-								</p>
-							</div>
-							<button
-								onClick={() => setLibraryOpen(false)}
-								className="size-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
-							>
-								<X className="size-4" />
-							</button>
-						</div>
-
-						<div className="flex-1 overflow-y-auto px-6 py-5 space-y-3">
-							{TEMPLATES.map((tpl, idx) => {
-								const added = isTemplateAdded(tpl);
-								const isAdding = addingIdx === idx;
+				) : (
+					<>
+						<div className="space-y-3">
+							{questions.map((q, idx) => {
+								const isSelected = selected.has(q.id!);
 								return (
 									<div
-										key={idx}
-										className="rounded-2xl border border-border p-4 flex items-start gap-4"
+										key={q.id}
+										onClick={() => selectMode && toggleSelected(q.id!)}
+										className="bg-card border rounded-2xl p-5 flex items-start gap-4 shadow-card transition-colors"
+										style={{
+											borderColor: isSelected
+												? "hsl(var(--primary))"
+												: "hsl(var(--border))",
+											background: isSelected
+												? "hsl(var(--primary) / 0.04)"
+												: undefined,
+											cursor: selectMode ? "pointer" : "default",
+										}}
 									>
+										{/* Checkbox (select mode) or order controls */}
+										{selectMode ? (
+											<div className="pt-0.5 shrink-0">
+												{isSelected ? (
+													<CheckSquare className="size-5 text-primary" />
+												) : (
+													<Square className="size-5 text-muted-foreground" />
+												)}
+											</div>
+										) : (
+											<div className="flex flex-col items-center gap-1 pt-0.5 shrink-0">
+												<button
+													onClick={() => moveQuestion(q.id!, -1)}
+													disabled={idx === 0}
+													className="size-7 rounded-lg flex items-center justify-center bg-secondary hover:bg-muted transition-colors disabled:opacity-30"
+												>
+													<ChevronUp className="size-3.5" />
+												</button>
+												<span className="text-xs font-mono text-muted-foreground">
+													{idx + 1}
+												</span>
+												<button
+													onClick={() => moveQuestion(q.id!, 1)}
+													disabled={idx === questions.length - 1}
+													className="size-7 rounded-lg flex items-center justify-center bg-secondary hover:bg-muted transition-colors disabled:opacity-30"
+												>
+													<ChevronDown className="size-3.5" />
+												</button>
+											</div>
+										)}
+
+										{/* Content */}
 										<div className="flex-1 min-w-0">
 											<div className="flex items-center gap-2 mb-1">
 												<span className="text-[10px] font-bold uppercase tracking-widest text-primary">
-													{tpl.category}
+													{q.category}
+												</span>
+												<span
+													className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${q.isActive ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}`}
+												>
+													{q.isActive ? "Active" : "Inactive"}
 												</span>
 											</div>
-											<p className="text-sm font-semibold text-foreground mb-2">
-												{tpl.question}
+											<p className="text-sm font-semibold text-foreground mb-3">
+												{q.question}
 											</p>
-											<div className="flex flex-wrap gap-1.5">
-												{tpl.options.map((opt) => (
+											<div className="flex flex-wrap gap-2">
+												{q.options.map((opt) => (
 													<span
 														key={opt.value}
-														className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-secondary text-xs font-medium"
+														className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary text-xs font-medium"
 													>
 														{opt.icon} {opt.label}
 													</span>
 												))}
 											</div>
 										</div>
-										<div className="shrink-0 pt-0.5">
-											{added ? (
-												<span className="flex items-center gap-1 text-xs font-semibold text-success">
-													<Check className="size-3.5" /> Added
-												</span>
-											) : (
+
+										{/* Row actions (hidden in select mode) */}
+										{!selectMode && (
+											<div className="flex items-center gap-1 shrink-0">
 												<button
-													onClick={() => handleAddTemplate(idx)}
-													disabled={isAdding}
-													className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 disabled:opacity-50"
+													onClick={() => handleToggleActive(q)}
+													className="size-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors"
+													title={q.isActive ? "Deactivate" : "Activate"}
 												>
-													{isAdding ? (
-														<Loader2 className="size-3 animate-spin" />
+													{q.isActive ? (
+														<ToggleRight className="size-4 text-success" />
 													) : (
-														<Plus className="size-3" />
+														<ToggleLeft className="size-4 text-muted-foreground" />
 													)}
-													Add
 												</button>
-											)}
-										</div>
+												<button
+													onClick={() => openEdit(q)}
+													className="size-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors"
+												>
+													<Pencil className="size-3.5 text-muted-foreground" />
+												</button>
+												<button
+													onClick={() => setDeleteConfirm(q.id!)}
+													className="size-8 rounded-lg flex items-center justify-center hover:bg-destructive/10 transition-colors"
+												>
+													<Trash2 className="size-3.5 text-destructive" />
+												</button>
+											</div>
+										)}
 									</div>
 								);
 							})}
 						</div>
 
-						<div className="px-6 py-4 border-t border-border flex justify-end">
-							<button
-								onClick={() => setLibraryOpen(false)}
-								className="h-10 px-5 rounded-full border border-border text-sm font-semibold text-muted-foreground hover:bg-secondary"
-							>
-								Close
-							</button>
-						</div>
-					</div>
-				</div>
-			)}
+						{/* ── Create Question card ── */}
+						{!selectMode && (
+							<>
+								<button
+									onClick={openCreate}
+									className="w-full mt-4 rounded-2xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground hover:border-primary hover:text-primary transition-colors group"
+								>
+									<div className="size-10 rounded-full border-2 border-current flex items-center justify-center group-hover:bg-primary/5 transition-colors">
+										<Plus className="size-5" />
+									</div>
+									<span className="text-sm font-semibold">Create Question</span>
+									<span className="text-xs opacity-70">
+										Add a custom question to the quiz
+									</span>
+								</button>
+								<div className="mt-3 flex justify-center">
+									<button
+										onClick={() => setLibraryOpen(true)}
+										className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary transition-colors"
+									>
+										<Library className="size-3.5" />
+										Or import from library
+									</button>
+								</div>
+							</>
+						)}
+					</>
+				)}
 
-			{/* ════════════ Single delete confirm ════════════ */}
-			{deleteConfirm && (
-				<div
-					className="fixed inset-0 z-50 flex items-center justify-center p-4"
-					style={{ background: "rgba(0,0,0,0.5)" }}
-				>
-					<div className="bg-card rounded-2xl border border-border p-6 w-full max-w-sm shadow-xl">
-						<h4 className="font-display font-semibold mb-2">Delete this question?</h4>
-						<p className="text-sm text-muted-foreground mb-5">This cannot be undone.</p>
-						<div className="flex gap-3">
-							<button
-								onClick={() => setDeleteConfirm(null)}
-								className="flex-1 h-10 rounded-full border border-border text-sm font-semibold text-muted-foreground hover:bg-secondary"
-							>
-								Cancel
-							</button>
-							<button
-								onClick={() => handleDelete(deleteConfirm)}
-								className="flex-1 h-10 rounded-full bg-destructive text-destructive-foreground text-sm font-semibold hover:opacity-90"
-							>
-								Delete
-							</button>
+				{/* ════════════ Create Modal ════════════ */}
+				{createOpen && (
+					<div
+						className="fixed inset-0 z-50 flex items-center justify-center p-4"
+						style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+						onClick={(e) => e.target === e.currentTarget && setCreateOpen(false)}
+					>
+						<div
+							className="w-full max-w-2xl bg-card rounded-3xl border border-border shadow-xl overflow-hidden"
+							style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}
+						>
+							<div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border">
+								<h3 className="font-display text-base font-semibold">
+									Create Question
+								</h3>
+								<button
+									onClick={() => setCreateOpen(false)}
+									className="size-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+								>
+									<X className="size-4" />
+								</button>
+							</div>
+
+							<div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+								<div className="grid grid-cols-2 gap-3">
+									<div>
+										<label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+											Category
+										</label>
+										<input
+											value={createForm.category}
+											onChange={(e) =>
+												setCreateForm((p) => ({
+													...p,
+													category: e.target.value,
+												}))
+											}
+											placeholder="e.g. Lifestyle"
+											className="w-full h-10 rounded-xl border border-input bg-secondary/40 px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+										/>
+									</div>
+									<div className="flex items-end pb-0.5">
+										<label className="flex items-center gap-2 cursor-pointer">
+											<span className="text-xs font-semibold text-muted-foreground">
+												Active
+											</span>
+											<button
+												onClick={() =>
+													setCreateForm((p) => ({
+														...p,
+														isActive: !p.isActive,
+													}))
+												}
+											>
+												{createForm.isActive ? (
+													<ToggleRight className="size-6 text-success" />
+												) : (
+													<ToggleLeft className="size-6 text-muted-foreground" />
+												)}
+											</button>
+										</label>
+									</div>
+								</div>
+								<div>
+									<label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+										Question
+									</label>
+									<input
+										value={createForm.question}
+										onChange={(e) =>
+											setCreateForm((p) => ({
+												...p,
+												question: e.target.value,
+											}))
+										}
+										placeholder="e.g. How busy is your daily routine?"
+										className="w-full h-10 rounded-xl border border-input bg-secondary/40 px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+									/>
+								</div>
+
+								<div>
+									<div className="flex items-center justify-between mb-3">
+										<label className="text-xs font-semibold text-muted-foreground">
+											Options ({createForm.options.length})
+										</label>
+										<button
+											onClick={addCreateOption}
+											className="text-xs font-semibold text-primary flex items-center gap-1 hover:underline"
+										>
+											<Plus className="size-3" /> Add option
+										</button>
+									</div>
+									<div className="space-y-3">
+										{createForm.options.map((opt, i) => (
+											<OptionEditor
+												key={i}
+												opt={opt}
+												i={i}
+												canRemove={createForm.options.length > 2}
+												onChange={updateCreateOption}
+												onWeight={updateCreateWeight}
+												onRemove={removeCreateOption}
+											/>
+										))}
+									</div>
+								</div>
+							</div>
+
+							<div className="px-6 py-4 border-t border-border flex justify-end gap-3">
+								<button
+									onClick={() => setCreateOpen(false)}
+									className="h-10 px-5 rounded-full border border-border text-sm font-semibold text-muted-foreground hover:bg-secondary"
+								>
+									Cancel
+								</button>
+								<button
+									onClick={handleCreate}
+									disabled={
+										creating ||
+										!createForm.category.trim() ||
+										!createForm.question.trim()
+									}
+									className="h-10 px-5 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex items-center gap-2 hover:opacity-90 disabled:opacity-50"
+								>
+									{creating ? (
+										<Loader2 className="size-4 animate-spin" />
+									) : (
+										<Save className="size-4" />
+									)}
+									Create
+								</button>
+							</div>
 						</div>
 					</div>
-				</div>
-			)}
+				)}
+
+				{/* ════════════ Edit Modal ════════════ */}
+				{editForm && (
+					<div
+						className="fixed inset-0 z-50 flex items-center justify-center p-4"
+						style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+						onClick={(e) => e.target === e.currentTarget && setEditForm(null)}
+					>
+						<div
+							className="w-full max-w-2xl bg-card rounded-3xl border border-border shadow-xl overflow-hidden"
+							style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}
+						>
+							<div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border">
+								<div>
+									<h3 className="font-display text-base font-semibold">
+										Edit Question
+									</h3>
+									<p className="text-xs text-muted-foreground mt-0.5">
+										{editForm.category}
+									</p>
+								</div>
+								<div className="flex items-center gap-3">
+									<label className="flex items-center gap-1.5 cursor-pointer">
+										<span className="text-xs text-muted-foreground">
+											Active
+										</span>
+										<button
+											onClick={() =>
+												setEditForm((p) =>
+													p ? { ...p, isActive: !p.isActive } : p
+												)
+											}
+										>
+											{editForm.isActive ? (
+												<ToggleRight className="size-5 text-success" />
+											) : (
+												<ToggleLeft className="size-5 text-muted-foreground" />
+											)}
+										</button>
+									</label>
+									<button
+										onClick={() => setEditForm(null)}
+										className="size-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+									>
+										<X className="size-4" />
+									</button>
+								</div>
+							</div>
+
+							<div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+								<div>
+									<label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+										Question
+									</label>
+									<input
+										value={editForm.question}
+										onChange={(e) =>
+											setEditForm((p) =>
+												p ? { ...p, question: e.target.value } : p
+											)
+										}
+										className="w-full h-10 rounded-xl border border-input bg-secondary/40 px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+									/>
+								</div>
+								<div>
+									<p className="text-xs font-semibold text-muted-foreground mb-3">
+										Options & Weights{" "}
+										<span className="font-normal opacity-70">
+											(0 = avoid · 3 = strongly prefer)
+										</span>
+									</p>
+									<div className="space-y-3">
+										{editForm.options.map((opt, i) => (
+											<OptionEditor
+												key={i}
+												opt={opt}
+												i={i}
+												canRemove={editForm.options.length > 2}
+												onChange={updateEditOption}
+												onWeight={updateEditWeight}
+												onRemove={(idx) =>
+													setEditForm((p) =>
+														p
+															? {
+																	...p,
+																	options: p.options.filter(
+																		(_, j) => j !== idx
+																	),
+																}
+															: p
+													)
+												}
+											/>
+										))}
+									</div>
+									<button
+										onClick={() =>
+											setEditForm((p) =>
+												p
+													? {
+															...p,
+															options: [...p.options, emptyOption()],
+														}
+													: p
+											)
+										}
+										className="mt-3 text-xs font-semibold text-primary flex items-center gap-1 hover:underline"
+									>
+										<Plus className="size-3" /> Add option
+									</button>
+								</div>
+							</div>
+
+							<div className="px-6 py-4 border-t border-border flex justify-end gap-3">
+								<button
+									onClick={() => setEditForm(null)}
+									className="h-10 px-5 rounded-full border border-border text-sm font-semibold text-muted-foreground hover:bg-secondary"
+								>
+									Cancel
+								</button>
+								<button
+									onClick={handleSaveEdit}
+									disabled={saving}
+									className="h-10 px-5 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex items-center gap-2 hover:opacity-90 disabled:opacity-50"
+								>
+									{saving ? (
+										<Loader2 className="size-4 animate-spin" />
+									) : (
+										<Save className="size-4" />
+									)}
+									Save
+								</button>
+							</div>
+						</div>
+					</div>
+				)}
+
+				{/* ════════════ Library Modal ════════════ */}
+				{libraryOpen && (
+					<div
+						className="fixed inset-0 z-50 flex items-center justify-center p-4"
+						style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+						onClick={(e) => e.target === e.currentTarget && setLibraryOpen(false)}
+					>
+						<div
+							className="w-full max-w-2xl bg-card rounded-3xl border border-border shadow-xl overflow-hidden"
+							style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}
+						>
+							<div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border">
+								<div>
+									<h3 className="font-display text-base font-semibold">
+										Question Library
+									</h3>
+									<p className="text-xs text-muted-foreground mt-0.5">
+										Add predefined questions to your quiz
+									</p>
+								</div>
+								<button
+									onClick={() => setLibraryOpen(false)}
+									className="size-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+								>
+									<X className="size-4" />
+								</button>
+							</div>
+
+							<div className="flex-1 overflow-y-auto px-6 py-5 space-y-3">
+								{TEMPLATES.map((tpl, idx) => {
+									const added = isTemplateAdded(tpl);
+									const isAdding = addingIdx === idx;
+									return (
+										<div
+											key={idx}
+											className="rounded-2xl border border-border p-4 flex items-start gap-4"
+										>
+											<div className="flex-1 min-w-0">
+												<div className="flex items-center gap-2 mb-1">
+													<span className="text-[10px] font-bold uppercase tracking-widest text-primary">
+														{tpl.category}
+													</span>
+												</div>
+												<p className="text-sm font-semibold text-foreground mb-2">
+													{tpl.question}
+												</p>
+												<div className="flex flex-wrap gap-1.5">
+													{tpl.options.map((opt) => (
+														<span
+															key={opt.value}
+															className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-secondary text-xs font-medium"
+														>
+															{opt.icon} {opt.label}
+														</span>
+													))}
+												</div>
+											</div>
+											<div className="shrink-0 pt-0.5">
+												{added ? (
+													<span className="flex items-center gap-1 text-xs font-semibold text-success">
+														<Check className="size-3.5" /> Added
+													</span>
+												) : (
+													<button
+														onClick={() => handleAddTemplate(idx)}
+														disabled={isAdding}
+														className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 disabled:opacity-50"
+													>
+														{isAdding ? (
+															<Loader2 className="size-3 animate-spin" />
+														) : (
+															<Plus className="size-3" />
+														)}
+														Add
+													</button>
+												)}
+											</div>
+										</div>
+									);
+								})}
+							</div>
+
+							<div className="px-6 py-4 border-t border-border flex justify-end">
+								<button
+									onClick={() => setLibraryOpen(false)}
+									className="h-10 px-5 rounded-full border border-border text-sm font-semibold text-muted-foreground hover:bg-secondary"
+								>
+									Close
+								</button>
+							</div>
+						</div>
+					</div>
+				)}
+
+				{/* ════════════ Single delete confirm ════════════ */}
+				{deleteConfirm && (
+					<div
+						className="fixed inset-0 z-50 flex items-center justify-center p-4"
+						style={{ background: "rgba(0,0,0,0.5)" }}
+					>
+						<div className="bg-card rounded-2xl border border-border p-6 w-full max-w-sm shadow-xl">
+							<h4 className="font-display font-semibold mb-2">
+								Delete this question?
+							</h4>
+							<p className="text-sm text-muted-foreground mb-5">
+								This cannot be undone.
+							</p>
+							<div className="flex gap-3">
+								<button
+									onClick={() => setDeleteConfirm(null)}
+									className="flex-1 h-10 rounded-full border border-border text-sm font-semibold text-muted-foreground hover:bg-secondary"
+								>
+									Cancel
+								</button>
+								<button
+									onClick={() => handleDelete(deleteConfirm)}
+									className="flex-1 h-10 rounded-full bg-destructive text-destructive-foreground text-sm font-semibold hover:opacity-90"
+								>
+									Delete
+								</button>
+							</div>
+						</div>
+					</div>
+				)}
+			</div>
 		</AdminLayout>
 	);
 }

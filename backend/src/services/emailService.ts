@@ -629,6 +629,218 @@ export interface ContractCompletedEmailParams {
 	pdfUrl: string;
 }
 
+export interface NewRequestEmailParams {
+	to: string;
+	shelterName: string;
+	applicantName: string;
+	petName: string;
+	applicationId: string;
+}
+
+export const sendNewRequestEmail = async ({
+	to,
+	shelterName,
+	applicantName,
+	petName,
+	applicationId,
+}: NewRequestEmailParams): Promise<void> => {
+	const appUrl = process.env.APP_URL || "http://localhost:3000";
+	const link = `${appUrl}/admin/requests/${applicationId}`;
+
+	const htmlContent = `
+		<!DOCTYPE html><html><head><meta charset="utf-8"></head>
+		<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f5;">
+		<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:40px 20px;">
+		<tr><td align="center">
+		<table width="100%" cellpadding="0" cellspacing="0" style="max-width:500px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+		<tr><td style="background:linear-gradient(135deg,#5D9C59,#7CB342);padding:32px;text-align:center;">
+		<h1 style="margin:0;color:#fff;font-size:28px;">Snuggles</h1></td></tr>
+		<tr><td style="padding:32px;">
+		<h2 style="margin:0 0 16px;color:#1a1a1a;font-size:22px;">New Adoption Request</h2>
+		<p style="margin:0 0 8px;color:#4a4a4a;font-size:16px;">Hi ${shelterName},</p>
+		<p style="margin:0 0 16px;color:#4a4a4a;font-size:16px;line-height:1.6;">
+		<strong>${applicantName}</strong> has submitted an adoption request for <strong>${petName}</strong>.</p>
+		<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+		<a href="${link}" style="display:inline-block;background:linear-gradient(135deg,#5D9C59,#7CB342);color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;font-size:16px;font-weight:600;">View Request</a>
+		</td></tr></table></td></tr>
+		<tr><td style="background:#f9f9f9;padding:24px;text-align:center;">
+		<p style="margin:0;color:#888;font-size:13px;">&copy; ${new Date().getFullYear()} Snuggles</p></td></tr>
+		</table></td></tr></table></body></html>`;
+
+	try {
+		await transporter.sendMail({
+			from,
+			to,
+			subject: `New Adoption Request for ${petName}`,
+			html: htmlContent,
+		});
+		console.log(`New request email sent to ${to}`);
+	} catch (error) {
+		console.error(`Failed to send new request email to ${to}:`, error);
+	}
+};
+
+export interface NewMessageEmailParams {
+	to: string;
+	displayName: string;
+	senderName: string;
+	preview: string;
+	chatId: string;
+}
+
+export const sendNewMessageEmail = async ({
+	to,
+	displayName,
+	senderName,
+	preview,
+	chatId,
+}: NewMessageEmailParams): Promise<void> => {
+	const appUrl = process.env.APP_URL || "http://localhost:3000";
+	const link = `${appUrl}/chats/${chatId}`;
+
+	const htmlContent = `
+		<!DOCTYPE html><html><head><meta charset="utf-8"></head>
+		<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f5;">
+		<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:40px 20px;">
+		<tr><td align="center">
+		<table width="100%" cellpadding="0" cellspacing="0" style="max-width:500px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+		<tr><td style="background:linear-gradient(135deg,#5D9C59,#7CB342);padding:32px;text-align:center;">
+		<h1 style="margin:0;color:#fff;font-size:28px;">Snuggles</h1></td></tr>
+		<tr><td style="padding:32px;">
+		<h2 style="margin:0 0 16px;color:#1a1a1a;font-size:22px;">New Message</h2>
+		<p style="margin:0 0 8px;color:#4a4a4a;font-size:16px;">Hi ${displayName},</p>
+		<p style="margin:0 0 8px;color:#4a4a4a;font-size:16px;"><strong>${senderName}</strong> sent you a message:</p>
+		<div style="background:#f9f9f9;border:1px solid #e5e5e5;border-radius:8px;padding:12px 16px;margin:12px 0;">
+		<p style="margin:0;color:#4a4a4a;font-size:14px;font-style:italic;">${preview}</p></div>
+		<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+		<a href="${link}" style="display:inline-block;background:linear-gradient(135deg,#5D9C59,#7CB342);color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;font-size:16px;font-weight:600;">Open Chat</a>
+		</td></tr></table></td></tr>
+		<tr><td style="background:#f9f9f9;padding:24px;text-align:center;">
+		<p style="margin:0;color:#888;font-size:13px;">&copy; ${new Date().getFullYear()} Snuggles</p></td></tr>
+		</table></td></tr></table></body></html>`;
+
+	try {
+		await transporter.sendMail({
+			from,
+			to,
+			subject: `New message from ${senderName}`,
+			html: htmlContent,
+		});
+		console.log(`New message email sent to ${to}`);
+	} catch (error) {
+		console.error(`Failed to send new message email to ${to}:`, error);
+	}
+};
+
+export interface WeeklyReportEmailParams {
+	to: string;
+	displayName: string;
+	newApplications: number;
+	newKyc: number;
+	newContracts: number;
+	newMessages: number;
+}
+
+export const sendWeeklyReportEmail = async ({
+	to,
+	displayName,
+	newApplications,
+	newKyc,
+	newContracts,
+	newMessages,
+}: WeeklyReportEmailParams): Promise<void> => {
+	const appUrl = process.env.APP_URL || "http://localhost:3000";
+
+	const htmlContent = `
+		<!DOCTYPE html><html><head><meta charset="utf-8"></head>
+		<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f5;">
+		<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:40px 20px;">
+		<tr><td align="center">
+		<table width="100%" cellpadding="0" cellspacing="0" style="max-width:500px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+		<tr><td style="background:linear-gradient(135deg,#5D9C59,#7CB342);padding:32px;text-align:center;">
+		<h1 style="margin:0;color:#fff;font-size:28px;">Snuggles</h1>
+		<p style="margin:4px 0 0;color:rgba(255,255,255,0.85);font-size:14px;">Weekly Summary</p></td></tr>
+		<tr><td style="padding:32px;">
+		<h2 style="margin:0 0 16px;color:#1a1a1a;font-size:22px;">Your Weekly Report</h2>
+		<p style="margin:0 0 16px;color:#4a4a4a;font-size:16px;">Hi ${displayName},</p>
+		<p style="margin:0 0 20px;color:#4a4a4a;font-size:16px;">Here's what happened this week on Snuggles:</p>
+		<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+		<tr><td style="padding:10px 16px;background:#f0fdf4;border-radius:8px 8px 0 0;">
+		<span style="font-size:24px;font-weight:700;color:#16a34a;">${newApplications}</span>
+		<span style="color:#4a4a4a;font-size:14px;margin-left:8px;">New Applications</span></td></tr>
+		<tr><td style="padding:10px 16px;background:#f8fafc;">
+		<span style="font-size:24px;font-weight:700;color:#6366f1;">${newKyc}</span>
+		<span style="color:#4a4a4a;font-size:14px;margin-left:8px;">KYC Verifications</span></td></tr>
+		<tr><td style="padding:10px 16px;background:#f0fdf4;">
+		<span style="font-size:24px;font-weight:700;color:#f59e0b;">${newContracts}</span>
+		<span style="color:#4a4a4a;font-size:14px;margin-left:8px;">Contracts Signed</span></td></tr>
+		<tr><td style="padding:10px 16px;background:#f8fafc;border-radius:0 0 8px 8px;">
+		<span style="font-size:24px;font-weight:700;color:#3b82f6;">${newMessages}</span>
+		<span style="color:#4a4a4a;font-size:14px;margin-left:8px;">Messages Sent</span></td></tr>
+		</table>
+		<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+		<a href="${appUrl}/admin" style="display:inline-block;background:linear-gradient(135deg,#5D9C59,#7CB342);color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;font-size:16px;font-weight:600;">Go to Dashboard</a>
+		</td></tr></table></td></tr>
+		<tr><td style="background:#f9f9f9;padding:24px;text-align:center;">
+		<p style="margin:0;color:#888;font-size:13px;">&copy; ${new Date().getFullYear()} Snuggles</p></td></tr>
+		</table></td></tr></table></body></html>`;
+
+	try {
+		await transporter.sendMail({
+			from,
+			to,
+			subject: "Your Weekly Snuggles Report",
+			html: htmlContent,
+		});
+		console.log(`Weekly report email sent to ${to}`);
+	} catch (error) {
+		console.error(`Failed to send weekly report email to ${to}:`, error);
+	}
+};
+
+export interface SystemAlertEmailParams {
+	to: string;
+	displayName: string;
+	subject: string;
+	message: string;
+}
+
+export const sendSystemAlertEmail = async ({
+	to,
+	displayName,
+	subject,
+	message,
+}: SystemAlertEmailParams): Promise<void> => {
+	const appUrl = process.env.APP_URL || "http://localhost:3000";
+
+	const htmlContent = `
+		<!DOCTYPE html><html><head><meta charset="utf-8"></head>
+		<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f5;">
+		<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:40px 20px;">
+		<tr><td align="center">
+		<table width="100%" cellpadding="0" cellspacing="0" style="max-width:500px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+		<tr><td style="background:linear-gradient(135deg,#ef4444,#dc2626);padding:32px;text-align:center;">
+		<h1 style="margin:0;color:#fff;font-size:28px;">Snuggles</h1>
+		<p style="margin:4px 0 0;color:rgba(255,255,255,0.85);font-size:14px;">System Alert</p></td></tr>
+		<tr><td style="padding:32px;">
+		<h2 style="margin:0 0 16px;color:#1a1a1a;font-size:22px;">${subject}</h2>
+		<p style="margin:0 0 8px;color:#4a4a4a;font-size:16px;">Hi ${displayName},</p>
+		<p style="margin:0 0 16px;color:#4a4a4a;font-size:16px;line-height:1.6;">${message}</p>
+		<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+		<a href="${appUrl}/admin" style="display:inline-block;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;font-size:16px;font-weight:600;">Go to Dashboard</a>
+		</td></tr></table></td></tr>
+		<tr><td style="background:#f9f9f9;padding:24px;text-align:center;">
+		<p style="margin:0;color:#888;font-size:13px;">&copy; ${new Date().getFullYear()} Snuggles</p></td></tr>
+		</table></td></tr></table></body></html>`;
+
+	try {
+		await transporter.sendMail({ from, to, subject: `[Alert] ${subject}`, html: htmlContent });
+		console.log(`System alert email sent to ${to}`);
+	} catch (error) {
+		console.error(`Failed to send system alert email to ${to}:`, error);
+	}
+};
+
 export const sendContractCompletedEmail = async ({
 	to,
 	displayName,

@@ -100,7 +100,7 @@ export default function PetHealthPage() {
 						No health records found
 					</p>
 					<p style={{ fontSize: "14px", color: "#888", marginTop: "4px" }}>
-						This pet doesn't have any health records yet.
+						This pet doesn{"'"}t have any health records yet.
 					</p>
 					<Link
 						href="/pets"
@@ -146,7 +146,8 @@ export default function PetHealthPage() {
 								color: "#1C1C1C",
 							}}
 						>
-							{pet.name}'s Health Records
+							{pet.name}
+							{"'"}s Health Records
 						</span>
 					</div>
 				</div>
@@ -379,7 +380,8 @@ export default function PetHealthPage() {
 						className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium"
 						style={{ border: "1px solid #E8E8E8", color: "#666", background: "#fff" }}
 					>
-						<ArrowLeft className="size-4" /> Back to {pet.name}'s Profile
+						<ArrowLeft className="size-4" /> Back to {pet.name}
+						{"'"}s Profile
 					</Link>
 				</div>
 			</div>

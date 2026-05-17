@@ -59,7 +59,7 @@ export default function SignContractPage() {
 		setError(null);
 
 		try {
-			const hash = btoa(`${contractId}-${user?.uid}-${Date.now()}`);
+			const hash = btoa(`${contractId}-${user?.id}-${Date.now()}`);
 			await contractsApi.sign(contractId, {
 				role: "adopter",
 				contractHash: hash,

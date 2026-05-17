@@ -1,6 +1,11 @@
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
+ROOT=$(git rev-parse --show-toplevel)
 
-cd "$(dirname "$0")/backend" || exit 1
+cd "$ROOT/frontend" || exit 1
 npx lint-staged
-npm run build
+yarn build
+yarn test
+
+cd "$ROOT/backend" || exit 1
+npx lint-staged
+yarn build
+yarn test

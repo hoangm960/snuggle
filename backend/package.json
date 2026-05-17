@@ -14,7 +14,6 @@
 		"lint": "eslint src --ext .ts",
 		"lint:fix": "eslint src --ext .ts --fix",
 		"format": "prettier --write .",
-		"prepare": "husky",
 		"create-admin": "ts-node src/scripts/createAdmin.ts"
 	},
 	"dependencies": {
@@ -27,6 +26,7 @@
 		"jwks-rsa": "^4.0.1",
 		"morgan": "^1.10.0",
 		"multer": "^2.1.1",
+		"node-cron": "^4.2.1",
 		"nodemailer": "^8.0.5",
 		"pdfkit": "^0.18.0",
 		"puppeteer": "^21.7.0",
@@ -40,6 +40,7 @@
 		"@types/morgan": "^1.9.9",
 		"@types/multer": "^2.1.0",
 		"@types/node": "^20.10.0",
+		"@types/node-cron": "^3.0.11",
 		"@types/nodemailer": "^8.0.0",
 		"@types/pdfkit": "^0.17.6",
 		"@types/socket.io": "^3.0.2",
@@ -48,9 +49,7 @@
 		"@typescript-eslint/parser": "^8.58.0",
 		"eslint": "^10.2.0",
 		"eslint-config-prettier": "^10.1.8",
-		"husky": "^9.1.7",
 		"jest": "^30.3.0",
-		"lint-staged": "^16.4.0",
 		"nodemon": "^3.1.14",
 		"prettier": "^3.8.1",
 		"supertest": "^7.2.2",

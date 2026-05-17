@@ -65,7 +65,7 @@ export default function TestimonialsSection() {
 									color: "#7AADA1",
 								}}
 							>
-								"
+								{'"'}
 							</div>
 							<p
 								className="leading-relaxed"

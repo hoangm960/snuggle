@@ -27,6 +27,12 @@ api.interceptors.request.use(
 				config.headers.Authorization = `Bearer ${fbToken}`;
 			}
 		}
+
+		// Let browser set Content-Type for FormData (needed for multipart boundary)
+		if (config.data instanceof FormData) {
+			delete config.headers["Content-Type"];
+		}
+
 		return config;
 	},
 	(error) => Promise.reject(error)
@@ -130,6 +136,9 @@ export const contractsApi = {
 
 	generatePdf: (id: string) =>
 		api.post<{ success: boolean; data: { pdfUrl: string } }>(`/contracts/${id}/pdf`),
+
+	uploadSigned: (id: string, formData: FormData) =>
+		api.put<{ success: boolean; data: Contract }>(`/contracts/${id}/upload-signed`, formData),
 };
 
 export interface Application {

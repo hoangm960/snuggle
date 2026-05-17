@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { db } from "../config/firebase";
+import { db, bucket } from "../config/firebase";
 import { AdoptionContract, AuthRequest, ApiResponse } from "../types";
 import { AppError } from "../middleware/errorHandler";
 import {
@@ -7,6 +7,7 @@ import {
 	sendContractSignedEmail,
 	sendContractCompletedEmail,
 } from "../services/emailService";
+import { shouldSendEmail } from "../services/notificationPrefService";
 import { generateContractPdf } from "../services/contractPdfService";
 
 const contractsCollection = db.collection("adoptionContracts");
@@ -226,12 +227,15 @@ export const createContract = async (req: AuthRequest, res: Response): Promise<v
 	const adopterDoc = await usersCollection.doc(contractData.adopterId).get();
 	const adopterData = adopterDoc.data();
 
-	await sendContractCreatedEmail({
-		to: adopterData?.email || "",
-		displayName: adopterData?.displayName || "",
-		petName: petData?.name || "Unknown",
-		contractId: docRef.id,
-	});
+	const sendCreated = await shouldSendEmail(contractData.adopterId, "requestApproved");
+	if (sendCreated) {
+		await sendContractCreatedEmail({
+			to: adopterData?.email || "",
+			displayName: adopterData?.displayName || "",
+			petName: petData?.name || "Unknown",
+			contractId: docRef.id,
+		});
+	}
 
 	const response: ApiResponse<AdoptionContract> = {
 		success: true,
@@ -291,7 +295,9 @@ export const signContract = async (req: AuthRequest, res: Response): Promise<voi
 	if (fullySigned) {
 		updateData.status = "signed";
 		if (contractData.petId) {
-			await petsCollection.doc(contractData.petId).update({ status: "adopted" });
+			await petsCollection
+				.doc(contractData.petId)
+				.update({ status: "adopted", adoptedAt: new Date() });
 		}
 	}
 
@@ -302,13 +308,16 @@ export const signContract = async (req: AuthRequest, res: Response): Promise<voi
 	const petDoc = contractData.petId ? await petsCollection.doc(contractData.petId).get() : null;
 	const petData = petDoc?.data();
 
-	await sendContractSignedEmail({
-		to: adopterData?.email || "",
-		displayName: adopterData?.displayName || "",
-		petName: petData?.name || "Unknown",
-		contractId: id,
-		signedBy: role === "adopter" ? "you" : "the shelter",
-	});
+	const sendSigned = await shouldSendEmail(contractData.adopterId, "requestApproved");
+	if (sendSigned) {
+		await sendContractSignedEmail({
+			to: adopterData?.email || "",
+			displayName: adopterData?.displayName || "",
+			petName: petData?.name || "Unknown",
+			contractId: id,
+			signedBy: role === "adopter" ? "you" : "the shelter",
+		});
+	}
 
 	const adopterSignedAtVal = updateData.adopterSignedAt || contractData.adopterSignedAt;
 	const shelterSignedAtVal = updateData.shelterSignedAt || contractData.shelterSignedAt;
@@ -339,13 +348,16 @@ export const signContract = async (req: AuthRequest, res: Response): Promise<voi
 		await contractsCollection.doc(id).update({ contractFileURL: pdfUrl });
 
 		if (fullySigned) {
-			await sendContractCompletedEmail({
-				to: adopterData?.email || "",
-				displayName: adopterData?.displayName || "",
-				petName: petData?.name || "Unknown",
-				contractId: id,
-				pdfUrl,
-			});
+			const sendCompleted = await shouldSendEmail(contractData.adopterId, "requestApproved");
+			if (sendCompleted) {
+				await sendContractCompletedEmail({
+					to: adopterData?.email || "",
+					displayName: adopterData?.displayName || "",
+					petName: petData?.name || "Unknown",
+					contractId: id,
+					pdfUrl,
+				});
+			}
 		}
 	}
 
@@ -467,6 +479,106 @@ export const generateContractPdfEndpoint = async (
 	const response: ApiResponse<{ pdfUrl: string }> = {
 		success: true,
 		data: { pdfUrl },
+	};
+
+	res.status(200).json(response);
+};
+
+export const adminUploadSignedContract = async (req: AuthRequest, res: Response): Promise<void> => {
+	if (!req.user) {
+		throw new AppError("Unauthorized", 401);
+	}
+
+	const { id } = req.params;
+	const { shelterSignedName } = req.body;
+	const file = req.file;
+
+	if (!file) {
+		throw new AppError("Contract PDF file is required", 400);
+	}
+
+	if (
+		!shelterSignedName ||
+		typeof shelterSignedName !== "string" ||
+		shelterSignedName.trim().length === 0
+	) {
+		throw new AppError("Shelter representative name is required", 400);
+	}
+
+	const doc = await contractsCollection.doc(id).get();
+	if (!doc.exists) {
+		throw new AppError("Contract not found", 404);
+	}
+
+	const contractData = doc.data() as AdoptionContract;
+
+	if (contractData.status !== "draft") {
+		throw new AppError("Contract must be in draft status to upload signed PDF", 400);
+	}
+
+	if (!contractData.adopterSignedAt) {
+		throw new AppError(
+			"Adopter must sign the contract first before uploading shelter-signed PDF",
+			400
+		);
+	}
+
+	const filename = `contracts/${id}-signed.pdf`;
+	const storageFile = bucket.file(filename);
+
+	await storageFile.save(file.buffer, {
+		contentType: "application/pdf",
+		metadata: {
+			metadata: {
+				firebaseStorageDownloadTokens: id,
+			},
+		},
+	});
+
+	await storageFile.makePublic();
+	const pdfUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
+
+	const updateData: Partial<AdoptionContract> = {
+		contractFileURL: pdfUrl,
+		shelterSignedAt: new Date(),
+		shelterSignedName: shelterSignedName.trim(),
+		status: "signed",
+	};
+
+	await contractsCollection.doc(id).update(updateData);
+
+	if (contractData.petId) {
+		await petsCollection
+			.doc(contractData.petId)
+			.update({ status: "adopted", adoptedAt: new Date() });
+	}
+
+	const petDoc = contractData.petId ? await petsCollection.doc(contractData.petId).get() : null;
+	const petData = petDoc?.data();
+	const adopterDoc = await usersCollection.doc(contractData.adopterId).get();
+	const adopterData = adopterDoc.data();
+
+	const sendCompleted = await shouldSendEmail(contractData.adopterId, "requestApproved");
+	if (sendCompleted && adopterData?.email) {
+		await sendContractCompletedEmail({
+			to: adopterData.email,
+			displayName: adopterData.displayName || "",
+			petName: petData?.name || "Unknown",
+			contractId: id,
+			pdfUrl,
+		});
+	}
+
+	const updatedDoc = await contractsCollection.doc(id).get();
+	const updatedContract: AdoptionContract = {
+		id: updatedDoc.id,
+		...updatedDoc.data(),
+	} as AdoptionContract;
+
+	const response: ApiResponse<AdoptionContract> = {
+		success: true,
+		data: updatedContract,
+		message: "Contract completed and signed PDF uploaded successfully",
 	};
 
 	res.status(200).json(response);

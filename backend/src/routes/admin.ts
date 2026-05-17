@@ -8,8 +8,9 @@ import {
 	updateUserStatus,
 	inviteUser,
 	deleteUser,
+	sendSystemAlert,
 } from "../controllers/adminController";
-import { getDashboardData } from "../controllers/dashboardController";
+import { getDashboardData, getSidebarStats } from "../controllers/dashboardController";
 import {
 	getAllChats,
 	getChatMessages,
@@ -42,6 +43,18 @@ router.get(
 	"/dashboard",
 	asyncHandler(async (req: AuthRequest, res: Response) => {
 		const data = await getDashboardData();
+
+		res.status(200).json({
+			success: true,
+			data,
+		});
+	})
+);
+
+router.get(
+	"/sidebar",
+	asyncHandler(async (_req: AuthRequest, res: Response) => {
+		const data = await getSidebarStats();
 
 		res.status(200).json({
 			success: true,
@@ -389,6 +402,22 @@ router.delete(
 		res.status(200).json({ success: true, message: "Question deleted" });
 	})
 );
+router.post(
+	"/alerts",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		const { subject, message } = req.body;
+		if (!subject || !message) {
+			throw new AppError("subject and message are required", 400);
+		}
+		const result = await sendSystemAlert(subject, message);
+		res.status(200).json({
+			success: true,
+			data: result,
+			message: `Alert sent to ${result.sent} users`,
+		});
+	})
+);
+
 router.get("/health-records", asyncHandler(getAllHealthRecords));
 
 router.post("/health-records", asyncHandler(createHealthRecord));
