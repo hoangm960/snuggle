@@ -123,6 +123,7 @@ export default function HealthRecordsPage() {
 					},
 					...prev,
 				]);
+				window.dispatchEvent(new Event("notification-refresh"));
 			}
 			setShowModal(false);
 		} catch (error) {
@@ -140,6 +141,7 @@ export default function HealthRecordsPage() {
 		} catch (error) {
 			console.error("Failed to delete:", error);
 		}
+		window.dispatchEvent(new Event("notification-refresh"));
 	}
 
 	if (loading) {

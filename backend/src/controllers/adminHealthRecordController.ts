@@ -3,6 +3,7 @@ import { db } from "../config/firebase";
 import { HealthRecord, AuthRequest, ApiResponse, Pet } from "../types";
 import { AppError } from "../middleware/errorHandler";
 import { errorLogger } from "../utils/logger";
+import { checkVaccinationConsistency } from "../utils/vaccinationAudit";
 
 interface HealthRecordWithPet extends HealthRecord {
 	petName: string;
@@ -89,6 +90,7 @@ export const createHealthRecord = async (req: AuthRequest, res: Response): Promi
 		if (!petDoc.exists) {
 			throw new AppError("Pet not found", 404);
 		}
+		let petData = petDoc.data() as Pet;
 
 		const recordData: Omit<HealthRecord, "id"> = {
 			petId,
@@ -102,6 +104,16 @@ export const createHealthRecord = async (req: AuthRequest, res: Response): Promi
 		};
 
 		const docRef = await getHealthRecordsCollection(petId).add(recordData);
+		// Auto sync vaccination status
+		if (type === "vaccine") {
+			await db.collection("pets").doc(petId).update({
+				isVaccinated: true,
+				updatedAt: new Date(),
+			});
+			petData = { ...petData, isVaccinated: true }; // Update local petData for consistency check
+		}
+		await checkVaccinationConsistency(petId, petData);
+
 		const record: HealthRecord = { id: docRef.id, ...recordData };
 
 		const response: ApiResponse<HealthRecord> = {
@@ -130,7 +142,29 @@ export const deleteHealthRecord = async (req: AuthRequest, res: Response): Promi
 			throw new AppError("Health record not found", 404);
 		}
 
+		const recordType = doc.data()?.type;
+
+		// fetch pet once, reuse for consistency check
+        const petDoc = await db.collection("pets").doc(petId).get();
+        if (!petDoc.exists) throw new AppError("Pet not found", 404);
+        let petData = petDoc.data() as Pet;
+
 		await getHealthRecordsCollection(petId).doc(id).delete();
+
+		// If the deleted record is a vaccine, check if there are any other vaccine records left. If not, update the pet's vaccination status
+		if (recordType === "vaccine") {
+			const remainingVaccines = await getHealthRecordsCollection(petId)
+				.where("type", "==", "vaccine")
+				.limit(1)
+				.get();
+			const newVaccinationStatus = !remainingVaccines.empty;
+			await db.collection("pets").doc(petId).update({
+				isVaccinated: newVaccinationStatus,
+				updatedAt: new Date(),
+			});
+			petData = { ...petData, isVaccinated: newVaccinationStatus }; // Update local petData for consistency check
+		}
+		await checkVaccinationConsistency(petId, petData);
 
 		const response: ApiResponse = {
 			success: true,
