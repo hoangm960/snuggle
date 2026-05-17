@@ -42,8 +42,8 @@ export const getAllHealthRecords = async (req: AuthRequest, res: Response): Prom
 					vetName: recordData.vetName,
 					batchNumber: recordData.batchNumber,
 					documentURL: recordData.documentURL,
-					recordDate: recordData.recordDate,
-					createdAt: recordData.createdAt,
+					recordDate: recordData.recordDate?.toDate?.() ?? recordData.recordDate,
+					createdAt: recordData.createdAt?.toDate?.() ?? recordData.createdAt,
 					petName: petData.name,
 					petSpecies: petData.species,
 				});

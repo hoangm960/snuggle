@@ -22,7 +22,14 @@ export const getPetHealthRecords = async (req: AuthRequest, res: Response): Prom
 		const records: HealthRecord[] = [];
 
 		snapshot.forEach((doc) => {
-			records.push({ id: doc.id, petId, ...doc.data() } as HealthRecord);
+			const data = doc.data();
+			records.push({
+				id: doc.id,
+				petId,
+				...data,
+				recordDate: data.recordDate?.toDate?.() ?? data.recordDate,
+				createdAt: data.createdAt?.toDate?.() ?? data.createdAt,
+			} as HealthRecord);
 		});
 
 		const response: ApiResponse<HealthRecord[]> = {
