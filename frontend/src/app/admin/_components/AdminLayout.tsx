@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { AppSidebar } from "./AppSidebar";
-import { NotificationBell } from "./NotificationBell";
 import { Menu } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -47,9 +46,7 @@ export function AdminLayout({ children, title, subtitle }: AdminLayoutProps) {
                             {title}
                         </p>
                     )}
-                    <div className="ml-auto">
-                        <NotificationBell />
-                    </div>
+                    <div className="ml-auto" />
                 </div>
                 {(title || subtitle) && (
                     <header
