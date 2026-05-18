@@ -308,6 +308,14 @@ export const signContract = async (req: AuthRequest, res: Response): Promise<voi
 	const petDoc = contractData.petId ? await petsCollection.doc(contractData.petId).get() : null;
 	const petData = petDoc?.data();
 
+	let shelterLocation = petData?.location || "the shelter";
+	if (petData?.shelterId) {
+		const shelterDoc = await sheltersCollection.doc(petData.shelterId).get();
+		if (shelterDoc.exists && shelterDoc.data()?.address) {
+			shelterLocation = shelterDoc.data()?.address;
+		}
+	}
+
 	const sendSigned = await shouldSendEmail(contractData.adopterId, "requestApproved");
 	if (sendSigned) {
 		await sendContractSignedEmail({
@@ -356,6 +364,7 @@ export const signContract = async (req: AuthRequest, res: Response): Promise<voi
 					petName: petData?.name || "Unknown",
 					contractId: id,
 					pdfUrl,
+					shelterLocation,
 				});
 			}
 		}
@@ -558,6 +567,14 @@ export const adminUploadSignedContract = async (req: AuthRequest, res: Response)
 	const adopterDoc = await usersCollection.doc(contractData.adopterId).get();
 	const adopterData = adopterDoc.data();
 
+	let shelterLocation = petData?.location || "the shelter";
+	if (petData?.shelterId) {
+		const shelterDoc = await sheltersCollection.doc(petData.shelterId).get();
+		if (shelterDoc.exists && shelterDoc.data()?.address) {
+			shelterLocation = shelterDoc.data()?.address;
+		}
+	}
+
 	const sendCompleted = await shouldSendEmail(contractData.adopterId, "requestApproved");
 	if (sendCompleted && adopterData?.email) {
 		await sendContractCompletedEmail({
@@ -566,6 +583,7 @@ export const adminUploadSignedContract = async (req: AuthRequest, res: Response)
 			petName: petData?.name || "Unknown",
 			contractId: id,
 			pdfUrl,
+			shelterLocation,
 		});
 	}
 

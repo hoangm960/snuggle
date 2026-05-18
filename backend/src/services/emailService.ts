@@ -627,6 +627,7 @@ export interface ContractCompletedEmailParams {
 	petName: string;
 	contractId: string;
 	pdfUrl: string;
+	shelterLocation: string;
 }
 
 export interface NewRequestEmailParams {
@@ -847,6 +848,7 @@ export const sendContractCompletedEmail = async ({
 	petName,
 	contractId,
 	pdfUrl,
+	shelterLocation,
 }: ContractCompletedEmailParams): Promise<void> => {
 	const htmlContent = `
 		<!DOCTYPE html>
@@ -874,8 +876,13 @@ export const sendContractCompletedEmail = async ({
 									<p style="margin: 0 0 16px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
 										Congratulations! Your adoption of <strong>${petName}</strong> is now complete. Both parties have signed the contract.
 									</p>
-									<p style="margin: 0 0 24px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+									<p style="margin: 0 0 16px; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
 										Welcome to your new life together! We're sure ${petName} will bring you lots of joy.
+									</p>
+									<p style="margin: 0 0 24px; color: #4a4a4a; font-size: 16px; line-height: 1.6; background-color: #f0fdf4; padding: 16px; border-radius: 8px; border-left: 4px solid #22c55e;">
+										<strong>Pickup Location:</strong><br/>
+										You can now pick up ${petName} at:<br/>
+										<strong>${shelterLocation}</strong>
 									</p>
 									<table width="100%" cellpadding="0" cellspacing="0">
 										<tr>
