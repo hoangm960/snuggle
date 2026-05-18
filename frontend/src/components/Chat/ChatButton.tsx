@@ -23,7 +23,8 @@ export default function ChatButton() {
 				style={{
 					width: "60px",
 					height: "60px",
-					backgroundColor: "#7AADA1",
+					backgroundColor: "##216959",
+					boxShadow: "0 8px 32px rgba(114, 88, 71, 0.45), 0 2px 8px rgba(0,0,0,0.12)",
 				}}
 				aria-label="Open chat"
 			>

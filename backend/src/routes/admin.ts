@@ -21,6 +21,7 @@ import {
 	getAllHealthRecords,
 	createHealthRecord,
 	deleteHealthRecord,
+	editHealthRecord,
 } from "../controllers/adminHealthRecordController";
 import { authenticate } from "../middleware/auth";
 import { requireAdmin } from "../middleware/admin";
@@ -423,5 +424,55 @@ router.get("/health-records", asyncHandler(getAllHealthRecords));
 router.post("/health-records", asyncHandler(createHealthRecord));
 
 router.delete("/health-records/:petId/:id", asyncHandler(deleteHealthRecord));
+
+router.put("/health-records/:petId/:id", asyncHandler(editHealthRecord)); // reuse edit handler for admin since it has consistency check logic
+
+// GET /admin/notifications
+router.get("/notifications", authenticate, asyncHandler(async (req, res) => {
+    const snapshot = await db.collection("adminNotifications")
+        .orderBy("createdAt", "desc")
+        .limit(20)
+        .get();
+
+    const data = snapshot.docs.map((doc) => {
+        const d = doc.data();
+        return {
+            id: doc.id,
+            ...d,
+            createdAt: d.createdAt?.toDate?.() ?? d.createdAt,
+            resolvedAt: d.resolvedAt?.toDate?.() ?? d.resolvedAt ?? null,
+        };
+    });
+
+    res.json({ success: true, data });
+}));
+
+router.patch("/notifications/mark-all-read", authenticate, asyncHandler(async (req, res) => {
+    const snapshot = await db.collection("adminNotifications")
+        .where("read", "==", false).get();
+    const batch = db.batch();
+    snapshot.forEach((doc) => batch.update(doc.ref, { read: true }));
+    await batch.commit();
+    res.json({ success: true });
+}));
+
+router.patch("/notifications/:id/read", authenticate, asyncHandler(async (req, res) => {
+    await db.collection("adminNotifications").doc(req.params.id).update({ read: true });
+    res.json({ success: true });
+}));
+
+// delete /admin/notifications/:id
+router.delete("/notifications/:id", asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const doc = await db.collection("adminNotifications").doc(id).get();
+
+    if (!doc.exists) {
+        throw new AppError("Notification not found", 404);
+    }
+
+    await db.collection("adminNotifications").doc(id).delete();
+    res.json({ success: true, message: "Notification deleted" });
+}));
+
 
 export default router;

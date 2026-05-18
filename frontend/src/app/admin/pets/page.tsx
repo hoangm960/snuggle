@@ -131,6 +131,7 @@ export default function PetsPage() {
 
 			setForm(defaultForm);
 			setShowUpload(false);
+			window.dispatchEvent(new Event("notification-refresh"));
 		} catch {
 			alert("An error occurred while saving.");
 		} finally {
@@ -165,6 +166,7 @@ export default function PetsPage() {
 		setDeleteLoading(false);
 		setShowDeleteModal(false);
 		setDeleteTarget(null);
+		window.dispatchEvent(new Event("notification-refresh"));
 	};
 
 	const handleCloseDeleteModal = () => {

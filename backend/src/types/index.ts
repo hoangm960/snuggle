@@ -147,6 +147,7 @@ export interface Pet {
 	thumbnail?: string;
 	isVaccinated: boolean;
 	isNeutered: boolean;
+	location: string;
 	geoPoint?: GeoPoint;
 	contractId?: string;
 	createdAt: Date;
@@ -165,6 +166,7 @@ export interface HealthRecord {
 	addedBy?: string;
 	recordDate: Date;
 	createdAt: Date;
+	updatedAt?: Date;
 }
 
 export interface AdoptionApplication {
