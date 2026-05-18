@@ -31,19 +31,21 @@ export function EKYCFooter() {
 						<p style={{ color: "#888", fontSize: "12px" }}>
 							Address: 123 Adoption Lane
 						</p>
-						<button
-							className="mt-5 px-5 py-2 rounded-lg font-medium hover:opacity-80 transition-opacity"
-							style={{
-								background: "#C4857A",
-								color: "#fff",
-								fontSize: "12px",
-								fontFamily: "'Space Grotesk', sans-serif",
-								border: "none",
-								cursor: "pointer",
-							}}
-						>
-							Contact us
-						</button>
+						<Link href="/home#contact">
+							<button
+								className="mt-5 px-5 py-2 rounded-lg font-medium hover:opacity-80 transition-opacity"
+								style={{
+									background: "#C4857A",
+									color: "#fff",
+									fontSize: "12px",
+									fontFamily: "'Space Grotesk', sans-serif",
+									border: "none",
+									cursor: "pointer",
+								}}
+							>
+								Contact us
+							</button>
+						</Link>
 					</div>
 					<div className="flex items-end gap-3 flex-wrap">
 						<input

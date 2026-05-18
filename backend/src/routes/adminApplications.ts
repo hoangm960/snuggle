@@ -3,6 +3,7 @@ import { AuthRequest } from "../types";
 import {
 	getAllAdminApplications,
 	updateAdminApplicationStatus,
+	getAdminApplicationById,
 } from "../controllers/adminApplicationsController";
 import { authenticate } from "../middleware/auth";
 import { requireAdmin } from "../middleware/admin";
@@ -29,6 +30,15 @@ router.get(
 			success: true,
 			data: result,
 		});
+	})
+);
+
+router.get(
+	"/:id",
+	asyncHandler(async (req: AuthRequest, res: Response) => {
+		const { id } = req.params;
+		const application = await getAdminApplicationById(id);
+		res.status(200).json({ success: true, data: application });
 	})
 );
 

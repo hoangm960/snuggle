@@ -170,3 +170,33 @@ export const getAllAdminApplications = async (
 		stats,
 	};
 };
+
+export const getAdminApplicationById = async (
+	applicationId: string
+): Promise<AdoptionApplication & { petName: string; petThumbnail?: string; adopterEmail?: string }> => {
+	const doc = await applicationsCollection.doc(applicationId).get();
+
+	if (!doc.exists) {
+		throw new Error("Application not found");
+	}
+
+	const data = doc.data() as AdoptionApplication;
+
+	const [petDoc, adopterDoc] = await Promise.all([
+		data.petId ? petsCollection.doc(data.petId).get() : null,
+		data.adopterId ? usersCollection.doc(data.adopterId).get() : null,
+	]);
+
+	const petData = petDoc?.data();
+	const userData = adopterDoc?.data();
+
+	return {
+		id: doc.id,
+		...data,
+		appliedAt: (data.appliedAt as any)?.toDate ? (data.appliedAt as any).toDate() : data.appliedAt,
+		reviewedAt: (data.reviewedAt as any)?.toDate ? (data.reviewedAt as any).toDate() : data.reviewedAt,
+		petName: data.name || petData?.name || "Unknown",
+		petThumbnail: petData?.thumbnail || petData?.photoURLs?.[0] || undefined,
+		adopterEmail: userData?.email || undefined,
+	};
+};

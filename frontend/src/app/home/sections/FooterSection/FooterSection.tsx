@@ -29,19 +29,21 @@ export default function FooterSection() {
 						</a>
 						<p style={{ color: "#888", fontSize: "12px" }}>Phone: 555-567-8901</p>
 						<p style={{ color: "#888", fontSize: "12px" }}>Address: adsgefgs</p>
-						<button
-							className="mt-5 px-5 py-2 rounded-lg font-medium hover:opacity-80 transition-opacity"
-							style={{
-								background: "#C4857A",
-								color: "#fff",
-								fontSize: "12px",
-								fontFamily: "'Space Grotesk', sans-serif",
-								border: "none",
-								cursor: "pointer",
-							}}
-						>
-							Contact us
-						</button>
+						<a href="#contact">
+							<button
+								className="mt-5 px-5 py-2 rounded-lg font-medium hover:opacity-80 transition-opacity"
+								style={{
+									background: "#C4857A",
+									color: "#fff",
+									fontSize: "12px",
+									fontFamily: "'Space Grotesk', sans-serif",
+									border: "none",
+									cursor: "pointer",
+								}}
+							>
+								Contact us
+							</button>
+						</a>
 					</div>
 					<div className="flex items-end gap-3 flex-wrap">
 						<input
