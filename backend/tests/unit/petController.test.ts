@@ -22,17 +22,27 @@ jest.mock("../../src/config/firebase", () => {
 
 	return {
 		db: {
-			collection: jest.fn(() => ({
-				doc: jest.fn(() => ({
+			collection: jest.fn(() => {
+				const collMock: any = {
+					where: mockWhere,
+					orderBy: mockOrderBy,
+					limit: mockLimit,
+					get: mockCollectionGet,
+					add: mockCollectionAdd,
+				};
+				collMock.doc = jest.fn(() => ({
 					get: mockDocGet,
 					update: mockDocUpdate,
 					delete: mockDocDelete,
-				})),
-				where: mockWhere,
-				orderBy: mockOrderBy,
-				limit: mockLimit,
-				get: mockCollectionGet,
-				add: mockCollectionAdd,
+					collection: jest.fn(() => collMock),
+				}));
+				return collMock;
+			}),
+			batch: jest.fn(() => ({
+				set: jest.fn(),
+				update: jest.fn(),
+				delete: jest.fn(),
+				commit: jest.fn().mockResolvedValue(undefined),
 			})),
 		},
 		auth: {

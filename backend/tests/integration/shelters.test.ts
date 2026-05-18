@@ -54,7 +54,7 @@ const createTestApp = (): Express => {
 			return;
 		}
 
-		const { name, address, contactEmail, phone, description } = req.body;
+		const { name, address, contactEmail } = req.body;
 		if (!name || !address || !contactEmail) {
 			res.status(400).json({ success: false, error: "Missing required fields" });
 			return;

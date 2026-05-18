@@ -59,7 +59,7 @@ const createTestApp = (): Express => {
 			return;
 		}
 
-		const { petId, petName, message } = req.body;
+		const { petId, petName } = req.body;
 		if (!petId || !petName) {
 			res.status(400).json({ success: false, error: "Missing required fields" });
 			return;

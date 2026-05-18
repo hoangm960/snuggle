@@ -1,8 +1,6 @@
 import {
 	getUserChats,
 	getChatById,
-	getMessages,
-	createChat,
 	createSupportChat,
 	getSupportChatStatus,
 	sendMessage,

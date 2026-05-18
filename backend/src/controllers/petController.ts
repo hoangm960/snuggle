@@ -2,6 +2,7 @@ import { Response } from "express";
 import { db } from "../config/firebase";
 import { Pet, AuthRequest, ApiResponse } from "../types";
 import { AppError } from "../middleware/errorHandler";
+import { checkVaccinationConsistency } from "../utils/vaccinationAudit";
 
 const petsCollection = db.collection("pets");
 const usersCollection = db.collection("users");
@@ -72,6 +73,16 @@ export const getPetById = async (req: AuthRequest, res: Response): Promise<void>
 	res.status(200).json(response);
 };
 
+export const auditVaccinationConsistency = async () => {
+    const petsSnapshot = await petsCollection.get();
+
+    await Promise.all(
+        petsSnapshot.docs.map((doc) => checkVaccinationConsistency(doc.id))
+    );
+
+    return { checked: petsSnapshot.size };
+};
+
 export const createPet = async (req: AuthRequest, res: Response): Promise<void> => {
 	if (!req.user) {
 		throw new AppError("Unauthorized", 401);
@@ -88,6 +99,7 @@ export const createPet = async (req: AuthRequest, res: Response): Promise<void> 
 		photoURLs: req.body.photoURLs,
 		shelterId: req.body.shelterId || req.user.uid,
 		status: "available",
+		location: req.body.location || "",
 		isVaccinated: req.body.isVaccinated || false,
 		isNeutered: req.body.isNeutered || false,
 		createdAt: new Date(),
@@ -102,7 +114,7 @@ export const createPet = async (req: AuthRequest, res: Response): Promise<void> 
 		data: pet,
 		message: "Pet created successfully",
 	};
-
+	await checkVaccinationConsistency(docRef.id, pet); // Ensure vaccination status is consistent with health records
 	res.status(201).json(response);
 };
 
@@ -134,6 +146,8 @@ export const updatePet = async (req: AuthRequest, res: Response): Promise<void> 
 	delete updateData.shelterId;
 
 	await petsCollection.doc(id).update(updateData);
+	// merge old and new data so no extra read needed
+	await checkVaccinationConsistency(id, { ...petData, ...updateData }); // Ensure vaccination status is consistent with health records
 
 	const updatedDoc = await petsCollection.doc(id).get();
 	const pet: Pet = { id: updatedDoc.id, ...updatedDoc.data() } as Pet;
@@ -164,6 +178,18 @@ export const deletePet = async (req: AuthRequest, res: Response): Promise<void> 
 	if (!userIsAdmin && petData.shelterId !== req.user.uid) {
 		throw new AppError("Not authorized to delete this pet", 403);
 	}
+
+	// clean up orphaned notifications
+    const orphanedNotifs = await db
+        .collection("adminNotifications")
+        .where("petId", "==", id)
+        .get();
+
+    if (!orphanedNotifs.empty) {
+        const batch = db.batch();
+        orphanedNotifs.forEach((doc) => batch.delete(doc.ref));
+        await batch.commit();
+    }
 
 	await petsCollection.doc(id).delete();
 

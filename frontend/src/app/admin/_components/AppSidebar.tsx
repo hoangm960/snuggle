@@ -19,11 +19,12 @@ import {
 	Star,
 	MessageCircle,
 	Wand2,
+	Building,
 } from "lucide-react";
 
 interface SidebarStats {
 	pendingRequests: number;
-	pendingReviews: number;
+	//pendingReviews: number;
 	pendingChats: number;
 	petsAdoptedThisWeek: number;
 }
@@ -49,8 +50,9 @@ const navMain: NavItem[] = [
 	{ href: "/admin/ekyc", label: "eKYC Management", icon: ShieldCheck },
 	{ href: "/admin/health-records", label: "Health Records", icon: HeartPulse },
 	{ href: "/admin/contracts", label: "Contracts", icon: FileSignature },
-	{ href: "/admin/reviews", label: "Reviews", icon: Star, badgeKey: "pendingReviews" },
+	//{ href: "/admin/reviews", label: "Reviews", icon: Star, badgeKey: "pendingReviews" },
 	{ href: "/admin/chats", label: "Support Chats", icon: MessageCircle, badgeKey: "pendingChats" },
+	{ href: "/admin/shelters", label: "Shelters", icon: Building },
 	{ href: "/admin/quiz", label: "Pet Quiz", icon: Wand2 },
 ];
 
@@ -61,7 +63,7 @@ export function AppSidebar() {
 	const router = useRouter();
 	const [stats, setStats] = useState<SidebarStats>({
 		pendingRequests: 0,
-		pendingReviews: 0,
+		//pendingReviews: 0,
 		pendingChats: 0,
 		petsAdoptedThisWeek: 0,
 	});

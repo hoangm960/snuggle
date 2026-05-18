@@ -11,6 +11,14 @@ export const createShelterSchema = z.object({
 
 export const updateShelterSchema = createShelterSchema.partial();
 
+export const adminCreateShelterSchema = createShelterSchema.extend({
+	adminUserId: z.string().optional(),
+});
+
+export const adminUpdateShelterSchema = adminCreateShelterSchema.partial().extend({
+	status: z.enum(["active", "suspended"]).optional(),
+});
+
 export const createApplicationSchema = z.object({
 	petId: z.string().min(1, "Pet ID is required"),
 	message: z.string().max(2000).optional(),

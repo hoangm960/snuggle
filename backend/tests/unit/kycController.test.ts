@@ -1,9 +1,6 @@
 import {
 	getPendingKYC,
 	getKYCById,
-	getUserWithKYC,
-	approveKYC,
-	rejectKYC,
 	getKYCStats,
 	getUserKYC,
 } from "../../src/controllers/kycController";
