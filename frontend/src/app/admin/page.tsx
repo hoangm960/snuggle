@@ -175,8 +175,8 @@ export default function AdminDashboard() {
 
 	return (
 		<AdminLayout>
-			<div className="p-8 min-h-full flex flex-col">
-				<div className="mb-8">
+			<div className="p-4 sm:p-6 lg:p-8 min-h-full flex flex-col">
+				<div className="mb-6 lg:mb-8">
 					<h1
 						style={{
 							fontFamily: "'Space Grotesk', sans-serif",
@@ -192,7 +192,7 @@ export default function AdminDashboard() {
 					</p>
 				</div>
 
-				<div className="grid grid-cols-3 gap-5 mb-8">
+				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-6 lg:mb-8">
 					{statCards.map((s) => (
 						<a
 							key={s.label}
@@ -236,9 +236,9 @@ export default function AdminDashboard() {
 					))}
 				</div>
 
-				<div className="grid grid-cols-3 gap-5 flex-1 auto-rows-fr">
+				<div className="grid grid-cols-1 lg:grid-cols-3 gap-5 flex-1">
 					<div
-						className="col-span-2 rounded-2xl p-6"
+						className="lg:col-span-2 rounded-2xl p-6"
 						style={{ background: "#fff", border: "1px solid #F0F0F0" }}
 					>
 						<div className="flex items-center justify-between mb-5">
@@ -271,7 +271,8 @@ export default function AdminDashboard() {
 								No recent requests
 							</p>
 						) : (
-							<table className="w-full">
+							<div className="overflow-x-auto -mx-2">
+						<table className="w-full min-w-[480px]">
 								<thead>
 									<tr>
 										{["ID", "Pet", "Adopter", "Date", "Status"].map((h) => (
@@ -358,6 +359,7 @@ export default function AdminDashboard() {
 									})}
 								</tbody>
 							</table>
+						</div>
 						)}
 					</div>
 

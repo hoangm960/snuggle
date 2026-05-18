@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { adminChatApi } from "@/lib/chatApi";
 import { Chat, Message } from "@/types";
 import { AdminLayout } from "../_components/AdminLayout";
-import { MessageCircle, Clock, CheckCircle } from "lucide-react";
+import { MessageCircle, Clock, CheckCircle, ChevronLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSocket } from "@/hooks/useSocket";
 
@@ -181,10 +181,12 @@ export default function AdminChatsPage() {
 
 	return (
 		<AdminLayout title="Support Chats" subtitle="Manage customer support conversations">
-			<div className="p-8 h-full min-h-0 flex flex-col">
+			<div className="p-4 sm:p-6 lg:p-8 h-full min-h-0 flex flex-col">
 				<div className="flex flex-1 min-h-0 gap-4">
 					<div
-						className="w-80 shrink-0 overflow-hidden rounded-xl border"
+						className={`overflow-hidden rounded-xl border lg:w-80 lg:shrink-0 ${
+							selectedChat ? "hidden lg:block" : "w-full"
+						}`}
 						style={{ borderColor: "#e5e7eb" }}
 					>
 						<div className="flex border-b" style={{ borderColor: "#e5e7eb" }}>
@@ -279,15 +281,23 @@ export default function AdminChatsPage() {
 					</div>
 
 					<div
-						className="flex flex-1 flex-col overflow-hidden rounded-xl border"
+						className={`flex-col overflow-hidden rounded-xl border flex-1 ${
+							selectedChat ? "flex" : "hidden lg:flex"
+						}`}
 						style={{ borderColor: "#e5e7eb" }}
 					>
 						{selectedChat ? (
 							<>
 								<div
-									className="border-b px-4 py-3"
+									className="border-b px-4 py-3 flex items-center gap-3"
 									style={{ borderColor: "#e5e7eb", backgroundColor: "#f9fafb" }}
 								>
+									<button
+										onClick={() => setSelectedChat(null)}
+										className="lg:hidden size-8 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors shrink-0"
+									>
+										<ChevronLeft className="size-4" style={{ color: "#666" }} />
+									</button>
 									<h3 className="font-medium">Chat Details</h3>
 									<p className="text-sm text-gray-500">
 										Created{" "}

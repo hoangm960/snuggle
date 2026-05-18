@@ -16,14 +16,14 @@ import {
 	ShieldCheck,
 	HeartPulse,
 	FileSignature,
-	Star,
 	MessageCircle,
 	Wand2,
+	Building,
+	X,
 } from "lucide-react";
 
 interface SidebarStats {
 	pendingRequests: number;
-	pendingReviews: number;
 	pendingChats: number;
 	petsAdoptedThisWeek: number;
 }
@@ -49,19 +49,23 @@ const navMain: NavItem[] = [
 	{ href: "/admin/ekyc", label: "eKYC Management", icon: ShieldCheck },
 	{ href: "/admin/health-records", label: "Health Records", icon: HeartPulse },
 	{ href: "/admin/contracts", label: "Contracts", icon: FileSignature },
-	{ href: "/admin/reviews", label: "Reviews", icon: Star, badgeKey: "pendingReviews" },
 	{ href: "/admin/chats", label: "Support Chats", icon: MessageCircle, badgeKey: "pendingChats" },
+	{ href: "/admin/shelters", label: "Shelters", icon: Building },
 	{ href: "/admin/quiz", label: "Pet Quiz", icon: Wand2 },
 ];
 
 const navSecondary = [{ href: "/admin/settings", label: "Settings", icon: Settings }];
 
-export function AppSidebar() {
+interface AppSidebarProps {
+	isOpen: boolean;
+	onClose: () => void;
+}
+
+export function AppSidebar({ isOpen, onClose }: AppSidebarProps) {
 	const pathname = usePathname();
 	const router = useRouter();
 	const [stats, setStats] = useState<SidebarStats>({
 		pendingRequests: 0,
-		pendingReviews: 0,
 		pendingChats: 0,
 		petsAdoptedThisWeek: 0,
 	});
@@ -78,6 +82,12 @@ export function AppSidebar() {
 		fetchStats();
 	}, []);
 
+	// Close sidebar on navigation (mobile)
+	useEffect(() => {
+		onClose();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [pathname]);
+
 	function handleLogout() {
 		clearAuthSession();
 		router.push("/login");
@@ -90,11 +100,13 @@ export function AppSidebar() {
 
 	return (
 		<aside
-			className="hidden lg:flex w-64 shrink-0 flex-col border-r"
+			className={`fixed inset-y-0 left-0 z-40 w-64 flex flex-col border-r transition-transform duration-200 lg:relative lg:translate-x-0 lg:z-auto ${
+				isOpen ? "translate-x-0" : "-translate-x-full"
+			}`}
 			style={{ background: "#fff", borderColor: "#F0F0F0" }}
 		>
 			{/* Brand */}
-			<div className="px-6 pt-7 pb-8">
+			<div className="px-6 pt-7 pb-5 flex items-start justify-between">
 				<div className="flex items-center gap-2.5">
 					<div
 						className="size-10 rounded-2xl flex items-center justify-center"
@@ -125,6 +137,13 @@ export function AppSidebar() {
 						</p>
 					</div>
 				</div>
+				<button
+					onClick={onClose}
+					className="lg:hidden size-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
+					aria-label="Close menu"
+				>
+					<X className="size-4" style={{ color: "#888" }} />
+				</button>
 			</div>
 
 			{/* Main nav */}

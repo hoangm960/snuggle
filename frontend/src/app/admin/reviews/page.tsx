@@ -136,7 +136,7 @@ export default function ReviewsPage() {
 			title="Reviews & Ratings"
 			subtitle="Moderate adoption experience reviews from adopters."
 		>
-			<div className="p-8">
+			<div className="p-4 sm:p-6 lg:p-8">
 				<div className="flex gap-2 mb-6 overflow-x-auto pb-1">
 					{TABS.map(({ key, label }) => (
 						<button
@@ -343,7 +343,7 @@ export default function ReviewsPage() {
 						onClick={() => setSelected(null)}
 					>
 						<div
-							className="w-[500px] bg-card rounded-3xl p-6 shadow-xl border border-border"
+							className="w-full max-w-[500px] mx-4 bg-card rounded-3xl p-6 shadow-xl border border-border"
 							onClick={(e) => e.stopPropagation()}
 						>
 							<div className="flex items-center justify-between mb-5">

@@ -115,7 +115,7 @@ export default function ContractsPage() {
 
 	return (
 		<AdminLayout>
-			<div className="p-8">
+			<div className="p-4 sm:p-6 lg:p-8">
 				<div className="flex items-center gap-3 mb-8">
 					<div
 						className="size-10 rounded-xl flex items-center justify-center"
@@ -177,7 +177,8 @@ export default function ContractsPage() {
 					className="rounded-2xl overflow-hidden"
 					style={{ background: "#fff", border: "1px solid #F0F0F0" }}
 				>
-					<table className="w-full">
+				<div className="overflow-x-auto">
+					<table className="w-full min-w-[800px]">
 						<thead style={{ background: "#FAFAFA" }}>
 							<tr>
 								{[
@@ -346,6 +347,7 @@ export default function ContractsPage() {
 						</tbody>
 					</table>
 				</div>
+				</div>
 			</div>
 
 			{/* Detail Modal */}
@@ -356,7 +358,7 @@ export default function ContractsPage() {
 					onClick={() => setSelected(null)}
 				>
 					<div
-						className="w-[600px] max-h-[85vh] overflow-y-auto rounded-2xl p-6"
+						className="w-full max-w-[600px] mx-4 max-h-[85vh] overflow-y-auto rounded-2xl p-6"
 						style={{ background: "#fff" }}
 						onClick={(e) => e.stopPropagation()}
 					>
@@ -419,7 +421,7 @@ export default function ContractsPage() {
 							</span>
 						</div>
 
-						<div className="grid grid-cols-2 gap-4 mb-5">
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
 							{[
 								{ label: "Adopter", value: selected.adopter },
 								{ label: "Email", value: selected.adopterEmail },

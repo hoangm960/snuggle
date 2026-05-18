@@ -154,7 +154,7 @@ export default function HealthRecordsPage() {
 
 	return (
 		<AdminLayout>
-			<div className="p-8">
+			<div className="p-4 sm:p-6 lg:p-8">
 				<div className="flex items-center justify-between mb-8">
 					<div className="flex items-center gap-3">
 						<div
@@ -225,7 +225,8 @@ export default function HealthRecordsPage() {
 					className="rounded-2xl overflow-hidden"
 					style={{ background: "#fff", border: "1px solid #F0F0F0" }}
 				>
-					<table className="w-full">
+				<div className="overflow-x-auto">
+					<table className="w-full min-w-[640px]">
 						<thead style={{ background: "#FAFAFA" }}>
 							<tr>
 								{["Pet", "Record", "Type", "Veterinarian", "Date", ""].map((h) => (
@@ -349,6 +350,7 @@ export default function HealthRecordsPage() {
 						</tbody>
 					</table>
 				</div>
+				</div>
 			</div>
 
 			{showModal && (
@@ -358,7 +360,7 @@ export default function HealthRecordsPage() {
 					onClick={() => setShowModal(false)}
 				>
 					<div
-						className="w-[540px] max-h-[85vh] overflow-y-auto rounded-2xl p-6"
+						className="w-full max-w-[540px] mx-4 max-h-[85vh] overflow-y-auto rounded-2xl p-6"
 						style={{ background: "#fff" }}
 						onClick={(e) => e.stopPropagation()}
 					>

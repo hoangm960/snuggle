@@ -420,7 +420,7 @@ export default function RequestsPage() {
 			title="Adoption Requests"
 			subtitle="Review applications and approve forever homes."
 		>
-			<div className="p-8">
+			<div className="p-4 sm:p-6 lg:p-8">
 				<div className="flex gap-2 mb-6 overflow-x-auto pb-1">
 					{TABS.map(({ key, label }) => (
 						<button

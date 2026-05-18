@@ -141,7 +141,7 @@ export default function PetDetailEditPage() {
 
 				<div className="flex gap-8 flex-col lg:flex-row">
 					{/* Left — Photo gallery */}
-					<div className="flex-shrink-0" style={{ width: "300px" }}>
+					<div className="w-full lg:w-72 lg:flex-shrink-0">
 						<div className="bg-card border border-border rounded-3xl p-5 shadow-card">
 							<h2 className="font-display font-semibold text-base mb-4">
 								Photo Gallery
