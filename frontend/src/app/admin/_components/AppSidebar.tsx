@@ -19,6 +19,7 @@ import {
 	Star,
 	MessageCircle,
 	Wand2,
+	Building,
 } from "lucide-react";
 
 interface SidebarStats {
@@ -51,6 +52,7 @@ const navMain: NavItem[] = [
 	{ href: "/admin/contracts", label: "Contracts", icon: FileSignature },
 	//{ href: "/admin/reviews", label: "Reviews", icon: Star, badgeKey: "pendingReviews" },
 	{ href: "/admin/chats", label: "Support Chats", icon: MessageCircle, badgeKey: "pendingChats" },
+	{ href: "/admin/shelters", label: "Shelters", icon: Building },
 	{ href: "/admin/quiz", label: "Pet Quiz", icon: Wand2 },
 ];
 
