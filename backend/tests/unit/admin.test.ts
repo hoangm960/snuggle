@@ -1,5 +1,5 @@
 import { requireAdmin } from "../../src/middleware/admin";
-import { Request, Response, NextFunction } from "express";
+import { Response } from "express";
 import { AppError } from "../../src/middleware/errorHandler";
 
 // Mock Firebase module

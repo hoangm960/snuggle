@@ -60,7 +60,7 @@ const createTestApp = (): Express => {
 			return;
 		}
 
-		const { shelterId, rating, comment } = req.body;
+		const { shelterId, rating } = req.body;
 		if (!shelterId || !rating) {
 			res.status(400).json({ success: false, error: "Missing required fields" });
 			return;

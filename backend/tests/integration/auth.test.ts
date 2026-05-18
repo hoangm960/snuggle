@@ -14,7 +14,7 @@ const createTestApp = (): Express => {
 	});
 
 	app.post("/api/auth/register", (req, res) => {
-		const { email, password, displayName } = req.body;
+		const { email, password } = req.body;
 
 		if (!email || !password) {
 			res.status(400).json({ success: false, error: "Email and password required" });
